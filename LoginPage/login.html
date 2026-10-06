@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>GeneGlass | Login</title>
+
+    <!-- CSS داخل نفس مجلد LoginPage -->
+    <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+
+<main class="login-page">
+
+    <!-- ================= LEFT SIDE ================= -->
+    <section class="brand-section">
+
+        <!-- Decorative particles -->
+        <span class="particle p1"></span>
+        <span class="particle p2"></span>
+        <span class="particle p3"></span>
+        <span class="particle p4"></span>
+
+
+        <!-- Logo + Subtitle -->
+        <div class="brand-content">
+
+            <img
+                src="../assets/geneglass-logo.png"
+                alt="GeneGlass Logo"
+                class="brand-logo"
+            >
+
+            <p class="brand-subtitle">
+                Intelligent Decision Support System
+                <br>
+                for Sanger Sequencing
+            </p>
+
+        </div>
+
+
+        <!-- Signal image at bottom -->
+        <div class="signal-area">
+
+            <img
+                src="../assets/signal-wave.png"
+                alt=""
+                class="signal-image"
+            >
+
+        </div>
+
+    </section>
+
+
+    <!-- ================= RIGHT SIDE ================= -->
+    <section class="login-section">
+
+        <!-- DNA Background -->
+        <img
+            src="../assets/dna-bg.png"
+            alt=""
+            class="dna-image"
+        >
+
+
+        <!-- ================= LOGIN CARD ================= -->
+        <div class="login-card">
+
+            <div class="login-header">
+
+                <h1>Welcome back</h1>
+
+                <p>
+                    Sign in to your account
+                </p>
+
+            </div>
+
+
+            <form id="loginForm">
+
+                <!-- ================= EMAIL ================= -->
+                <div class="form-group">
+
+                    <label for="email">
+                        Specialist ID / Email
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <svg
+                            class="field-icon"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                        >
+                            <circle
+                                cx="12"
+                                cy="8"
+                                r="4">
+                            </circle>
+
+                            <path
+                                d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7">
+                            </path>
+                        </svg>
+
+
+                        <input
+                            type="email"
+                            id="email"
+                            placeholder="doctor@kau.edu.sa"
+                            autocomplete="username"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- ================= PASSWORD ================= -->
+                <div class="form-group">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <svg
+                            class="field-icon"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                        >
+
+                            <rect
+                                x="5"
+                                y="10"
+                                width="14"
+                                height="11"
+                                rx="2">
+                            </rect>
+
+                            <path
+                                d="M8 10V7a4 4 0 0 1 8 0v3">
+                            </path>
+
+                        </svg>
+
+
+                        <input
+                            type="password"
+                            id="password"
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                            required
+                        >
+
+
+                        <!-- Show / Hide Password -->
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            id="togglePassword"
+                            aria-label="Show password"
+                        >
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                            >
+
+                                <path
+                                    d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z">
+                                </path>
+
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="2.5">
+                                </circle>
+
+                            </svg>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ================= ERROR ================= -->
+                <p
+                    class="error-message"
+                    id="errorMessage"
+                >
+                    Invalid ID or Password. Please try again.
+                </p>
+
+
+                <!-- ================= OPTIONS ================= -->
+                <div class="login-options">
+
+                    <label class="remember">
+
+                        <input
+                            type="checkbox"
+                            id="remember"
+                        >
+
+                        <span>
+                            Remember me
+                        </span>
+
+                    </label>
+
+
+                    <a
+                        href="#"
+                        class="forgot-password"
+                    >
+                        Forgot password?
+                    </a>
+
+                </div>
+
+
+                <!-- ================= LOGIN BUTTON ================= -->
+                <button
+                    type="submit"
+                    class="login-button"
+                >
+
+                    <span>
+                        Sign In
+                    </span>
+
+                    <span class="button-arrow">
+                        →
+                    </span>
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- JS داخل نفس مجلد LoginPage -->
+<script src="login.js"></script>
+
+</body>
+</html>
