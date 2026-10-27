@@ -1,481 +1,402 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>GeneGlass | Dashboard</title>
 
-    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="dashboard.css" />
 
     <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
+  </head>
 
-<body>
-
+  <body>
     <div class="dashboard-page">
+      <!-- ================= SIDEBAR ================= -->
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <img
+            src="../assets/geneglass-logo.png"
+            alt="GeneGlass"
+            class="sidebar-logo"
+          />
+        </div>
 
-        <!-- ================= SIDEBAR ================= -->
-        <aside class="sidebar">
+        <nav class="sidebar-nav">
+          <a href="dashboard.html" class="nav-item active">
+            <i class="fa-solid fa-house"></i>
+            <span>Dashboard</span>
+          </a>
 
-            <div class="sidebar-brand">
-                <img src="../assets/geneglass-logo.png" alt="GeneGlass" class="sidebar-logo">
+          <a href="../AnalysisPage/analysis.html" class="nav-item">
+            <i class="fa-solid fa-dna"></i>
+            <span>New Analysis</span>
+          </a>
+
+          <a href="../HistoryPage/history.html" class="nav-item">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>History</span>
+          </a>
+
+          <a href="../ProfilePage/profile.html" class="nav-item">
+    <i class="fa-solid fa-user"></i>
+    <span>Profile</span>
+</a>
+        </nav>
+
+        <!-- Decorative DNA -->
+        <img src="../assets/dna-bg.png" alt="" class="sidebar-dna" />
+      </aside>
+
+      <!-- ================= MAIN ================= -->
+      <main class="main-content">
+        <!-- Fixed DNA Background -->
+        <img src="../assets/dna-bg.png" alt="" class="dashboard-dna" />
+
+        <!-- ================= HEADER ================= -->
+        <header class="dashboard-header">
+          <div>
+            <h1>Hi, Specialist Rawan</h1>
+
+            <p>Here's an overview of your sequencing analyses</p>
+          </div>
+
+          <button class="profile-button">
+            <span class="profile-circle">
+              <i class="fa-solid fa-user"></i>
+            </span>
+
+            <span>Dr. Rawan</span>
+
+            <i class="fa-solid fa-chevron-down arrow-small"></i>
+          </button>
+        </header>
+
+        <!-- ================= STAT CARDS ================= -->
+        <section class="stats-grid">
+          <!-- TOTAL -->
+          <article class="stat-card">
+            <div class="stat-icon">
+              <i class="fa-solid fa-file-waveform"></i>
             </div>
 
-            <nav class="sidebar-nav">
+            <div class="stat-info">
+              <p>Total Analyses</p>
+              <h2>28</h2>
+              <span>all time</span>
+            </div>
 
-                <a href="dashboard.html" class="nav-item active">
-                    <i class="fa-solid fa-house"></i>
-                    <span>Dashboard</span>
-                </a>
+            <div class="mini-line">
+              <span></span>
+            </div>
+          </article>
 
-                <a href="analysis.html" class="nav-item">
-                    <i class="fa-solid fa-dna"></i>
-                    <span>New Analysis</span>
-                </a>
+          <!-- MUTATIONS -->
+          <article class="stat-card">
+            <div class="stat-icon">
+              <i class="fa-solid fa-chart-simple"></i>
+            </div>
 
-                <a href="history.html" class="nav-item">
-                    <i class="fa-solid fa-clock-rotate-left"></i>
-                    <span>History</span>
-                </a>
+            <div class="stat-info">
+              <p>Mutations vs Normal</p>
+              <h2>10 / 18</h2>
+              <span>mutations / normal</span>
+            </div>
 
-                <a href="profile.html" class="nav-item">
-                    <i class="fa-solid fa-user"></i>
-                    <span>Profile</span>
-                </a>
+            <div class="mini-donut">
+              <span></span>
+            </div>
+          </article>
 
-            </nav>
+          <!-- QC -->
+          <article class="stat-card">
+            <div class="stat-icon">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
 
-            <!-- Decorative DNA -->
-            <img src="../assets/dna-bg.png" alt="" class="sidebar-dna">
+            <div class="stat-info">
+              <p>QC Pass Rate</p>
+              <h2>92.9%</h2>
+              <span>successful analyses</span>
+            </div>
 
-        </aside>
+            <div class="mini-line">
+              <span></span>
+            </div>
+          </article>
+        </section>
 
+        <!-- ================= CHARTS ================= -->
+        <section class="charts-grid">
+          <!-- ACTIVITY -->
+          <article class="dashboard-card activity-card">
+            <div class="card-header">
+              <div>
+                <h2>Activity — Last 7 Days</h2>
+                <p>Daily breakdown of your analyses</p>
+              </div>
 
-        <!-- ================= MAIN ================= -->
-        <main class="main-content">
+              <div class="chart-legend">
+                <span>
+                  <i class="dot normal"></i>
+                  Normal
+                </span>
 
-            <!-- Fixed DNA Background -->
-            <img src="../assets/dna-bg.png" alt="" class="dashboard-dna">
+                <span>
+                  <i class="dot mutation"></i>
+                  Mutation
+                </span>
 
-            <!-- ================= HEADER ================= -->
-            <header class="dashboard-header">
+                <span>
+                  <i class="dot review"></i>
+                  QC Review
+                </span>
+              </div>
+            </div>
+
+            <div class="chart-container">
+              <canvas id="activityChart"></canvas>
+            </div>
+          </article>
+
+          <!-- GENE DISTRIBUTION -->
+          <article class="dashboard-card gene-card">
+            <div class="card-header">
+              <div>
+                <h2>Gene Distribution</h2>
+                <p>Analyses by gene (all time)</p>
+              </div>
+            </div>
+
+            <div class="gene-content">
+              <div class="donut-container">
+                <canvas id="geneChart"></canvas>
+
+                <div class="donut-center">
+                  <strong>28</strong>
+                  <span>analyses</span>
+                </div>
+              </div>
+
+              <div class="gene-list">
+                <div>
+                  <span>
+                    <i class="gene-dot jak2"></i>
+                    JAK2
+                  </span>
+                  <strong>14</strong>
+                </div>
 
                 <div>
-                    <h1>Hi, Specialist Rawan</h1>
-
-                    <p>
-                        Here's an overview of your sequencing analyses
-                    </p>
+                  <span>
+                    <i class="gene-dot calr"></i>
+                    CALR
+                  </span>
+                  <strong>9</strong>
                 </div>
 
+                <div>
+                  <span>
+                    <i class="gene-dot mpl"></i>
+                    MPL
+                  </span>
+                  <strong>5</strong>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
 
-                <button class="profile-button">
+        <!-- ================= RECENT ACTIVITY ================= -->
+        <section class="dashboard-card recent-card">
+          <div class="recent-header">
+            <div>
+              <h2>Recent Activity</h2>
+              <p>Your latest sequencing analyses</p>
+            </div>
 
-                    <span class="profile-circle">
-                        <i class="fa-solid fa-user"></i>
+            <a href="../AnalysisPage/analysis.html" class="new-analysis-button">
+              <i class="fa-solid fa-plus"></i>
+
+              <span>Start New Analysis</span>
+
+              <span class="button-arrow">→</span>
+            </a>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>File Name</th>
+                  <th>Gene</th>
+                  <th>Target Position</th>
+                  <th>Result</th>
+                  <th>QC Status</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td class="file-name">
+                    <i class="fa-solid fa-file-lines"></i>
+                    JAK2_001.ab1
+                  </td>
+
+                  <td>
+                    <strong>JAK2</strong>
+                  </td>
+
+                  <td>c.1849</td>
+
+                  <td>
+                    <span class="result mutation-result">
+                      <i></i>
+                      Mutation Detected
                     </span>
-
-                    <span>Dr. Rawan</span>
-
-                    <i class="fa-solid fa-chevron-down arrow-small"></i>
-
-                </button>
-
-            </header>
-
-
-            <!-- ================= STAT CARDS ================= -->
-            <section class="stats-grid">
-
-                <!-- TOTAL -->
-                <article class="stat-card">
-
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-file-waveform"></i>
-                    </div>
-
-                    <div class="stat-info">
-                        <p>Total Analyses</p>
-                        <h2>28</h2>
-                        <span>all time</span>
-                    </div>
-
-                    <div class="mini-line">
-                        <span></span>
-                    </div>
-
-                </article>
-
-
-                <!-- MUTATIONS -->
-                <article class="stat-card">
-
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-chart-simple"></i>
-                    </div>
-
-                    <div class="stat-info">
-                        <p>Mutations vs Normal</p>
-                        <h2>10 / 18</h2>
-                        <span>mutations / normal</span>
-                    </div>
-
-                    <div class="mini-donut">
-                        <span></span>
-                    </div>
-
-                </article>
-
-
-                <!-- QC -->
-                <article class="stat-card">
-
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </div>
-
-                    <div class="stat-info">
-                        <p>QC Pass Rate</p>
-                        <h2>92.9%</h2>
-                        <span>successful analyses</span>
-                    </div>
-
-                    <div class="mini-line">
-                        <span></span>
-                    </div>
-
-                </article>
-
-            </section>
-
-
-            <!-- ================= CHARTS ================= -->
-            <section class="charts-grid">
-
-                <!-- ACTIVITY -->
-                <article class="dashboard-card activity-card">
-
-                    <div class="card-header">
-
-                        <div>
-                            <h2>Activity — Last 7 Days</h2>
-                            <p>Daily breakdown of your analyses</p>
-                        </div>
-
-                        <div class="chart-legend">
-
-                            <span>
-                                <i class="dot normal"></i>
-                                Normal
-                            </span>
-
-                            <span>
-                                <i class="dot mutation"></i>
-                                Mutation
-                            </span>
-
-                            <span>
-                                <i class="dot review"></i>
-                                QC Review
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                    <div class="chart-container">
-                        <canvas id="activityChart"></canvas>
-                    </div>
-
-                </article>
-
-
-                <!-- GENE DISTRIBUTION -->
-                <article class="dashboard-card gene-card">
-
-                    <div class="card-header">
-
-                        <div>
-                            <h2>Gene Distribution</h2>
-                            <p>Analyses by gene (all time)</p>
-                        </div>
-
-                    </div>
-
-
-                    <div class="gene-content">
-
-                        <div class="donut-container">
-                            <canvas id="geneChart"></canvas>
-
-                            <div class="donut-center">
-                                <strong>28</strong>
-                                <span>analyses</span>
-                            </div>
-                        </div>
-
-
-                        <div class="gene-list">
-
-                            <div>
-                                <span>
-                                    <i class="gene-dot jak2"></i>
-                                    JAK2
-                                </span>
-                                <strong>14</strong>
-                            </div>
-
-                            <div>
-                                <span>
-                                    <i class="gene-dot calr"></i>
-                                    CALR
-                                </span>
-                                <strong>9</strong>
-                            </div>
-
-                            <div>
-                                <span>
-                                    <i class="gene-dot mpl"></i>
-                                    MPL
-                                </span>
-                                <strong>5</strong>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </article>
-
-            </section>
-
-
-            <!-- ================= RECENT ACTIVITY ================= -->
-            <section class="dashboard-card recent-card">
-
-                <div class="recent-header">
-
-                    <div>
-                        <h2>Recent Activity</h2>
-                        <p>Your latest sequencing analyses</p>
-                    </div>
-
-
-                    <a href="analysis.html" class="new-analysis-button">
-
-                        <i class="fa-solid fa-plus"></i>
-
-                        <span>Start New Analysis</span>
-
-                        <span class="button-arrow">→</span>
-
-                    </a>
-
-                </div>
-
-
-                <div class="table-wrapper">
-
-                    <table>
-
-                        <thead>
-                            <tr>
-                                <th>File Name</th>
-                                <th>Gene</th>
-                                <th>Target Position</th>
-                                <th>Result</th>
-                                <th>QC Status</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-
-
-                        <tbody>
-
-                            <tr>
-                                <td class="file-name">
-                                    <i class="fa-solid fa-file-lines"></i>
-                                    JAK2_001.ab1
-                                </td>
-
-                                <td>
-                                    <strong>JAK2</strong>
-                                </td>
-
-                                <td>c.1849</td>
-
-                                <td>
-                                    <span class="result mutation-result">
-                                        <i></i>
-                                        Mutation Detected
-                                    </span>
-                                </td>
-
-                                <td>
-                                    <span class="qc-badge passed">
-                                        Passed
-                                    </span>
-                                </td>
-
-                                <td>May 7, 2026</td>
-
-                                <td class="actions">
-
-                                    <button title="Report">
-                                        <i class="fa-regular fa-file-lines"></i>
-                                    </button>
-
-                                    <button title="View">
-                                        <i class="fa-regular fa-eye"></i>
-                                    </button>
-
-                                </td>
-                            </tr>
-
-
-                            <tr>
-                                <td class="file-name">
-                                    <i class="fa-solid fa-file-lines"></i>
-                                    CALR_005.ab1
-                                </td>
-
-                                <td>
-                                    <strong>CALR</strong>
-                                </td>
-
-                                <td>c.1144_1145</td>
-
-                                <td>
-                                    <span class="result normal-result">
-                                        <i></i>
-                                        Normal Sequence
-                                    </span>
-                                </td>
-
-                                <td>
-                                    <span class="qc-badge passed">
-                                        Passed
-                                    </span>
-                                </td>
-
-                                <td>May 6, 2026</td>
-
-                                <td class="actions">
-
-                                    <button>
-                                        <i class="fa-regular fa-file-lines"></i>
-                                    </button>
-
-                                    <button>
-                                        <i class="fa-regular fa-eye"></i>
-                                    </button>
-
-                                </td>
-                            </tr>
-
-
-                            <tr>
-                                <td class="file-name">
-                                    <i class="fa-solid fa-file-lines"></i>
-                                    MPL_003.ab1
-                                </td>
-
-                                <td>
-                                    <strong>MPL</strong>
-                                </td>
-
-                                <td>c.1544</td>
-
-                                <td>
-                                    <span class="result review-result">
-                                        <i></i>
-                                        Review Required
-                                    </span>
-                                </td>
-
-                                <td>
-                                    <span class="qc-badge review">
-                                        Review
-                                    </span>
-                                </td>
-
-                                <td>May 5, 2026</td>
-
-                                <td class="actions">
-
-                                    <button>
-                                        <i class="fa-regular fa-file-lines"></i>
-                                    </button>
-
-                                    <button>
-                                        <i class="fa-regular fa-eye"></i>
-                                    </button>
-
-                                </td>
-                            </tr>
-
-
-                            <tr>
-                                <td class="file-name">
-                                    <i class="fa-solid fa-file-lines"></i>
-                                    JAK2_002.ab1
-                                </td>
-
-                                <td>
-                                    <strong>JAK2</strong>
-                                </td>
-
-                                <td>c.1849</td>
-
-                                <td>
-                                    <span class="result normal-result">
-                                        <i></i>
-                                        Normal Sequence
-                                    </span>
-                                </td>
-
-                                <td>
-                                    <span class="qc-badge passed">
-                                        Passed
-                                    </span>
-                                </td>
-
-                                <td>May 4, 2026</td>
-
-                                <td class="actions">
-
-                                    <button>
-                                        <i class="fa-regular fa-file-lines"></i>
-                                    </button>
-
-                                    <button>
-                                        <i class="fa-regular fa-eye"></i>
-                                    </button>
-
-                                </td>
-                            </tr>
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </section>
-
-        </main>
-
+                  </td>
+
+                  <td>
+                    <span class="qc-badge passed"> Passed </span>
+                  </td>
+
+                  <td>May 7, 2026</td>
+
+                  <td class="actions">
+                    <button title="Report">
+                      <i class="fa-regular fa-file-lines"></i>
+                    </button>
+
+                    <button title="View">
+                      <i class="fa-regular fa-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td class="file-name">
+                    <i class="fa-solid fa-file-lines"></i>
+                    CALR_005.ab1
+                  </td>
+
+                  <td>
+                    <strong>CALR</strong>
+                  </td>
+
+                  <td>c.1144_1145</td>
+
+                  <td>
+                    <span class="result normal-result">
+                      <i></i>
+                      Normal Sequence
+                    </span>
+                  </td>
+
+                  <td>
+                    <span class="qc-badge passed"> Passed </span>
+                  </td>
+
+                  <td>May 6, 2026</td>
+
+                  <td class="actions">
+                    <button>
+                      <i class="fa-regular fa-file-lines"></i>
+                    </button>
+
+                    <button>
+                      <i class="fa-regular fa-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td class="file-name">
+                    <i class="fa-solid fa-file-lines"></i>
+                    MPL_003.ab1
+                  </td>
+
+                  <td>
+                    <strong>MPL</strong>
+                  </td>
+
+                  <td>c.1544</td>
+
+                  <td>
+                    <span class="result review-result">
+                      <i></i>
+                      Review Required
+                    </span>
+                  </td>
+
+                  <td>
+                    <span class="qc-badge review"> Review </span>
+                  </td>
+
+                  <td>May 5, 2026</td>
+
+                  <td class="actions">
+                    <button>
+                      <i class="fa-regular fa-file-lines"></i>
+                    </button>
+
+                    <button>
+                      <i class="fa-regular fa-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td class="file-name">
+                    <i class="fa-solid fa-file-lines"></i>
+                    JAK2_002.ab1
+                  </td>
+
+                  <td>
+                    <strong>JAK2</strong>
+                  </td>
+
+                  <td>c.1849</td>
+
+                  <td>
+                    <span class="result normal-result">
+                      <i></i>
+                      Normal Sequence
+                    </span>
+                  </td>
+
+                  <td>
+                    <span class="qc-badge passed"> Passed </span>
+                  </td>
+
+                  <td>May 4, 2026</td>
+
+                  <td class="actions">
+                    <button>
+                      <i class="fa-regular fa-file-lines"></i>
+                    </button>
+
+                    <button>
+                      <i class="fa-regular fa-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
     </div>
 
     <script src="dashboard.js"></script>
-
-</body>
-
+  </body>
 </html>

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GeneGlass | Profile</title>
+    <link rel="stylesheet" href="../DashboardPage/dashboard.css" />
+    <link rel="stylesheet" href="profile.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+    <script src="profile.js" defer></script>
+  </head>
+  <body>
+    <div class="dashboard-page">
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <img
+            class="sidebar-logo"
+            src="../assets/geneglass-logo.png"
+            alt="GeneGlass"
+          />
+        </div>
+        <nav class="sidebar-nav" aria-label="Main navigation">
+          <a class="nav-item" href="../DashboardPage/dashboard.html"
+            ><i class="fa-solid fa-house"></i><span>Dashboard</span></a
+          >
+          <a class="nav-item" href="../AnalysisPage/analysis.html"
+            ><i class="fa-solid fa-dna"></i><span>New Analysis</span></a
+          >
+          <a class="nav-item" href="../HistoryPage/history.html"
+            ><i class="fa-solid fa-clock-rotate-left"></i
+            ><span>History</span></a
+          >
+          <a class="nav-item active" href="profile.html" aria-current="page"
+            ><i class="fa-solid fa-user"></i><span>Profile</span></a
+          >
+        </nav>
+        <img
+          class="sidebar-dna"
+          src="../assets/dna-bg.png"
+          alt=""
+          aria-hidden="true"
+        />
+      </aside>
+      <main class="main-content profile-main">
+        <img
+          class="dashboard-dna"
+          src="../assets/dna-bg.png"
+          alt=""
+          aria-hidden="true"
+        />
+        <header class="profile-heading">
+          <div>
+            <h1>My Profile</h1>
+            <p>Manage your specialist information and account preferences.</p>
+          </div>
+        </header>
+        <section
+          class="profile-card identity-card"
+          aria-label="Specialist overview"
+        >
+          <div class="avatar"><i class="fa-solid fa-user-doctor"></i></div>
+          <div class="identity">
+            <h2 id="displayName">Dr. Rawan</h2>
+            <p>Laboratory Specialist</p>
+            <span class="profile-chip"
+              ><i class="fa-solid fa-flask"></i> GeneGlass Specialist</span
+            >
+          </div>
+        </section>
+        <div class="profile-grid">
+          <section class="profile-card details-card">
+            <div class="section-head">
+              <div>
+                <h2>Personal Information</h2>
+                <p>Basic details associated with your account</p>
+              </div>
+              <button type="button" id="editBtn" class="outline-btn">
+                <i class="fa-solid fa-pen"></i> Edit Profile
+              </button>
+            </div>
+            <form id="profileForm" novalidate>
+              <div class="fields-grid">
+                <label
+                  >Full Name<input
+                    id="fullName"
+                    type="text"
+                    value="Dr. Rawan"
+                    maxlength="80"
+                    disabled
+                    required
+                /></label>
+                <label
+                  >Email Address<input
+                    id="email"
+                    type="email"
+                    placeholder="Not provided"
+                    maxlength="120"
+                    disabled
+                /></label>
+                <label
+                  >Role<input value="Laboratory Specialist" disabled
+                /></label>
+                <label
+                  >Department<input
+                    id="department"
+                    type="text"
+                    value="Genetics Laboratory"
+                    maxlength="100"
+                    disabled
+                /></label>
+              </div>
+              <div id="editActions" class="edit-actions" hidden>
+                <button type="submit" class="primary-btn">Save Changes</button
+                ><button type="button" id="cancelBtn" class="outline-btn">
+                  Cancel
+                </button>
+              </div>
+              <p id="profileMessage" class="form-message" role="status"></p>
+            </form>
+          </section>
+          <section class="profile-card stats-card">
+            <div class="section-head">
+              <div>
+                <h2>My Analysis Statistics</h2>
+                <p>Overview of your saved analyses</p>
+              </div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-icon">
+                <i class="fa-solid fa-file-waveform"></i>
+              </div>
+              <div>
+                <span>Total Analyses</span><strong id="totalCount">—</strong>
+              </div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-icon">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+              <div>
+                <span>Completed Analyses</span
+                ><strong id="completedCount">—</strong>
+              </div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-icon">
+                <i class="fa-solid fa-magnifying-glass-chart"></i>
+              </div>
+              <div>
+                <span>Needs Review</span><strong id="reviewCount">—</strong>
+              </div>
+            </div>
+            <p class="muted-note">
+              Statistics will appear after connecting the backend.
+            </p>
+          </section>
+        </div>
+        <section class="profile-card account-card">
+          <div>
+            <h2>Account</h2>
+            <p>
+              Account access and session controls will be available after
+              authentication is connected.
+            </p>
+          </div>
+          <button id="logoutBtn" class="outline-btn" type="button">
+            <i class="fa-solid fa-right-from-bracket"></i> Back to Login
+          </button>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GeneGlass | New Analysis</title>
+    <link rel="stylesheet" href="analysis.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+    <script src="analysis.js" defer></script>
+  </head>
+
+  <body>
+    <div class="dashboard-page">
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <img
+            class="sidebar-logo"
+            src="../assets/geneglass-logo.png"
+            alt="GeneGlass"
+          />
+        </div>
+        <nav class="sidebar-nav" aria-label="Main navigation">
+          <a class="nav-item" href="../DashboardPage/dashboard.html"
+            ><i class="fa-solid fa-house"></i><span>Dashboard</span></a
+          >
+          <a class="nav-item active" href="analysis.html" aria-current="page"
+            ><i class="fa-solid fa-dna"></i><span>New Analysis</span></a
+          >
+          <a class="nav-item" href="../HistoryPage/history.html"
+            ><i class="fa-solid fa-clock-rotate-left"></i
+            ><span>History</span></a
+          >
+          <a href="../ProfilePage/profile.html" class="nav-item">
+    <i class="fa-solid fa-user"></i>
+    <span>Profile</span>
+</a>
+        </nav>
+        <img
+          class="sidebar-dna"
+          src="../assets/dna-bg.png"
+          alt=""
+          aria-hidden="true"
+        />
+      </aside>
+      <main class="main-content">
+        <img
+          class="dashboard-dna"
+          src="../assets/dna-bg.png"
+          alt=""
+          aria-hidden="true"
+        />
+        <header class="dashboard-header analysis-header">
+          <div>
+            <h1>New Analysis</h1>
+            <p>Upload a Sanger sequencing file to begin your review.</p>
+          </div>
+          <span class="gene-tag">JAK2 V617F</span>
+        </header>
+        <section
+          class="dashboard-card upload-card"
+          aria-labelledby="upload-title"
+        >
+          <h2 id="upload-title">
+            <i class="fa-solid fa-file-arrow-up"></i>Upload AB1 File
+          </h2>
+          <p class="hint">
+            Select an original .ab1 file. The original signal will be preserved.
+          </p>
+          <label class="drop" for="ab1"
+            ><i class="fa-solid fa-cloud-arrow-up"></i
+            ><strong>Choose an AB1 file</strong
+            ><span>Only .ab1 files are accepted</span></label
+          >
+          <input id="ab1" type="file" accept=".ab1" hidden />
+          <div class="file-info" id="fileInfo" role="status">
+            No file selected
+          </div>
+          <div class="field">
+            <label for="gene">Target gene</label
+            ><select id="gene">
+              <option value="JAK2">JAK2 — V617F (c.1849G&gt;T)</option>
+            </select>
+          </div>
+          <div class="analysis-actions">
+            <button id="analyze" type="button" disabled>
+              Start Analysis <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+          <p id="message" class="message" role="status"></p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

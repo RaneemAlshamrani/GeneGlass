@@ -1,246 +1,140 @@
 /* =========================================================
-   ACTIVITY — LAST 7 DAYS
+   Activity — Sunday to Thursday
 ========================================================= */
 
-const activityCanvas =
-    document.getElementById("activityChart");
+const activityCanvas = document.getElementById("activityChart");
 
-const activityChart =
-    new Chart(activityCanvas, {
+const activityChart = new Chart(activityCanvas, {
+  type: "bar",
 
-        type: "bar",
+  data: {
+    labels: ["Sun", "Mon", "Tue", "Wed", "Thu"],
 
-        data: {
+    datasets: [
+      {
+        label: "Normal",
+        data: [1, 3, 1, 3, 1],
+        backgroundColor: "#10b59b",
+        borderRadius: 5,
+        borderSkipped: false,
+      },
+      {
+        label: "Mutation",
+        data: [1, 2, 1, 2, 1],
+        backgroundColor: "#ed3f46",
+        borderRadius: 5,
+        borderSkipped: false,
+      },
+      {
+        label: "QC Review",
+        data: [1, 0.5, 1, 0.5, 1],
+        backgroundColor: "#f3a316",
+        borderRadius: 5,
+        borderSkipped: false,
+      },
+    ],
+  },
 
-            labels: [
-                "Mon",
-                "Tue",
-                "Wed",
-                "Thu",
-                "Fri",
-                "Sat",
-                "Sun"
-            ],
+  options: {
+    responsive: true,
 
-            datasets: [
+    maintainAspectRatio: false,
 
-                {
-                    label: "Normal",
+    plugins: {
+      legend: {
+        display: false,
+      },
 
-                    data: [
-                        1,
-                        3,
-                        1,
-                        3,
-                        1,
-                        1,
-                        1
-                    ],
+      tooltip: {
+        displayColors: true,
+      },
+    },
 
-                    backgroundColor:
-                        "#10b59b",
+    scales: {
+      x: {
+        stacked: true,
 
-                    borderRadius: 5,
-
-                    borderSkipped: false
-                },
-
-                {
-                    label: "Mutation",
-
-                    data: [
-                        1,
-                        2,
-                        1,
-                        2,
-                        1,
-                        0,
-                        1
-                    ],
-
-                    backgroundColor:
-                        "#ed3f46",
-
-                    borderRadius: 5,
-
-                    borderSkipped: false
-                },
-
-                {
-                    label: "QC Review",
-
-                    data: [
-                        1,
-                        0.5,
-                        1,
-                        0.5,
-                        1,
-                        0,
-                        1
-                    ],
-
-                    backgroundColor:
-                        "#f3a316",
-
-                    borderRadius: 5,
-
-                    borderSkipped: false
-                }
-
-            ]
-
+        grid: {
+          display: false,
         },
 
+        border: {
+          display: false,
+        },
 
-        options: {
+        ticks: {
+          color: "#789095",
+          font: {
+            size: 11,
+          },
+        },
+      },
 
-            responsive: true,
+      y: {
+        stacked: true,
 
-            maintainAspectRatio: false,
+        beginAtZero: true,
 
+        suggestedMax: 6,
 
-            plugins: {
+        ticks: {
+          stepSize: 2,
 
-                legend: {
-                    display: false
-                },
+          color: "#789095",
 
-                tooltip: {
-                    displayColors: true
-                }
+          font: {
+            size: 10,
+          },
+        },
 
-            },
+        grid: {
+          color: "rgba(88, 124, 128, 0.10)",
+        },
 
-
-            scales: {
-
-                x: {
-
-                    stacked: true,
-
-                    grid: {
-                        display: false
-                    },
-
-                    border: {
-                        display: false
-                    },
-
-                    ticks: {
-                        color: "#789095",
-                        font: {
-                            size: 11
-                        }
-                    }
-
-                },
-
-
-                y: {
-
-                    stacked: true,
-
-                    beginAtZero: true,
-
-                    suggestedMax: 6,
-
-                    ticks: {
-
-                        stepSize: 2,
-
-                        color: "#789095",
-
-                        font: {
-                            size: 10
-                        }
-
-                    },
-
-                    grid: {
-
-                        color:
-                            "rgba(88, 124, 128, 0.10)"
-
-                    },
-
-                    border: {
-                        display: false
-                    }
-
-                }
-
-            }
-
-        }
-
-    });
-
-
+        border: {
+          display: false,
+        },
+      },
+    },
+  },
+});
 
 /* =========================================================
    GENE DISTRIBUTION
 ========================================================= */
 
-const geneCanvas =
-    document.getElementById("geneChart");
+const geneCanvas = document.getElementById("geneChart");
 
+const geneChart = new Chart(geneCanvas, {
+  type: "doughnut",
 
-const geneChart =
-    new Chart(geneCanvas, {
+  data: {
+    labels: ["JAK2", "CALR", "MPL"],
 
-        type: "doughnut",
+    datasets: [
+      {
+        data: [14, 9, 5],
 
-        data: {
+        backgroundColor: ["#056d70", "#0ca9a2", "#79d8d4"],
 
-            labels: [
-                "JAK2",
-                "CALR",
-                "MPL"
-            ],
+        borderWidth: 0,
 
-            datasets: [
+        hoverOffset: 3,
+      },
+    ],
+  },
 
-                {
+  options: {
+    responsive: true,
 
-                    data: [
-                        14,
-                        9,
-                        5
-                    ],
+    maintainAspectRatio: false,
 
-                    backgroundColor: [
-                        "#056d70",
-                        "#0ca9a2",
-                        "#79d8d4"
-                    ],
+    cutout: "70%",
 
-                    borderWidth: 0,
-
-                    hoverOffset: 3
-
-                }
-
-            ]
-
-        },
-
-
-        options: {
-
-            responsive: true,
-
-            maintainAspectRatio: false,
-
-            cutout: "70%",
-
-            plugins: {
-
-                legend: {
-                    display: false
-                }
-
-            }
-
-        }
-
-    });
+    plugins: {
+      legend: {
+        display: false,
+      },
+    },
+  },
+});

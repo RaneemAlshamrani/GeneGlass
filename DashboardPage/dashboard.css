@@ -3,142 +3,127 @@
 ========================================================= */
 
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 html,
 body {
-    width: 100%;
-    min-height: 100%;
+  width: 100%;
+  min-height: 100%;
 }
 
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    color: #102f34;
-    background: #f6fbfb;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #102f34;
+  background: #f6fbfb;
 }
-
 
 /* =========================================================
    PAGE
 ========================================================= */
 
 .dashboard-page {
-    min-height: 100vh;
-    display: flex;
+  min-height: 100vh;
+  display: flex;
 }
-
 
 /* =========================================================
    SIDEBAR
 ========================================================= */
 
 .sidebar {
-    position: fixed;
-    left: 0;
-    top: 0;
+  position: fixed;
+  left: 0;
+  top: 0;
 
-    width: 245px;
-    height: 100vh;
+  width: 245px;
+  height: 100vh;
 
-    background:
-        linear-gradient(
-            180deg,
-            #046e71 0%,
-            #035d62 45%,
-            #024d54 100%
-        );
+  background: linear-gradient(180deg, #046e71 0%, #035d62 45%, #024d54 100%);
 
-    overflow: hidden;
-    z-index: 100;
+  overflow: hidden;
+  z-index: 100;
 }
-
 
 /* Logo */
 
 .sidebar-brand {
-    height: 135px;
+  height: 135px;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-    padding: 20px;
+  padding: 20px;
 }
 
 .sidebar-logo {
-    width: 165px;
-    max-height: 100px;
+  width: 165px;
+  max-height: 100px;
 
-    object-fit: contain;
+  object-fit: contain;
 }
-
 
 /* =========================================================
    SIDEBAR NAVIGATION
 ========================================================= */
 
 .sidebar-nav {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
-    padding: 15px 14px;
-    gap: 9px;
+  padding: 15px 14px;
+  gap: 9px;
 }
 
 .nav-item {
-    position: relative;
+  position: relative;
 
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 
-    gap: 15px;
+  gap: 15px;
 
-    min-height: 54px;
+  min-height: 54px;
 
-    padding: 0 20px;
+  padding: 0 20px;
 
-    border-radius: 16px;
+  border-radius: 16px;
 
-    color: rgba(255, 255, 255, 0.76);
+  color: rgba(255, 255, 255, 0.76);
 
-    text-decoration: none;
+  text-decoration: none;
 
-    font-size: 15px;
-    font-weight: 500;
+  font-size: 15px;
+  font-weight: 500;
 
-    transition: 0.25s ease;
+  transition: 0.25s ease;
 }
 
 .nav-item i {
-    width: 20px;
-    text-align: center;
+  width: 20px;
+  text-align: center;
 }
 
 .nav-item:hover {
-    color: white;
+  color: white;
 
-    background:
-        rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .nav-item.active {
-    color: white;
+  color: white;
 
-    background:
-        linear-gradient(
-            90deg,
-            rgba(12, 168, 166, 0.75),
-            rgba(12, 168, 166, 0.42)
-        );
+  background: linear-gradient(
+    90deg,
+    rgba(12, 168, 166, 0.75),
+    rgba(12, 168, 166, 0.42)
+  );
 
-    box-shadow:
-        0 10px 25px
-        rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
 }
-
 
 /* =========================================================
    SIDEBAR DNA
@@ -149,63 +134,61 @@ body {
 ========================================================= */
 
 .sidebar-dna {
-    position: absolute;
+  position: absolute;
 
-    /* نخليه كبير مثل التصميم المبدئي */
-    width: 430px;
-    height: auto;
+  /* نخليه كبير مثل التصميم المبدئي */
+  width: 430px;
+  height: auto;
 
-    /* نخلي جزء كبير منه خارج الـ sidebar
+  /* نخلي جزء كبير منه خارج الـ sidebar
        عشان يظهر كعنصر مقصوص من الزاوية */
-    left: -145px;
-    bottom: -105px;
+  left: -145px;
+  bottom: -105px;
 
-    object-fit: contain;
+  object-fit: contain;
 
-    opacity: 0.42;
+  opacity: 0.42;
 
-    pointer-events: none;
+  pointer-events: none;
 
-    z-index: 0;
+  z-index: 0;
 
-    /* نفس الميلان الناعم */
-    transform: rotate(-12deg);
+  /* نفس الميلان الناعم */
+  transform: rotate(-12deg);
 
-    /* مهم: بدون حركة */
-    animation: none;
+  /* مهم: بدون حركة */
+  animation: none;
 }
-
 
 /* =========================================================
    MAIN
 ========================================================= */
 
 .main-content {
-    position: relative;
+  position: relative;
 
-    margin-left: 245px;
+  margin-left: 245px;
 
-    width: calc(100% - 245px);
-    min-height: 100vh;
+  width: calc(100% - 245px);
+  min-height: 100vh;
 
-    padding: 38px 45px 45px;
+  padding: 38px 45px 45px;
 
-    overflow: hidden;
+  overflow: hidden;
 
-    background:
-        radial-gradient(
-            circle at 78% 5%,
-            rgba(47, 211, 211, 0.16),
-            transparent 26%
-        ),
-        radial-gradient(
-            circle at 50% 85%,
-            rgba(55, 200, 201, 0.08),
-            transparent 30%
-        ),
-        #f8fcfc;
+  background:
+    radial-gradient(
+      circle at 78% 5%,
+      rgba(47, 211, 211, 0.16),
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at 50% 85%,
+      rgba(55, 200, 201, 0.08),
+      transparent 30%
+    ),
+    #f8fcfc;
 }
-
 
 /* =========================================================
    DASHBOARD DNA BACKGROUND
@@ -214,24 +197,23 @@ body {
 ========================================================= */
 
 .dashboard-dna {
-    position: absolute;
+  position: absolute;
 
-    width: 630px;
+  width: 630px;
 
-    right: -150px;
-    top: -190px;
+  right: -150px;
+  top: -190px;
 
-    opacity: 0.12;
+  opacity: 0.12;
 
-    pointer-events: none;
+  pointer-events: none;
 
-    z-index: 0;
+  z-index: 0;
 
-    /* مهم:
+  /* مهم:
        مافي animation نهائياً
     */
 }
-
 
 /* Make dashboard content above DNA */
 
@@ -239,268 +221,237 @@ body {
 .stats-grid,
 .charts-grid,
 .recent-card {
-    position: relative;
-    z-index: 2;
+  position: relative;
+  z-index: 2;
 }
-
 
 /* =========================================================
    HEADER
 ========================================================= */
 
 .dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 
-    margin-bottom: 30px;
+  margin-bottom: 30px;
 }
 
 .dashboard-header h1 {
-    font-size: 31px;
-    font-weight: 750;
+  font-size: 31px;
+  font-weight: 750;
 
-    color: #092f34;
+  color: #092f34;
 
-    margin-bottom: 6px;
+  margin-bottom: 6px;
 }
 
 .dashboard-header p {
-    font-size: 15px;
-    color: #71858a;
+  font-size: 15px;
+  color: #71858a;
 }
-
 
 /* PROFILE BUTTON */
 
 .profile-button {
-    border: 1px solid rgba(12, 139, 139, 0.08);
+  border: 1px solid rgba(12, 139, 139, 0.08);
 
-    background:
-        rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.72);
 
-    border-radius: 30px;
+  border-radius: 30px;
 
-    min-height: 48px;
+  min-height: 48px;
 
-    padding: 6px 16px 6px 7px;
+  padding: 6px 16px 6px 7px;
 
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 
-    gap: 9px;
+  gap: 9px;
 
-    color: #315d62;
+  color: #315d62;
 
-    font-size: 14px;
-    font-weight: 600;
+  font-size: 14px;
+  font-weight: 600;
 
-    cursor: pointer;
+  cursor: pointer;
 
-    box-shadow:
-        0 10px 35px
-        rgba(29, 104, 107, 0.07);
+  box-shadow: 0 10px 35px rgba(29, 104, 107, 0.07);
 }
 
 .profile-circle {
-    width: 35px;
-    height: 35px;
+  width: 35px;
+  height: 35px;
 
-    border-radius: 50%;
+  border-radius: 50%;
 
-    background: #ddf5f4;
+  background: #ddf5f4;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-    color: #087d80;
+  color: #087d80;
 }
 
 .arrow-small {
-    font-size: 10px;
-    margin-left: 3px;
+  font-size: 10px;
+  margin-left: 3px;
 }
-
 
 /* =========================================================
    STAT CARDS
 ========================================================= */
 
 .stats-grid {
-    display: grid;
+  display: grid;
 
-    grid-template-columns:
-        repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 
-    gap: 18px;
+  gap: 18px;
 
-    margin-bottom: 18px;
+  margin-bottom: 18px;
 }
 
 .stat-card {
-    position: relative;
+  position: relative;
 
-    min-height: 132px;
+  min-height: 132px;
 
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 
-    gap: 18px;
+  gap: 18px;
 
-    padding: 22px;
+  padding: 22px;
 
-    border-radius: 22px;
+  border-radius: 22px;
 
-    background:
-        rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.82);
 
-    border:
-        1px solid
-        rgba(23, 126, 129, 0.09);
+  border: 1px solid rgba(23, 126, 129, 0.09);
 
-    box-shadow:
-        0 12px 35px
-        rgba(35, 105, 107, 0.07);
+  box-shadow: 0 12px 35px rgba(35, 105, 107, 0.07);
 
-    backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
 }
 
 .stat-icon {
-    width: 55px;
-    height: 55px;
+  width: 55px;
+  height: 55px;
 
-    flex-shrink: 0;
+  flex-shrink: 0;
 
-    border-radius: 50%;
+  border-radius: 50%;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-    font-size: 22px;
+  font-size: 22px;
 
-    color: #078c8d;
+  color: #078c8d;
 
-    background:
-        linear-gradient(
-            145deg,
-            #e2f7f6,
-            #d5f1f0
-        );
+  background: linear-gradient(145deg, #e2f7f6, #d5f1f0);
 }
 
 .stat-info {
-    flex: 1;
+  flex: 1;
 }
 
 .stat-info p {
-    font-size: 14px;
-    color: #455f64;
+  font-size: 14px;
+  color: #455f64;
 
-    margin-bottom: 5px;
+  margin-bottom: 5px;
 }
 
 .stat-info h2 {
-    font-size: 27px;
-    color: #075e62;
+  font-size: 27px;
+  color: #075e62;
 
-    margin-bottom: 3px;
+  margin-bottom: 3px;
 }
 
 .stat-info span {
-    color: #829398;
-    font-size: 12px;
+  color: #829398;
+  font-size: 12px;
 }
-
 
 /* MINI DECORATION */
 
 .mini-line {
-    width: 65px;
-    height: 45px;
+  width: 65px;
+  height: 45px;
 
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .mini-line span {
-    display: block;
+  display: block;
 
-    width: 100%;
-    height: 25px;
+  width: 100%;
+  height: 25px;
 
-    border-top:
-        2px solid #12a6a5;
+  border-top: 2px solid #12a6a5;
 
-    border-radius: 50%;
+  border-radius: 50%;
 }
 
 .mini-donut {
-    width: 50px;
-    height: 50px;
+  width: 50px;
+  height: 50px;
 
-    border-radius: 50%;
+  border-radius: 50%;
 
-    background:
-        conic-gradient(
-            #0aa999 0 65%,
-            #ed4148 65% 100%
-        );
+  background: conic-gradient(#0aa999 0 65%, #ed4148 65% 100%);
 
-    position: relative;
+  position: relative;
 }
 
 .mini-donut::after {
-    content: "";
+  content: "";
 
-    position: absolute;
-    inset: 9px;
+  position: absolute;
+  inset: 9px;
 
-    background: white;
+  background: white;
 
-    border-radius: 50%;
+  border-radius: 50%;
 }
-
 
 /* =========================================================
    CHARTS
 ========================================================= */
 
 .charts-grid {
-    display: grid;
+  display: grid;
 
-    grid-template-columns:
-        minmax(0, 2.1fr)
-        minmax(290px, 1fr);
+  grid-template-columns:
+    minmax(0, 2.1fr)
+    minmax(290px, 1fr);
 
-    gap: 18px;
+  gap: 18px;
 
-    margin-bottom: 18px;
+  margin-bottom: 18px;
 }
-
 
 /* =========================================================
    GENERAL DASHBOARD CARD
 ========================================================= */
 
 .dashboard-card {
-    border-radius: 22px;
+  border-radius: 22px;
 
-    background:
-        rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.84);
 
-    border:
-        1px solid
-        rgba(23, 126, 129, 0.09);
+  border: 1px solid rgba(23, 126, 129, 0.09);
 
-    box-shadow:
-        0 12px 35px
-        rgba(35, 105, 107, 0.07);
+  box-shadow: 0 12px 35px rgba(35, 105, 107, 0.07);
 
-    backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
 }
-
 
 /* =========================================================
    CHART HEADER
@@ -508,484 +459,454 @@ body {
 
 .activity-card,
 .gene-card {
-    min-height: 285px;
+  min-height: 285px;
 
-    padding: 23px 25px;
+  padding: 23px 25px;
 }
 
 .card-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
 
-    gap: 15px;
+  gap: 15px;
 
-    margin-bottom: 15px;
+  margin-bottom: 15px;
 }
 
 .card-header h2 {
-    font-size: 18px;
-    color: #12363b;
+  font-size: 18px;
+  color: #12363b;
 
-    margin-bottom: 4px;
+  margin-bottom: 4px;
 }
 
 .card-header p {
-    color: #819095;
-    font-size: 12px;
+  color: #819095;
+  font-size: 12px;
 }
-
 
 /* LEGEND */
 
 .chart-legend {
-    display: flex;
+  display: flex;
 
-    gap: 17px;
+  gap: 17px;
 
-    font-size: 11px;
-    color: #687d82;
+  font-size: 11px;
+  color: #687d82;
 }
 
 .chart-legend span {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .dot,
 .gene-dot {
-    display: inline-block;
+  display: inline-block;
 
-    width: 9px;
-    height: 9px;
+  width: 9px;
+  height: 9px;
 
-    border-radius: 50%;
+  border-radius: 50%;
 }
 
 .normal {
-    background: #10b59b;
+  background: #10b59b;
 }
 
 .mutation {
-    background: #ed3f46;
+  background: #ed3f46;
 }
 
 .review {
-    background: #f3a316;
+  background: #f3a316;
 }
-
 
 /* =========================================================
    ACTIVITY CHART
 ========================================================= */
 
 .chart-container {
-    position: relative;
+  position: relative;
 
-    height: 195px;
+  height: 195px;
 }
-
 
 /* =========================================================
    GENE DISTRIBUTION
 ========================================================= */
 
 .gene-content {
-    display: flex;
+  display: flex;
 
-    align-items: center;
-    justify-content: center;
+  align-items: center;
+  justify-content: center;
 
-    gap: 28px;
+  gap: 28px;
 
-    height: 190px;
+  height: 190px;
 }
 
 .donut-container {
-    position: relative;
+  position: relative;
 
-    width: 150px;
-    height: 150px;
+  width: 150px;
+  height: 150px;
 }
 
 .donut-center {
-    position: absolute;
+  position: absolute;
 
-    inset: 0;
+  inset: 0;
 
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
-    align-items: center;
-    justify-content: center;
+  align-items: center;
+  justify-content: center;
 
-    pointer-events: none;
+  pointer-events: none;
 }
 
 .donut-center strong {
-    font-size: 21px;
-    color: #123b40;
+  font-size: 21px;
+  color: #123b40;
 }
 
 .donut-center span {
-    font-size: 11px;
-    color: #839599;
+  font-size: 11px;
+  color: #839599;
 }
-
 
 /* GENE LIST */
 
 .gene-list {
-    width: 115px;
+  width: 115px;
 }
 
 .gene-list > div {
-    display: flex;
+  display: flex;
 
-    justify-content: space-between;
-    align-items: center;
+  justify-content: space-between;
+  align-items: center;
 
-    margin-bottom: 19px;
+  margin-bottom: 19px;
 
-    color: #38575c;
-    font-size: 13px;
+  color: #38575c;
+  font-size: 13px;
 }
 
 .gene-list span {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 
-    gap: 8px;
+  gap: 8px;
 }
 
 .jak2 {
-    background: #056d70;
+  background: #056d70;
 }
 
 .calr {
-    background: #0ca9a2;
+  background: #0ca9a2;
 }
 
 .mpl {
-    background: #79d8d4;
+  background: #79d8d4;
 }
-
 
 /* =========================================================
    RECENT ACTIVITY
 ========================================================= */
 
 .recent-card {
-    padding: 23px 25px 18px;
+  padding: 23px 25px 18px;
 }
 
 .recent-header {
-    display: flex;
+  display: flex;
 
-    align-items: center;
-    justify-content: space-between;
+  align-items: center;
+  justify-content: space-between;
 
-    margin-bottom: 17px;
+  margin-bottom: 17px;
 }
 
 .recent-header h2 {
-    font-size: 18px;
-    color: #12363b;
+  font-size: 18px;
+  color: #12363b;
 
-    margin-bottom: 4px;
+  margin-bottom: 4px;
 }
 
 .recent-header p {
-    font-size: 12px;
-    color: #829398;
+  font-size: 12px;
+  color: #829398;
 }
-
 
 /* BUTTON */
 
 .new-analysis-button {
-    min-height: 43px;
+  min-height: 43px;
 
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 
-    gap: 10px;
+  gap: 10px;
 
-    padding: 0 18px;
+  padding: 0 18px;
 
-    border-radius: 12px;
+  border-radius: 12px;
 
-    color: white;
+  color: white;
 
-    text-decoration: none;
+  text-decoration: none;
 
-    font-size: 13px;
-    font-weight: 600;
+  font-size: 13px;
+  font-weight: 600;
 
-    background:
-        linear-gradient(
-            90deg,
-            #087f81,
-            #0da5a5
-        );
+  background: linear-gradient(90deg, #087f81, #0da5a5);
 
-    box-shadow:
-        0 10px 24px
-        rgba(9, 142, 143, 0.17);
+  box-shadow: 0 10px 24px rgba(9, 142, 143, 0.17);
 
-    transition: 0.2s ease;
+  transition: 0.2s ease;
 }
 
 .new-analysis-button:hover {
-    transform: translateY(-2px);
+  transform: translateY(-2px);
 }
 
 .button-arrow {
-    font-size: 19px;
-    margin-left: 5px;
+  font-size: 19px;
+  margin-left: 5px;
 }
-
 
 /* =========================================================
    TABLE
 ========================================================= */
 
 .table-wrapper {
-    width: 100%;
-    overflow-x: auto;
+  width: 100%;
+  overflow-x: auto;
 }
 
 table {
-    width: 100%;
+  width: 100%;
 
-    border-collapse: collapse;
+  border-collapse: collapse;
 
-    font-size: 12px;
+  font-size: 12px;
 }
 
 thead {
-    background:
-        rgba(235, 243, 244, 0.7);
+  background: rgba(235, 243, 244, 0.7);
 }
 
 th {
-    padding: 12px 13px;
+  padding: 12px 13px;
 
-    text-align: left;
+  text-align: left;
 
-    color: #61777c;
+  color: #61777c;
 
-    font-weight: 600;
+  font-weight: 600;
 }
 
 td {
-    padding: 13px;
+  padding: 13px;
 
-    color: #355359;
+  color: #355359;
 
-    border-bottom:
-        1px solid
-        rgba(91, 129, 133, 0.10);
+  border-bottom: 1px solid rgba(91, 129, 133, 0.1);
 }
 
 tbody tr:last-child td {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 tbody tr {
-    transition: background 0.2s ease;
+  transition: background 0.2s ease;
 }
 
 tbody tr:hover {
-    background:
-        rgba(224, 248, 247, 0.30);
+  background: rgba(224, 248, 247, 0.3);
 }
-
 
 /* FILE */
 
 .file-name {
-    color: #173f44;
+  color: #173f44;
 }
 
 .file-name i {
-    margin-right: 8px;
-    color: #698a90;
+  margin-right: 8px;
+  color: #698a90;
 }
-
 
 /* =========================================================
    RESULTS
 ========================================================= */
 
 .result {
-    display: inline-flex;
+  display: inline-flex;
 
-    align-items: center;
+  align-items: center;
 
-    gap: 7px;
+  gap: 7px;
 
-    font-weight: 500;
+  font-weight: 500;
 }
 
 .result i {
-    width: 8px;
-    height: 8px;
+  width: 8px;
+  height: 8px;
 
-    border-radius: 50%;
+  border-radius: 50%;
 }
 
 .mutation-result {
-    color: #e5383f;
+  color: #e5383f;
 }
 
 .mutation-result i {
-    background: #e5383f;
+  background: #e5383f;
 }
 
 .normal-result {
-    color: #0aa98e;
+  color: #0aa98e;
 }
 
 .normal-result i {
-    background: #0aa98e;
+  background: #0aa98e;
 }
 
 .review-result {
-    color: #e99b0d;
+  color: #e99b0d;
 }
 
 .review-result i {
-    background: #f0a315;
+  background: #f0a315;
 }
-
 
 /* =========================================================
    QC BADGES
 ========================================================= */
 
 .qc-badge {
-    display: inline-flex;
+  display: inline-flex;
 
-    align-items: center;
-    justify-content: center;
+  align-items: center;
+  justify-content: center;
 
-    padding: 5px 11px;
+  padding: 5px 11px;
 
-    border-radius: 20px;
+  border-radius: 20px;
 
-    font-size: 11px;
-    font-weight: 500;
+  font-size: 11px;
+  font-weight: 500;
 }
 
 .qc-badge.passed {
-    color: #078b7d;
-    background: #ddf5f1;
+  color: #078b7d;
+  background: #ddf5f1;
 }
 
 .qc-badge.review {
-    color: #d58b00;
-    background: #fff0c8;
+  color: #d58b00;
+  background: #fff0c8;
 }
-
 
 /* =========================================================
    ACTIONS
 ========================================================= */
 
 .actions {
-    white-space: nowrap;
+  white-space: nowrap;
 }
 
 .actions button {
-    width: 32px;
-    height: 32px;
+  width: 32px;
+  height: 32px;
 
-    margin-right: 5px;
+  margin-right: 5px;
 
-    border:
-        1px solid
-        rgba(60, 108, 113, 0.09);
+  border: 1px solid rgba(60, 108, 113, 0.09);
 
-    border-radius: 8px;
+  border-radius: 8px;
 
-    background: #f5f9f9;
+  background: #f5f9f9;
 
-    color: #66868b;
+  color: #66868b;
 
-    cursor: pointer;
+  cursor: pointer;
 
-    transition: 0.2s ease;
+  transition: 0.2s ease;
 }
 
 .actions button:hover {
-    color: #07888a;
-    background: #e7f6f5;
+  color: #07888a;
+  background: #e7f6f5;
 }
-
 
 /* =========================================================
    RESPONSIVE
 ========================================================= */
 
 @media (max-width: 1100px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
 
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .charts-grid {
-        grid-template-columns: 1fr;
-    }
-
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-
 @media (max-width: 800px) {
+  .sidebar {
+    width: 78px;
+  }
 
-    .sidebar {
-        width: 78px;
-    }
+  .sidebar-logo {
+    width: 55px;
+  }
 
-    .sidebar-logo {
-        width: 55px;
-    }
+  .nav-item {
+    justify-content: center;
+    padding: 0;
+  }
 
-    .nav-item {
-        justify-content: center;
-        padding: 0;
-    }
+  .nav-item span {
+    display: none;
+  }
 
-    .nav-item span {
-        display: none;
-    }
+  .sidebar-dna {
+    display: none;
+  }
 
-    .sidebar-dna {
-        display: none;
-    }
+  .main-content {
+    margin-left: 78px;
+    width: calc(100% - 78px);
 
-    .main-content {
-        margin-left: 78px;
-        width: calc(100% - 78px);
+    padding: 25px 20px;
+  }
 
-        padding: 25px 20px;
-    }
+  .dashboard-header h1 {
+    font-size: 24px;
+  }
 
-    .dashboard-header h1 {
-        font-size: 24px;
-    }
+  .profile-button > span:not(.profile-circle),
+  .profile-button .arrow-small {
+    display: none;
+  }
 
-    .profile-button > span:not(.profile-circle),
-    .profile-button .arrow-small {
-        display: none;
-    }
+  .recent-header {
+    align-items: flex-start;
+    gap: 15px;
 
-    .recent-header {
-        align-items: flex-start;
-        gap: 15px;
-
-        flex-direction: column;
-    }
-
+    flex-direction: column;
+  }
 }
