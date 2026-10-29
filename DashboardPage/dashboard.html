@@ -16,6 +16,8 @@
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../assets/config.js" defer></script>
+    <script src="../assets/auth.js" defer></script>
   </head>
 
   <body>
@@ -64,7 +66,7 @@
         <!-- ================= HEADER ================= -->
         <header class="dashboard-header">
           <div>
-            <h1>Hi, Specialist Rawan</h1>
+            <h1 data-auth-greeting>Hi, Specialist</h1>
 
             <p>Here's an overview of your sequencing analyses</p>
           </div>
@@ -74,7 +76,7 @@
               <i class="fa-solid fa-user"></i>
             </span>
 
-            <span>Dr. Rawan</span>
+            <span data-auth-name>Specialist</span>
 
             <i class="fa-solid fa-chevron-down arrow-small"></i>
           </button>

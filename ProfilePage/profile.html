@@ -10,6 +10,8 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     />
+    <script src="../assets/config.js" defer></script>
+    <script src="../assets/auth.js" defer></script>
     <script src="profile.js" defer></script>
   </head>
   <body>
@@ -63,7 +65,7 @@
         >
           <div class="avatar"><i class="fa-solid fa-user-doctor"></i></div>
           <div class="identity">
-            <h2 id="displayName">Dr. Rawan</h2>
+            <h2 id="displayName" data-auth-name>Specialist</h2>
             <p>Laboratory Specialist</p>
             <span class="profile-chip"
               ><i class="fa-solid fa-flask"></i> GeneGlass Specialist</span
@@ -87,7 +89,8 @@
                   >Full Name<input
                     id="fullName"
                     type="text"
-                    value="Dr. Rawan"
+                    value="Specialist"
+                    data-auth-name
                     maxlength="80"
                     disabled
                     required
@@ -96,6 +99,7 @@
                   >Email Address<input
                     id="email"
                     type="email"
+                    data-auth-email
                     placeholder="Not provided"
                     maxlength="120"
                     disabled
@@ -107,7 +111,8 @@
                   >Department<input
                     id="department"
                     type="text"
-                    value="Genetics Laboratory"
+                    value="Not provided"
+                    data-auth-department
                     maxlength="100"
                     disabled
                 /></label>

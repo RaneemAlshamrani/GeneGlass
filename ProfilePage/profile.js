@@ -8,6 +8,9 @@ const editable = ["fullName", "email", "department"].map((id) =>
   document.getElementById(id),
 );
 let original = editable.map((input) => input.value);
+document.addEventListener("geneglass:auth-ready", () => {
+  original = editable.map((input) => input.value);
+});
 function setEditing(active) {
   editable.forEach((input) => (input.disabled = !active));
   editActions.hidden = !active;
@@ -33,5 +36,13 @@ form.addEventListener("submit", (event) => {
     "Preview updated. Changes are not saved to the database yet.";
 });
 document.getElementById("logoutBtn").addEventListener("click", () => {
-  window.location.href = "../LoginPage/login.html";
+  if (window.GeneGlassAuth) {
+    window.GeneGlassAuth.logout();
+    return;
+  }
+  sessionStorage.removeItem("geneglass_access_token");
+  sessionStorage.removeItem("geneglass_user");
+  localStorage.removeItem("geneglass_access_token");
+  localStorage.removeItem("geneglass_user");
+  window.location.replace("../LoginPage/login.html");
 });
