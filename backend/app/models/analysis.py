@@ -1,10 +1,18 @@
+
 """JAK2 analysis records and workflow state."""
 
 from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Enum as SqlEnum, ForeignKey, String, Text
+from sqlalchemy import (
+    Enum as SqlEnum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
@@ -32,20 +40,30 @@ class Analysis(TimestampMixin, Base):
     __tablename__ = "analyses"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,
     )
-    original_file_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    stored_file_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    file_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
-    gene: Mapped[str] = mapped_column(String(50), nullable=False, default="JAK2")
-    target_variant: Mapped[str] = mapped_column(
-        String(50),
-        nullable=False,
-        default="V617F",
+
+    original_file_name: Mapped[str] = mapped_column(
+        String(255), nullable=False
     )
+    stored_file_path: Mapped[str | None] = mapped_column(
+        String(500), nullable=True
+    )
+    file_sha256: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, index=True
+    )
+
+    gene: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="JAK2"
+    )
+    target_variant: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="V617F"
+    )
+
     status: Mapped[AnalysisStatus] = mapped_column(
         SqlEnum(
             AnalysisStatus,
@@ -59,6 +77,7 @@ class Analysis(TimestampMixin, Base):
         server_default=AnalysisStatus.PENDING.value,
         index=True,
     )
+
     qc_status: Mapped[QCStatus] = mapped_column(
         SqlEnum(
             QCStatus,
@@ -71,12 +90,49 @@ class Analysis(TimestampMixin, Base):
         default=QCStatus.PENDING,
         server_default=QCStatus.PENDING.value,
     )
+
+    # Quality control metrics
+    sequence_length: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )
+    cleaned_sequence_length: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )
+    average_quality: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    minimum_quality: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )
+    maximum_quality: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )
+    low_quality_count: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )
+    low_quality_percentage: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    retained_percentage: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )
+    quality_assessment: Mapped[str | None] = mapped_column(
+        String(20), nullable=True
+    )
+
+    # Variant detection fields - reserved for the later module
     v617f_detected: Mapped[bool | None] = mapped_column(nullable=True)
     result_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
-    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
-    completed_at: Mapped[datetime | None] = mapped_column(nullable=True)
+
+    error_message: Mapped[str | None] = mapped_column(
+        Text, nullable=True
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        nullable=True
+    )
 
     owner: Mapped["User"] = relationship(back_populates="analyses")
+
     reviews: Mapped[list["Review"]] = relationship(
         back_populates="analysis",
         cascade="all, delete-orphan",

@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -21,114 +22,151 @@
     <script src="history.js" defer></script>
 </head>
 
-  <body>
+<body>
     <div class="dashboard-page">
-      <aside class="sidebar">
-        <div class="sidebar-brand">
-          <img
-            class="sidebar-logo"
-            src="../assets/geneglass-logo.png"
-            alt="GeneGlass"
-          />
-        </div>
-        <nav class="sidebar-nav" aria-label="Main navigation">
-          <a class="nav-item" href="dashboard.html"
-            ><i class="fa-solid fa-house"></i><span>Dashboard</span></a
-          >
-          <a class="nav-item" href="../AnalysisPage/analysis.html"
-            ><i class="fa-solid fa-dna"></i><span>New Analysis</span></a
-          >
-          <a class="nav-item active" href="history.html" aria-current="page"
-            ><i class="fa-solid fa-clock-rotate-left"></i
-            ><span>History</span></a
-          >
-         <a href="../ProfilePage/profile.html" class="nav-item">
-    <i class="fa-solid fa-user"></i>
-    <span>Profile</span>
-</a>
-        </nav>
-        <img
-          class="sidebar-dna"
-          src="../assets/dna-bg.png"
-          alt=""
-          aria-hidden="true"
-        />
-      </aside>
-      <main class="main-content">
-        <img
-          class="dashboard-dna"
-          src="../assets/dna-bg.png"
-          alt=""
-          aria-hidden="true"
-        />
-        <header class="dashboard-header">
-          <div>
-            <h1>Analysis History</h1>
-            <p>Review and manage your saved sequencing analyses.</p>
-          </div>
-          <a class="new-analysis-button" href="../AnalysisPage/analysis.html"
-            ><i class="fa-solid fa-plus"></i> New Analysis
-            <span class="button-arrow">→</span></a
-          >
-        </header>
-        <section
-          class="dashboard-card history-card"
-          aria-labelledby="history-title"
-        >
-          <div class="history-toolbar">
-            <div>
-              <h2 id="history-title">Saved Analyses</h2>
-              <p id="resultCount">0 analyses</p>
+
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <img
+                    class="sidebar-logo"
+                    src="../assets/geneglass-logo.png"
+                    alt="GeneGlass"
+                />
             </div>
-            <div class="history-filters">
-              <label class="search-box"
-                ><i class="fa-solid fa-magnifying-glass"></i
-                ><span class="sr-only">Search analyses</span
-                ><input
-                  id="searchInput"
-                  type="search"
-                  placeholder="Search by file name or gene"
-              /></label>
-              <label class="sr-only" for="resultFilter">Filter by result</label>
-              <select id="resultFilter">
-                <option value="all">All Results</option>
-                <option value="mutation">Mutation Detected</option>
-                <option value="normal">Normal</option>
-                <option value="review">Needs Review</option>
-                <option value="pending">Pending</option>
-              </select>
-            </div>
-          </div>
-          <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>File Name</th>
-                  <th>Gene</th>
-                  <th>Target Position</th>
-                  <th>Result</th>
-                  <th>QC Status</th>
-                  <th>Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="historyRows"></tbody>
-            </table>
-          </div>
-          <div class="empty-state" id="emptyState">
-            <i class="fa-regular fa-folder-open"></i>
-            <h3>No saved analyses yet</h3>
-            <p>
-              Completed analyses will appear here after the backend and database
-              are connected.
-            </p>
-            <a href="../AnalysisPage/analysis.html"
-              >Start New Analysis <i class="fa-solid fa-arrow-right"></i
-            ></a>
-          </div>
-          <p class="history-message" id="historyMessage" role="status"></p>
-        </section>
-      </main>
+
+            <nav class="sidebar-nav" aria-label="Main navigation">
+
+                <!-- Corrected Dashboard link -->
+                <a class="nav-item" href="../DashboardPage/dashboard.html">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <a class="nav-item" href="../AnalysisPage/analysis.html">
+                    <i class="fa-solid fa-dna"></i>
+                    <span>New Analysis</span>
+                </a>
+
+                <a class="nav-item active" href="history.html" aria-current="page">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>History</span>
+                </a>
+
+                <a href="../ProfilePage/profile.html" class="nav-item">
+                    <i class="fa-solid fa-user"></i>
+                    <span>Profile</span>
+                </a>
+
+            </nav>
+
+            <img
+                class="sidebar-dna"
+                src="../assets/dna-bg.png"
+                alt=""
+                aria-hidden="true"
+            />
+        </aside>
+
+        <main class="main-content">
+
+            <img
+                class="dashboard-dna"
+                src="../assets/dna-bg.png"
+                alt=""
+                aria-hidden="true"
+            />
+
+            <header class="dashboard-header">
+                <div>
+                    <h1>Analysis History</h1>
+                    <p>Review and manage your saved sequencing analyses.</p>
+                </div>
+
+                <a class="new-analysis-button" href="../AnalysisPage/analysis.html">
+                    <i class="fa-solid fa-plus"></i>
+                    New Analysis
+                    <span class="button-arrow">→</span>
+                </a>
+            </header>
+
+            <section
+                class="dashboard-card history-card"
+                aria-labelledby="history-title"
+            >
+
+                <div class="history-toolbar">
+                    <div>
+                        <h2 id="history-title">Saved Analyses</h2>
+                        <p id="resultCount">0 analyses</p>
+                    </div>
+
+                    <div class="history-filters">
+
+                        <label class="search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+
+                            <span class="sr-only">Search analyses</span>
+
+                            <input
+                                id="searchInput"
+                                type="search"
+                                placeholder="Search by file name or gene"
+                            />
+                        </label>
+
+                        <label class="sr-only" for="resultFilter">
+                            Filter by result
+                        </label>
+
+                        <select id="resultFilter">
+                            <option value="all">All Results</option>
+                            <option value="mutation">Mutation Detected</option>
+                            <option value="normal">Normal</option>
+                            <option value="review">Needs Review</option>
+                            <option value="pending">Pending</option>
+                        </select>
+
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>File Name</th>
+                                <th>Gene</th>
+                                <th>Target Position</th>
+                                <th>Result</th>
+                                <th>QC Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="historyRows"></tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state" id="emptyState">
+                    <i class="fa-regular fa-folder-open"></i>
+
+                    <h3>No saved analyses yet</h3>
+
+                    <p>
+                        Completed analyses will appear here after the backend and database
+                        are connected.
+                    </p>
+
+                    <a href="../AnalysisPage/analysis.html">
+                        Start New Analysis
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+
+                <p class="history-message" id="historyMessage" role="status"></p>
+
+            </section>
+        </main>
     </div>
-  </body>
+</body>
 </html>
