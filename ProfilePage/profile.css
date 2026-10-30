@@ -252,3 +252,69 @@
     margin-bottom: 18px;
   }
 }
+
+/* Change Password Form */
+.password-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  width: 100%;
+  max-width: 520px;
+  margin-top: 20px;
+}
+
+.password-form label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  color: #36565a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.password-form input {
+  display: block;
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  border: 1px solid #d7e8e8;
+  border-radius: 10px;
+  background: #fff;
+  color: #183c40;
+  font: inherit;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.password-form input:focus {
+  outline: none;
+  border-color: #069c9d;
+  box-shadow: 0 0 0 3px rgba(6, 156, 157, 0.12);
+}
+
+.password-form button {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.password-form #passwordMessage {
+  margin: 0;
+  min-height: 16px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .password-form {
+    max-width: 100%;
+  }
+
+  .password-form button {
+    width: 100%;
+  }
+}

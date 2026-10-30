@@ -1,3 +1,4 @@
+
 """Authentication request and response schemas."""
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -11,6 +12,11 @@ class UserCreate(BaseModel):
     password: str = Field(min_length=12, max_length=128)
     department: str | None = Field(default=None, max_length=150)
     role: UserRole = UserRole.SPECIALIST
+
+
+class PasswordChange(BaseModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=12, max_length=128)
 
 
 class UserResponse(BaseModel):

@@ -1,140 +1,433 @@
+
 /* =========================================================
-   Activity — Sunday to Thursday
+   GeneGlass Dashboard Integration
 ========================================================= */
 
-const activityCanvas = document.getElementById("activityChart");
+let activityChart = null;
+let geneChart = null;
+let dashboardLoaded = false;
+let dashboardLoading = false;
 
-const activityChart = new Chart(activityCanvas, {
-  type: "bar",
+/* =========================================================
+   HELPERS
+========================================================= */
 
-  data: {
-    labels: ["Sun", "Mon", "Tue", "Wed", "Thu"],
+function updateText(selector, value) {
+  const element = document.querySelector(selector);
 
-    datasets: [
-      {
-        label: "Normal",
-        data: [1, 3, 1, 3, 1],
-        backgroundColor: "#10b59b",
-        borderRadius: 5,
-        borderSkipped: false,
-      },
-      {
-        label: "Mutation",
-        data: [1, 2, 1, 2, 1],
-        backgroundColor: "#ed3f46",
-        borderRadius: 5,
-        borderSkipped: false,
-      },
-      {
-        label: "QC Review",
-        data: [1, 0.5, 1, 0.5, 1],
-        backgroundColor: "#f3a316",
-        borderRadius: 5,
-        borderSkipped: false,
-      },
-    ],
-  },
+  if (element) {
+    element.textContent = value ?? "—";
+  }
+}
 
-  options: {
-    responsive: true,
+function formatDate(dateValue) {
+  if (!dateValue) return "—";
 
-    maintainAspectRatio: false,
+  const date = new Date(dateValue);
 
-    plugins: {
-      legend: {
-        display: false,
-      },
+  if (Number.isNaN(date.getTime())) return "—";
 
-      tooltip: {
-        displayColors: true,
-      },
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+/* =========================================================
+   UPDATE STAT CARDS
+========================================================= */
+
+function updateStatCards(data) {
+  const cards = document.querySelectorAll(
+    ".stats-grid .stat-card"
+  );
+
+  if (cards.length < 3) return;
+
+  const totalElement = cards[0].querySelector(".stat-info h2");
+  const resultElement = cards[1].querySelector(".stat-info h2");
+  const qcElement = cards[2].querySelector(".stat-info h2");
+
+  if (totalElement) {
+    totalElement.textContent = data.total_analyses ?? 0;
+  }
+
+  if (resultElement) {
+    resultElement.textContent =
+      `${data.positive ?? 0} / ${data.negative ?? 0}`;
+  }
+
+  if (qcElement) {
+    qcElement.textContent =
+      `${data.qc_success_rate ?? 0}%`;
+  }
+}
+
+/* =========================================================
+   GENE DISTRIBUTION CHART
+========================================================= */
+
+function updateGeneChart(data) {
+  const canvas = document.getElementById("geneChart");
+
+  if (!canvas || typeof Chart === "undefined") {
+    console.error("Gene chart canvas or Chart.js is missing.");
+    return;
+  }
+
+  const distribution = data.gene_distribution || {};
+
+  const jak2 = distribution.JAK2 ?? 0;
+  const calr = distribution.CALR ?? 0;
+  const mpl = distribution.MPL ?? 0;
+
+  if (geneChart) {
+    geneChart.destroy();
+  }
+
+  geneChart = new Chart(canvas, {
+    type: "doughnut",
+
+    data: {
+      labels: ["JAK2", "CALR", "MPL"],
+
+      datasets: [
+        {
+          data: [jak2, calr, mpl],
+          backgroundColor: [
+            "#056d70",
+            "#0ca9a2",
+            "#79d8d4",
+          ],
+          borderWidth: 0,
+          hoverOffset: 3,
+        },
+      ],
     },
 
-    scales: {
-      x: {
-        stacked: true,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "70%",
 
-        grid: {
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+    },
+  });
+
+  updateText(
+    ".donut-center strong",
+    data.total_analyses ?? 0
+  );
+
+  const geneValues = document.querySelectorAll(
+    ".gene-list > div strong"
+  );
+
+  if (geneValues.length >= 3) {
+    geneValues[0].textContent = jak2;
+    geneValues[1].textContent = calr;
+    geneValues[2].textContent = mpl;
+  }
+}
+
+/* =========================================================
+   ACTIVITY CHART
+========================================================= */
+
+function updateActivityChart(data) {
+  const canvas = document.getElementById("activityChart");
+
+  if (!canvas || typeof Chart === "undefined") {
+    console.error("Activity chart canvas or Chart.js is missing.");
+    return;
+  }
+
+  const activityCount = data.activity_last_7_days ?? 0;
+
+  if (activityChart) {
+    activityChart.destroy();
+  }
+
+  activityChart = new Chart(canvas, {
+    type: "bar",
+
+    data: {
+      labels: ["Last 7 Days"],
+
+      datasets: [
+        {
+          label: "Analyses",
+          data: [activityCount],
+          backgroundColor: "#10b59b",
+          borderRadius: 5,
+          borderSkipped: false,
+        },
+      ],
+    },
+
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+
+      plugins: {
+        legend: {
           display: false,
         },
 
-        border: {
-          display: false,
+        tooltip: {
+          displayColors: false,
+        },
+      },
+
+      scales: {
+        x: {
+          grid: {
+            display: false,
+          },
+
+          border: {
+            display: false,
+          },
+
+          ticks: {
+            color: "#789095",
+          },
         },
 
-        ticks: {
-          color: "#789095",
-          font: {
-            size: 11,
+        y: {
+          beginAtZero: true,
+
+          ticks: {
+            precision: 0,
+            color: "#789095",
+          },
+
+          grid: {
+            color: "rgba(88, 124, 128, 0.10)",
+          },
+
+          border: {
+            display: false,
           },
         },
       },
-
-      y: {
-        stacked: true,
-
-        beginAtZero: true,
-
-        suggestedMax: 6,
-
-        ticks: {
-          stepSize: 2,
-
-          color: "#789095",
-
-          font: {
-            size: 10,
-          },
-        },
-
-        grid: {
-          color: "rgba(88, 124, 128, 0.10)",
-        },
-
-        border: {
-          display: false,
-        },
-      },
     },
-  },
-});
+  });
+}
 
 /* =========================================================
-   GENE DISTRIBUTION
+   RECENT ANALYSES TABLE
 ========================================================= */
 
-const geneCanvas = document.getElementById("geneChart");
+function updateRecentAnalyses(analyses) {
+  const tableBody = document.querySelector(
+    ".recent-card table tbody"
+  );
 
-const geneChart = new Chart(geneCanvas, {
-  type: "doughnut",
+  if (!tableBody) return;
 
-  data: {
-    labels: ["JAK2", "CALR", "MPL"],
+  tableBody.replaceChildren();
 
-    datasets: [
+  if (!Array.isArray(analyses) || analyses.length === 0) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+
+    cell.colSpan = 7;
+    cell.textContent = "No analyses found yet.";
+    cell.style.textAlign = "center";
+    cell.style.padding = "25px";
+
+    row.appendChild(cell);
+    tableBody.appendChild(row);
+
+    return;
+  }
+
+  analyses.forEach((analysis) => {
+    const row = document.createElement("tr");
+
+    // File name
+    const fileCell = document.createElement("td");
+    fileCell.className = "file-name";
+
+    const fileIcon = document.createElement("i");
+    fileIcon.className = "fa-solid fa-file-lines";
+
+    fileCell.appendChild(fileIcon);
+    fileCell.appendChild(
+      document.createTextNode(
+        ` ${analysis.file_name || "Unnamed file"}`
+      )
+    );
+
+    row.appendChild(fileCell);
+
+    // Gene
+    const geneCell = document.createElement("td");
+    const geneName = document.createElement("strong");
+
+    geneName.textContent = analysis.gene || "—";
+    geneCell.appendChild(geneName);
+    row.appendChild(geneCell);
+
+    // Target position
+    const targetCell = document.createElement("td");
+    targetCell.textContent = analysis.target_variant || "—";
+    row.appendChild(targetCell);
+
+    // Result
+    const resultCell = document.createElement("td");
+    const resultBadge = document.createElement("span");
+
+    resultBadge.className = "result";
+
+    if (analysis.v617f_detected === true) {
+      resultBadge.classList.add("mutation-result");
+      resultBadge.textContent = "Mutation Detected";
+    } else if (
+      analysis.v617f_detected === false &&
+      (analysis.gene || "").toUpperCase() === "JAK2"
+    ) {
+      resultBadge.classList.add("normal-result");
+      resultBadge.textContent = "Normal Sequence";
+    } else if (analysis.status === "failed") {
+      resultBadge.classList.add("review-result");
+      resultBadge.textContent = "Analysis Failed";
+    } else {
+      resultBadge.classList.add("review-result");
+      resultBadge.textContent = "Result Pending";
+    }
+
+    resultCell.appendChild(resultBadge);
+    row.appendChild(resultCell);
+
+    // QC status
+    const qcCell = document.createElement("td");
+    const qcBadge = document.createElement("span");
+
+    qcBadge.className = "qc-badge";
+
+    const qcStatus = analysis.qc_status || "pending";
+
+    if (qcStatus === "passed") {
+      qcBadge.classList.add("passed");
+      qcBadge.textContent = "Passed";
+    } else if (qcStatus === "needs_review") {
+      qcBadge.classList.add("review");
+      qcBadge.textContent = "Review";
+    } else if (qcStatus === "failed") {
+      qcBadge.classList.add("review");
+      qcBadge.textContent = "Failed";
+    } else {
+      qcBadge.textContent = "Pending";
+    }
+
+    qcCell.appendChild(qcBadge);
+    row.appendChild(qcCell);
+
+    // Date
+    const dateCell = document.createElement("td");
+    dateCell.textContent = formatDate(analysis.created_at);
+    row.appendChild(dateCell);
+
+    // Actions (not connected yet)
+    const actionsCell = document.createElement("td");
+    actionsCell.className = "actions";
+    actionsCell.textContent = "—";
+    row.appendChild(actionsCell);
+
+    tableBody.appendChild(row);
+  });
+}
+
+/* =========================================================
+   LOAD DASHBOARD DATA
+========================================================= */
+
+async function loadDashboardSummary() {
+  if (dashboardLoaded || dashboardLoading) return;
+
+  const token = window.GeneGlassAuth?.token;
+
+  if (!token) {
+    console.warn(
+      "Dashboard: waiting for authentication."
+    );
+    return;
+  }
+
+  const apiBaseUrl = window.GeneGlassConfig?.apiBaseUrl;
+
+  if (!apiBaseUrl) {
+    console.error(
+      "Dashboard: API base URL is missing."
+    );
+    return;
+  }
+
+  dashboardLoading = true;
+
+  try {
+    const response = await fetch(
+      `${apiBaseUrl}/dashboard/summary`,
       {
-        data: [14, 9, 5],
+        method: "GET",
 
-        backgroundColor: ["#056d70", "#0ca9a2", "#79d8d4"],
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-        borderWidth: 0,
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
 
-        hoverOffset: 3,
-      },
-    ],
-  },
+      throw new Error(
+        error.detail ||
+        `Dashboard request failed: ${response.status}`
+      );
+    }
 
-  options: {
-    responsive: true,
+    const data = await response.json();
 
-    maintainAspectRatio: false,
+    updateStatCards(data);
+    updateGeneChart(data);
+    updateActivityChart(data);
+    updateRecentAnalyses(data.recent_analyses);
 
-    cutout: "70%",
+    dashboardLoaded = true;
 
-    plugins: {
-      legend: {
-        display: false,
-      },
-    },
-  },
+    console.log(
+      "Dashboard statistics loaded successfully.",
+      data
+    );
+
+  } catch (error) {
+    console.error(
+      "Could not load dashboard statistics:",
+      error
+    );
+
+  } finally {
+    dashboardLoading = false;
+  }
+}
+
+/* =========================================================
+   INITIALIZATION
+========================================================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadDashboardSummary();
 });
+
+document.addEventListener("geneglass:auth-ready", () => {
+  loadDashboardSummary();
+});
+

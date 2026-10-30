@@ -1,3 +1,4 @@
+```html
 <!doctype html>
 <html lang="en">
   <head>
@@ -14,6 +15,7 @@
     <script src="../assets/auth.js" defer></script>
     <script src="profile.js" defer></script>
   </head>
+
   <body>
     <div class="dashboard-page">
       <aside class="sidebar">
@@ -24,21 +26,22 @@
             alt="GeneGlass"
           />
         </div>
+
         <nav class="sidebar-nav" aria-label="Main navigation">
-          <a class="nav-item" href="../DashboardPage/dashboard.html"
-            ><i class="fa-solid fa-house"></i><span>Dashboard</span></a
-          >
-          <a class="nav-item" href="../AnalysisPage/analysis.html"
-            ><i class="fa-solid fa-dna"></i><span>New Analysis</span></a
-          >
-          <a class="nav-item" href="../HistoryPage/history.html"
-            ><i class="fa-solid fa-clock-rotate-left"></i
-            ><span>History</span></a
-          >
-          <a class="nav-item active" href="profile.html" aria-current="page"
-            ><i class="fa-solid fa-user"></i><span>Profile</span></a
-          >
+          <a class="nav-item" href="../DashboardPage/dashboard.html">
+            <i class="fa-solid fa-house"></i><span>Dashboard</span>
+          </a>
+          <a class="nav-item" href="../AnalysisPage/analysis.html">
+            <i class="fa-solid fa-dna"></i><span>New Analysis</span>
+          </a>
+          <a class="nav-item" href="../HistoryPage/history.html">
+            <i class="fa-solid fa-clock-rotate-left"></i><span>History</span>
+          </a>
+          <a class="nav-item active" href="profile.html" aria-current="page">
+            <i class="fa-solid fa-user"></i><span>Profile</span>
+          </a>
         </nav>
+
         <img
           class="sidebar-dna"
           src="../assets/dna-bg.png"
@@ -46,6 +49,7 @@
           aria-hidden="true"
         />
       </aside>
+
       <main class="main-content profile-main">
         <img
           class="dashboard-dna"
@@ -53,25 +57,30 @@
           alt=""
           aria-hidden="true"
         />
+
         <header class="profile-heading">
           <div>
             <h1>My Profile</h1>
             <p>Manage your specialist information and account preferences.</p>
           </div>
         </header>
+
         <section
           class="profile-card identity-card"
           aria-label="Specialist overview"
         >
-          <div class="avatar"><i class="fa-solid fa-user-doctor"></i></div>
+          <div class="avatar">
+            <i class="fa-solid fa-user-doctor"></i>
+          </div>
           <div class="identity">
             <h2 id="displayName" data-auth-name>Specialist</h2>
             <p>Laboratory Specialist</p>
-            <span class="profile-chip"
-              ><i class="fa-solid fa-flask"></i> GeneGlass Specialist</span
-            >
+            <span class="profile-chip">
+              <i class="fa-solid fa-flask"></i> GeneGlass Specialist
+            </span>
           </div>
         </section>
+
         <div class="profile-grid">
           <section class="profile-card details-card">
             <div class="section-head">
@@ -83,10 +92,12 @@
                 <i class="fa-solid fa-pen"></i> Edit Profile
               </button>
             </div>
+
             <form id="profileForm" novalidate>
               <div class="fields-grid">
-                <label
-                  >Full Name<input
+                <label>
+                  Full Name
+                  <input
                     id="fullName"
                     type="text"
                     value="Specialist"
@@ -94,38 +105,50 @@
                     maxlength="80"
                     disabled
                     required
-                /></label>
-                <label
-                  >Email Address<input
+                  />
+                </label>
+
+                <label>
+                  Email Address
+                  <input
                     id="email"
                     type="email"
                     data-auth-email
                     placeholder="Not provided"
                     maxlength="120"
                     disabled
-                /></label>
-                <label
-                  >Role<input value="Laboratory Specialist" disabled
-                /></label>
-                <label
-                  >Department<input
+                  />
+                </label>
+
+                <label>
+                  Role
+                  <input value="Laboratory Specialist" disabled />
+                </label>
+
+                <label>
+                  Department
+                  <input
                     id="department"
                     type="text"
                     value="Not provided"
                     data-auth-department
                     maxlength="100"
                     disabled
-                /></label>
+                  />
+                </label>
               </div>
+
               <div id="editActions" class="edit-actions" hidden>
-                <button type="submit" class="primary-btn">Save Changes</button
-                ><button type="button" id="cancelBtn" class="outline-btn">
+                <button type="submit" class="primary-btn">Save Changes</button>
+                <button type="button" id="cancelBtn" class="outline-btn">
                   Cancel
                 </button>
               </div>
+
               <p id="profileMessage" class="form-message" role="status"></p>
             </form>
           </section>
+
           <section class="profile-card stats-card">
             <div class="section-head">
               <div>
@@ -133,36 +156,100 @@
                 <p>Overview of your saved analyses</p>
               </div>
             </div>
+
             <div class="stat-row">
               <div class="stat-icon">
                 <i class="fa-solid fa-file-waveform"></i>
               </div>
               <div>
-                <span>Total Analyses</span><strong id="totalCount">—</strong>
+                <span>Total Analyses</span>
+                <strong id="totalCount">—</strong>
               </div>
             </div>
+
             <div class="stat-row">
               <div class="stat-icon">
                 <i class="fa-solid fa-circle-check"></i>
               </div>
               <div>
-                <span>Completed Analyses</span
-                ><strong id="completedCount">—</strong>
+                <span>Completed Analyses</span>
+                <strong id="completedCount">—</strong>
               </div>
             </div>
+
             <div class="stat-row">
               <div class="stat-icon">
                 <i class="fa-solid fa-magnifying-glass-chart"></i>
               </div>
               <div>
-                <span>Needs Review</span><strong id="reviewCount">—</strong>
+                <span>Needs Review</span>
+                <strong id="reviewCount">—</strong>
               </div>
             </div>
-            <p class="muted-note">
-              Statistics will appear after connecting the backend.
+
+            <p
+              id="statisticsMessage"
+              class="muted-note"
+              role="status"
+              aria-live="polite"
+            >
+              Loading your analysis statistics...
             </p>
           </section>
         </div>
+
+        <section class="profile-card password-card">
+          <div class="section-head">
+            <div>
+              <h2><i class="fa-solid fa-lock"></i> Change Password</h2>
+              <p>Update your password to keep your account secure.</p>
+            </div>
+          </div>
+
+          <form id="changePasswordForm" class="password-form">
+            <label for="currentPassword">Current Password</label>
+            <input
+              id="currentPassword"
+              name="currentPassword"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
+
+            <label for="newPassword">New Password</label>
+            <input
+              id="newPassword"
+              name="newPassword"
+              type="password"
+              minlength="12"
+              maxlength="128"
+              autocomplete="new-password"
+              required
+            />
+
+            <label for="confirmPassword">Confirm New Password</label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              minlength="12"
+              maxlength="128"
+              autocomplete="new-password"
+              required
+            />
+
+            <button
+              type="submit"
+              class="primary-btn"
+              id="changePasswordBtn"
+            >
+              <i class="fa-solid fa-key"></i> Change Password
+            </button>
+
+            <p id="passwordMessage" class="form-message" role="status"></p>
+          </form>
+        </section>
+
         <section class="profile-card account-card">
           <div>
             <h2>Account</h2>
@@ -179,3 +266,4 @@
     </div>
   </body>
 </html>
+```

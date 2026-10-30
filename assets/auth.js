@@ -21,23 +21,39 @@
     window.location.replace("../LoginPage/login.html");
   }
 
-  function updateUserInterface(user) {
-    document.querySelectorAll("[data-auth-name]").forEach((element) => {
-      element.textContent = user.full_name;
-    });
-    document.querySelectorAll("[data-auth-email]").forEach((element) => {
-      if ("value" in element) element.value = user.email;
-      else element.textContent = user.email;
-    });
-    document.querySelectorAll("[data-auth-department]").forEach((element) => {
-      const department = user.department || "Not provided";
-      if ("value" in element) element.value = department;
-      else element.textContent = department;
-    });
-    document.querySelectorAll("[data-auth-greeting]").forEach((element) => {
-      element.textContent = `Hi, ${user.full_name}`;
-    });
-  }
+
+function updateUserInterface(user) {
+  document.querySelectorAll("[data-auth-name]").forEach((el) => {
+    if ("value" in el) {
+      el.value = user.full_name;
+    } else {
+      el.textContent = user.full_name;
+    }
+  });
+
+  document.querySelectorAll("[data-auth-email]").forEach((el) => {
+    if ("value" in el) {
+      el.value = user.email;
+    } else {
+      el.textContent = user.email;
+    }
+  });
+
+  document.querySelectorAll("[data-auth-department]").forEach((el) => {
+    const department = user.department || "Not provided";
+
+    if ("value" in el) {
+      el.value = department;
+    } else {
+      el.textContent = department;
+    }
+  });
+
+  document.querySelectorAll("[data-auth-greeting]").forEach((el) => {
+    el.textContent = `Hi, ${user.full_name}`;
+  });
+}
+
 
   async function verifySession() {
     const storedSession = findStoredSession();

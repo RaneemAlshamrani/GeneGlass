@@ -1,3 +1,4 @@
+
 """FastAPI application factory and ASGI entry point."""
 
 from collections.abc import AsyncIterator
@@ -7,7 +8,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.auth import auth_router
+from app.api.dashboard import dashboard_router
 from app.api.routes import api_router, health_router
+from app.api.users import users_router
 from app.core.config import get_settings
 from app.db.init_db import initialize_database
 
@@ -15,7 +18,6 @@ from app.db.init_db import initialize_database
 @asynccontextmanager
 async def lifespan(_application: FastAPI) -> AsyncIterator[None]:
     """Initialize shared application resources before serving requests."""
-
     initialize_database()
     yield
 
@@ -41,8 +43,13 @@ def create_app() -> FastAPI:
     application.include_router(health_router)
     application.include_router(api_router, prefix=settings.api_prefix)
     application.include_router(auth_router, prefix=settings.api_prefix)
-    return application
+    application.include_router(users_router, prefix=settings.api_prefix)
+    application.include_router(
+        dashboard_router,
+        prefix=settings.api_prefix,
+    )
 
+    return application
 
 
 app = create_app()
