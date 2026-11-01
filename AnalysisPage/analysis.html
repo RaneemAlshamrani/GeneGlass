@@ -93,6 +93,21 @@
           </div>
           <p id="message" class="message" role="status"></p>
         </section>
+
+        <!-- chromatogram-viewer-v1 -->
+        <section class="dashboard-card chromatogram-card" id="chromatogramSection" hidden>
+          <h2><i class="fa-solid fa-chart-line"></i> Chromatogram Viewer</h2>
+          <p class="hint">Raw AB1 signal. Select a base range to inspect the peaks and quality scores.</p>
+          <div class="chromatogram-controls">
+            <label for="chromStart">First base <input type="number" id="chromStart" min="1" value="1"></label>
+            <label for="chromCount">Bases shown <input type="number" id="chromCount" min="5" max="100" value="30"></label>
+            <button type="button" id="chromPrevious">Previous</button>
+            <button type="button" id="chromNext">Next</button>
+          </div>
+          <div class="chromatogram-scroll"><canvas id="chromatogramCanvas" width="1050" height="320" aria-label="AB1 fluorescence chromatogram"></canvas></div>
+          <p class="chromatogram-detail" id="chromatogramDetail">Click a base label to see its quality.</p>
+          <p class="hint">Highlighted regions have Phred quality below 20. Peak labels use original AB1 base positions.</p>
+        </section>
       </main>
     </div>
   </body>

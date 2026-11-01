@@ -1,139 +1,203 @@
 /* GeneGlass New Analysis */
+
 :root {
   --sidebar-width: 245px;
+
   --ink: #102f34;
+
   --muted: #71858a;
+
   --teal: #079a9c;
 }
 
 * {
   margin: 0;
+
   padding: 0;
+
   box-sizing: border-box;
 }
 
 html,
 body {
   width: 100%;
+
   min-height: 100%;
 }
 
 body {
   font-family: Arial, Helvetica, sans-serif;
+
   color: var(--ink);
+
   background: #f6fbfb;
+
   font-size: 15px;
 }
 
 .dashboard-page {
   min-height: 100vh;
+
   display: flex;
 }
 
 /* Exact Dashboard sidebar dimensions */
+
 .sidebar {
   position: fixed;
+
   left: 0;
+
   top: 0;
+
   width: 245px;
+
   height: 100vh;
+
   background: linear-gradient(180deg, #046e71 0%, #035d62 45%, #024d54 100%);
+
   overflow: hidden;
+
   z-index: 100;
 }
 
 .sidebar-brand {
   height: 135px;
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
   padding: 20px;
 }
 
 .sidebar-logo {
   width: 165px;
+
   max-height: 100px;
+
   object-fit: contain;
 }
 
 .sidebar-nav {
   display: flex;
+
   flex-direction: column;
+
   padding: 15px 14px;
+
   gap: 9px;
 }
 
 .nav-item {
   position: relative;
+
   display: flex;
+
   align-items: center;
+
   gap: 15px;
+
   min-height: 54px;
+
   padding: 0 20px;
+
   border-radius: 16px;
+
   color: rgba(255, 255, 255, 0.76);
+
   text-decoration: none;
+
   font-size: 15px;
+
   font-weight: 500;
+
   transition: 0.25s ease;
+
   z-index: 1;
 }
 
 .nav-item i {
   width: 20px;
+
   text-align: center;
 }
 
 .nav-item:hover {
   color: white;
+
   background: rgba(255, 255, 255, 0.08);
 }
 
 .nav-item.active {
   color: white;
+
   background: linear-gradient(
     90deg,
     rgba(12, 168, 166, 0.75),
     rgba(12, 168, 166, 0.42)
   );
+
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
 }
 
 .nav-item:focus-visible {
   outline: 2px solid #fff;
+
   outline-offset: 2px;
 }
 
 .sidebar-dna {
   position: absolute;
+
   width: 430px;
+
   height: auto;
+
   left: -145px;
+
   bottom: -105px;
+
   object-fit: contain;
+
   opacity: 0.42;
+
   pointer-events: none;
+
   z-index: 0;
+
   transform: rotate(-12deg);
+
   animation: none;
 }
 
 /* Exact Dashboard main spacing and background */
+
 .main-content {
   position: relative;
+
   margin-left: 245px;
+
   width: calc(100% - 245px);
+
   min-height: 100vh;
+
   padding: 38px 45px 45px;
+
   overflow: hidden;
+
   background:
     radial-gradient(
       circle at 78% 5%,
+
       rgba(47, 211, 211, 0.16),
       transparent 26%
     ),
     radial-gradient(
       circle at 50% 85%,
+
       rgba(55, 200, 201, 0.08),
       transparent 30%
     ),
@@ -142,104 +206,158 @@ body {
 
 .dashboard-dna {
   position: absolute;
+
   width: 630px;
+
   height: auto;
+
   right: -150px;
+
   top: -190px;
+
   opacity: 0.12;
+
   pointer-events: none;
+
   z-index: 0;
+
   animation: none;
 }
 
 .dashboard-header,
 .upload-card {
   position: relative;
+
   z-index: 2;
 }
 
 .dashboard-header {
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
+
   margin-bottom: 30px;
+
   gap: 20px;
 }
 
 .dashboard-header h1 {
   font-size: 31px;
+
   font-weight: 750;
+
   color: #092f34;
+
   margin-bottom: 6px;
 }
 
 .dashboard-header p {
   font-size: 15px;
+
   color: #71858a;
+
   line-height: 1.5;
 }
 
 .gene-tag {
   display: inline-flex;
+
   align-items: center;
+
   justify-content: center;
+
   white-space: nowrap;
+
   padding: 11px 18px;
+
   border-radius: 25px;
+
   background: #dff4f3;
+
   color: #00777c;
+
   font-size: 14px;
+
   font-weight: 700;
 }
 
 .dashboard-card {
   border-radius: 22px;
+
   background: rgba(255, 255, 255, 0.84);
+
   border: 1px solid rgba(23, 126, 129, 0.09);
+
   box-shadow: 0 12px 35px rgba(35, 105, 107, 0.07);
+
   backdrop-filter: blur(16px);
 }
 
 .upload-card {
   width: 100%;
+
   padding: 23px 25px 25px;
 }
 
 .upload-card h2 {
   display: flex;
+
   align-items: center;
+
   gap: 12px;
+
   font-size: 20px;
+
   color: #12363b;
+
   margin-bottom: 8px;
 }
 
 .upload-card h2 i {
   color: #079a9c;
+
   font-size: 20px;
 }
 
 .hint {
   font-size: 14px;
+
   line-height: 1.5;
+
   color: #829398;
 }
 
 .drop {
   display: flex;
+
   flex-direction: column;
+
   justify-content: center;
+
   align-items: center;
+
   gap: 8px;
+
   width: 100%;
+
   min-height: 142px;
+
   margin: 18px 0 13px;
+
   padding: 20px;
+
   border: 2px dashed #8bd7d5;
+
   border-radius: 18px;
+
   background: #f4fbfb;
+
   text-align: center;
+
   cursor: pointer;
+
   transition:
     background 0.15s ease,
     border-color 0.15s ease;
@@ -248,87 +366,125 @@ body {
 .drop:hover,
 .drop:focus-within {
   background: #e9f9f8;
+
   border-color: #07a4a6;
 }
 
 .drop i {
   font-size: 30px;
+
   color: #06a3a4;
 }
 
 .drop strong {
   font-size: 16px;
+
   color: #10363b;
 }
 
 .drop span {
   font-size: 12px;
+
   color: #7d969d;
 }
 
 .file-info {
   min-height: 20px;
+
   margin-bottom: 14px;
+
   color: #466c72;
+
   font-size: 13px;
+
   overflow-wrap: anywhere;
 }
 
 .field {
   display: flex;
+
   flex-direction: column;
+
   gap: 7px;
+
   width: min(100%, 440px);
+
   margin-bottom: 17px;
 }
 
 .field label {
   font-size: 14px;
+
   font-weight: 700;
 }
 
 .field select {
   width: 100%;
+
   min-height: 44px;
+
   padding: 9px 14px;
+
   border: 1px solid #c9e4e3;
+
   border-radius: 11px;
+
   background: #fff;
+
   color: #123c41;
+
   font: inherit;
 }
 
 .field select:focus {
   outline: 2px solid #c9f2f0;
+
   border-color: #079a9c;
 }
 
 .analysis-actions {
   display: flex;
+
   align-items: center;
+
   gap: 15px;
 }
 
 .analysis-actions button {
   display: inline-flex;
+
   align-items: center;
+
   gap: 10px;
+
   min-height: 43px;
+
   padding: 0 18px;
+
   border: 0;
+
   border-radius: 12px;
+
   color: #fff;
+
   background: linear-gradient(90deg, #087f81, #0da5a5);
+
   font: inherit;
+
   font-size: 13px;
+
   font-weight: 600;
+
   cursor: pointer;
+
   box-shadow: 0 10px 24px rgba(9, 142, 143, 0.17);
 }
 
 .analysis-actions button:disabled {
   background: #b3c9c9;
+
   box-shadow: none;
+
   cursor: not-allowed;
 }
 
@@ -338,7 +494,9 @@ body {
 
 .message {
   margin-top: 10px;
+
   font-size: 13px;
+
   color: #587b81;
 }
 
@@ -357,6 +515,7 @@ body {
 
   .nav-item {
     justify-content: center;
+
     padding: 0;
   }
 
@@ -370,7 +529,9 @@ body {
 
   .main-content {
     margin-left: 78px;
+
     width: calc(100% - 78px);
+
     padding: 25px 20px;
   }
 
@@ -380,7 +541,9 @@ body {
 
   .dashboard-header {
     align-items: flex-start;
+
     flex-wrap: wrap;
+
     gap: 12px;
   }
 }
@@ -397,4 +560,322 @@ body {
   .drop {
     min-height: 125px;
   }
+}
+
+/* chromatogram-viewer-v1 */
+
+.chromatogram-card {
+  position: relative;
+  z-index: 2;
+  padding: 24px;
+  margin-top: 24px;
+}
+
+.chromatogram-card h2 {
+  margin-bottom: 10px;
+}
+
+.chromatogram-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  margin: 18px 0;
+}
+
+.chromatogram-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.chromatogram-controls input {
+  width: 115px;
+  padding: 9px;
+  border: 1px solid #c9e4e3;
+  border-radius: 9px;
+  font: inherit;
+}
+
+.chromatogram-controls button {
+  padding: 10px 15px;
+  border: 1px solid #a8d5d3;
+  border-radius: 9px;
+  background: #e8f7f6;
+  color: #075d61;
+  cursor: pointer;
+}
+
+.chromatogram-scroll {
+  overflow-x: auto;
+  background: white;
+  border: 1px solid #d9ebeb;
+  border-radius: 12px;
+  padding: 8px;
+}
+
+#chromatogramCanvas {
+  display: block;
+  width: 100%;
+  min-width: 650px;
+  height: auto;
+  cursor: crosshair;
+}
+
+.chromatogram-detail {
+  margin-top: 12px;
+  color: #28585e;
+  font-size: 14px;
+}
+
+/* GeneGlass Quality Control Cards */
+
+.qc-results-grid {
+  display: grid;
+
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap: 14px;
+
+  margin-top: 18px;
+}
+
+.qc-result-card {
+  background: #f5fbfb;
+
+  border: 1px solid #d8ebeb;
+
+  border-radius: 14px;
+
+  padding: 18px;
+
+  min-width: 0;
+}
+
+.qc-result-label {
+  display: block;
+
+  font-size: 13px;
+
+  color: #6b858b;
+
+  margin-bottom: 10px;
+}
+
+.qc-result-value {
+  display: block;
+
+  font-size: 22px;
+
+  font-weight: 700;
+
+  color: #083b40;
+
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .qc-results-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .qc-results-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* GeneGlass chromatogram viewer — consolidated styles */
+.gg-viewer-v2 {
+  margin-top: 22px;
+}
+.gg-viewer-v2 .chromatogram-controls {
+  display: none;
+}
+.gg-viewer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: end;
+  margin: 18px 0 12px;
+}
+.gg-search-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #21484d;
+  font-size: 13px;
+  font-weight: 650;
+}
+.gg-search-row {
+  display: flex;
+  gap: 8px;
+}
+.gg-search-row input {
+  width: 145px;
+  padding: 10px 12px;
+  border: 1px solid #b9dedf;
+  border-radius: 10px;
+  font: inherit;
+  background: #fff;
+  color: #123c40;
+}
+.gg-viewer-toolbar button {
+  padding: 10px 14px;
+  border: 1px solid #9fd6d6;
+  border-radius: 10px;
+  background: #e9f7f7;
+  color: #006b72;
+  font-weight: 650;
+  cursor: pointer;
+}
+.gg-viewer-toolbar button:hover {
+  background: #d5efef;
+}
+.gg-zoom-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: #21484d;
+  font-size: 13px;
+  font-weight: 650;
+}
+.gg-mouse-hint {
+  color: #6c868c;
+  font-size: 13px;
+  padding-bottom: 10px;
+}
+.gg-trace-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 8px 0 16px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.gg-a {
+  color: #249e69;
+}
+.gg-c {
+  color: #2588d1;
+}
+.gg-g {
+  color: #333;
+}
+.gg-t {
+  color: #d84c4c;
+}
+.gg-low {
+  color: #b47d16;
+}
+.gg-viewer-v2 canvas {
+  touch-action: none;
+  user-select: none;
+  max-width: 100%;
+}
+.gg-chart-with-scale {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+.gg-chart-with-scale #chromatogramCanvas {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  display: block;
+}
+.gg-chart-with-scale .gg-scale-control {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 0 0 70px;
+}
+.gg-chart-with-scale .gg-scale-control label {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.gg-chart-with-scale .gg-scale-control input[type="range"] {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 16px;
+  height: 220px;
+  margin: 0;
+  accent-color: #008c95;
+  cursor: pointer;
+}
+.gg-chart-with-scale .gg-scale-control span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #476b73;
+}
+.gg-viewer-v2 .gg-overview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 12px;
+  color: #71878a;
+  font-size: 13px;
+}
+.gg-viewer-v2 .gg-overview > span:first-child {
+  min-width: 110px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #123d43;
+}
+.gg-viewer-v2 .gg-overview-range {
+  flex: 1;
+  min-width: 100px;
+  accent-color: #008c95;
+  cursor: pointer;
+}
+.gg-viewer-v2 .gg-total-bases {
+  min-width: 65px;
+  text-align: right;
+  font-size: 12px;
+  color: #476b73;
+}
+.gg-selected-base {
+  margin: 12px 0;
+  padding: 14px 16px;
+  background: #f2f9f9;
+  border: 1px solid #d9eded;
+  border-radius: 12px;
+  color: #164b50;
+  font-weight: 600;
+}
+.gg-quality-panel {
+  margin-top: 22px;
+  padding: 24px;
+}
+.gg-quality-panel #message {
+  display: block;
+}
+.gg-quality-panel .qc-results-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 800px) {
+  .gg-quality-panel .qc-results-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 520px) {
+  .gg-quality-panel .qc-results-grid {
+    grid-template-columns: 1fr;
+  }
+  .gg-quality-panel {
+    padding: 16px;
+  }
+}
+
+.upload-card[hidden],
+.chromatogram-card[hidden] {
+  display: none !important;
 }
