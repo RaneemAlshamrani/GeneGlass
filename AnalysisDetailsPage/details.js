@@ -86,11 +86,67 @@ showCards(qcDetails, [
 ]);
 
 
-      chromatogram.textContent =
-        "Chromatogram will appear here.";
+     
+try {
+  const traceResponse = await fetch(
+    `${apiBaseUrl}/analyses/${analysisId}/chromatogram`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
 
-      jak2Details.textContent =
-        "JAK2 target analysis will appear here.";
+  if (!traceResponse.ok) {
+    throw new Error("Unable to load chromatogram.");
+  }
+
+  const trace = await traceResponse.json();
+
+  window.GeneGlassChromatogram.render(trace);
+
+  document.getElementById("chromatogramLoading").hidden = true;
+
+} catch (traceError) {
+  console.error("Chromatogram error:", traceError);
+
+  document.getElementById("chromatogramLoading").textContent =
+    "Chromatogram could not be loaded.";
+}
+
+
+      
+try {
+  const jak2Response = await fetch(
+    `${apiBaseUrl}/analyses/${analysisId}/jak2-target`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+
+  if (!jak2Response.ok) {
+    throw new Error("Unable to load JAK2 target analysis.");
+  }
+
+  const jak2Data = await jak2Response.json();
+  const result = jak2Data.result;
+
+  showCards(jak2Details, [
+    ["AB1 Position", result.ab1_base_number],
+    ["Direction", result.direction],
+    ["Observed Base", result.observed_base],
+    ["Target Phred", result.quality_score],
+    ["Review Status", result.needs_review ? "Needs Review" : "Not flagged"]
+  ]);
+
+} catch (jak2Error) {
+  console.error("JAK2 analysis error:", jak2Error);
+  jak2Details.textContent =
+    "JAK2 target analysis could not be loaded.";
+}
+
 
       message.textContent = "";
     } catch (error) {
