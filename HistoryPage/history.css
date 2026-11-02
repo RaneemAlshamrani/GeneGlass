@@ -173,3 +173,124 @@
     flex-wrap: wrap;
   }
 }
+/* History Pagination */
+.history-card .pagination,
+.history-card .history-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+.history-card .pagination button,
+.history-card .history-pagination button {
+  border: 1px solid #cfe5e5;
+  background: #ffffff;
+  color: #087f81;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.history-card .pagination button:hover:not(:disabled),
+.history-card .history-pagination button:hover:not(:disabled) {
+  background: #087f81;
+  border-color: #087f81;
+  color: #ffffff;
+}
+
+.history-card .pagination button:disabled,
+.history-card .history-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.history-card .pagination span,
+.history-card .history-pagination span {
+  font-size: 13px;
+  font-weight: 600;
+  color: #355359;
+}
+/* History Analysis Details */
+.history-details-card {
+  margin-top: 22px;
+  padding: 24px;
+  background: #f8fcfc;
+  border: 1px solid #d9e9e9;
+  border-radius: 18px;
+}
+
+.history-details-card h3 {
+  margin: 0 0 20px;
+  color: #12363b;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.history-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.history-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #e4eeee;
+  border-radius: 12px;
+  min-width: 0;
+}
+
+.history-detail-item span {
+  color: #71858a;
+  font-size: 12px;
+}
+
+.history-detail-item strong {
+  color: #12363b;
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 800px) {
+  .history-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* History View Button */
+.history-view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 18px;
+  background: #eaf7f7;
+  color: #087f81;
+  border: 1px solid #cfe5e5;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.history-view-btn:hover:not(:disabled) {
+  background: #087f81;
+  color: white;
+  border-color: #087f81;
+}
+
+.history-view-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

@@ -171,17 +171,46 @@
 
       const details = await response.json();
 
-      const detailText = [
-        `File: ${details.original_file_name}`,
-        `Gene: ${details.gene}`,
-        `Target: ${details.target_variant}`,
-        `Result: ${getResultLabel(details)}`,
-        `QC Status: ${details.qc_status}`,
-        `Status: ${details.status}`,
-        `Summary: ${details.result_summary || "Not available"}`,
-      ];
+    
+        message.replaceChildren();
 
-      message.textContent = detailText.join(" | ");
+const detailsCard = document.createElement("div");
+detailsCard.className = "history-details-card";
+
+const heading = document.createElement("h3");
+heading.textContent = "Analysis Details";
+detailsCard.appendChild(heading);
+
+const detailsGrid = document.createElement("div");
+detailsGrid.className = "history-details-grid";
+
+const fields = [
+  ["File Name", details.original_file_name],
+  ["Gene", details.gene],
+  ["Target Variant", details.target_variant],
+  ["Result", getResultLabel(details)],
+  ["QC Status", details.qc_status],
+  ["Analysis Status", details.status],
+  ["Summary", details.result_summary || "Not available"],
+];
+
+fields.forEach(([label, value]) => {
+  const item = document.createElement("div");
+  item.className = "history-detail-item";
+
+  const labelElement = document.createElement("span");
+  labelElement.textContent = label;
+
+  const valueElement = document.createElement("strong");
+  valueElement.textContent = value ?? "—";
+
+  item.append(labelElement, valueElement);
+  detailsGrid.appendChild(item);
+});
+
+detailsCard.appendChild(detailsGrid);
+message.appendChild(detailsCard);
+
     } catch (error) {
       message.textContent = error.message;
     } finally {
@@ -210,10 +239,13 @@
 
       viewButton.type = "button";
       viewButton.textContent = "View";
+      viewButton.className = "history-view-btn";
 
       viewButton.addEventListener("click", () => {
-        showAnalysisDetails(analysis.id, viewButton);
-      });
+  window.location.href =
+    `../AnalysisDetailsPage/details.html?id=${analysis.id}`;
+});
+
 
       actions.appendChild(viewButton);
       tr.appendChild(actions);

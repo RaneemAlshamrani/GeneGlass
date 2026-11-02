@@ -13,20 +13,16 @@
     heading.textContent = "Quality Control Results";
     message.appendChild(heading);
 
+   
     const results = [
-      ["Analysis ID", data.id],
       ["Sequence length", qc.sequence_length],
-      ["Cleaned sequence length", qc.cleaned_sequence_length],
       ["Average quality", qc.average_quality],
-      ["Minimum quality", qc.minimum_quality],
-      ["Maximum quality", qc.maximum_quality],
       ["Low-quality bases", qc.low_quality_count],
-      ["Low-quality percentage", `${qc.low_quality_percentage}%`],
       ["Retained percentage", `${qc.retained_percentage}%`],
       ["Quality assessment", qc.quality_assessment],
       ["QC status", data.qc_status],
-      ["Variant detection", "Pending"],
     ];
+
 
     const grid = document.createElement("div");
     grid.className = "qc-results-grid";
@@ -47,6 +43,43 @@
     });
 
     message.appendChild(grid);
+
+    const details = document.createElement("details");
+    details.className = "jak2-peak-details";
+
+    const summary = document.createElement("summary");
+    summary.textContent = "Show More QC Details";
+    details.appendChild(summary);
+
+    const extraGrid = document.createElement("div");
+    extraGrid.className = "jak2-peak-grid";
+
+    const extraResults = [
+      ["Analysis ID", data.id],
+      ["Cleaned sequence length", qc.cleaned_sequence_length],
+      ["Minimum quality", qc.minimum_quality],
+      ["Maximum quality", qc.maximum_quality],
+      ["Low-quality percentage", `${qc.low_quality_percentage}%`],
+      ["Variant detection", "Pending"],
+    ];
+
+    extraResults.forEach(([label, value]) => {
+      const item = document.createElement("div");
+      item.className = "jak2-peak-item";
+
+      const name = document.createElement("span");
+      name.textContent = label;
+
+      const number = document.createElement("strong");
+      number.textContent = value ?? "N/A";
+
+      item.append(name, number);
+      extraGrid.appendChild(item);
+    });
+
+    details.appendChild(extraGrid);
+    message.appendChild(details);
+
     const chromSection = document.getElementById("chromatogramSection");
     let qcPanel = document.getElementById("ggQualityPanel");
     if (!qcPanel) {
@@ -56,6 +89,101 @@
       chromSection.after(qcPanel);
     }
     qcPanel.appendChild(message);
+  }
+
+
+  function showJak2Results(data) {
+    const result = data.result;
+    const peaks = result.peak_analysis || {};
+
+    let panel = document.getElementById("jak2ResultsPanel");
+
+    if (!panel) {
+      panel = document.createElement("section");
+      panel.id = "jak2ResultsPanel";
+      panel.className = "dashboard-card";
+
+      document.getElementById("ggQualityPanel").after(panel);
+    }
+
+    panel.replaceChildren();
+
+    const heading = document.createElement("h3");
+    heading.textContent = "JAK2 V617F - Target Analysis";
+    panel.appendChild(heading);
+
+    const grid = document.createElement("div");
+    grid.className = "qc-results-grid";
+
+    const results = [
+      ["AB1 Position", result.ab1_base_number],
+      ["Direction", result.direction],
+      ["Observed Base", result.observed_base],
+      ["Target Phred", result.quality_score],
+      [
+        "Review Status",
+        result.needs_review ? "Needs Review" : "Not flagged"
+      ]
+    ];
+
+    results.forEach(([label, value]) => {
+      const card = document.createElement("div");
+      card.className = "qc-result-card";
+
+      const labelElement = document.createElement("span");
+      labelElement.className = "qc-result-label";
+      labelElement.textContent = label;
+
+      const valueElement = document.createElement("strong");
+      valueElement.className = "qc-result-value";
+      valueElement.textContent = value ?? "N/A";
+
+
+      card.append(labelElement, valueElement);
+      grid.appendChild(card);
+    });
+
+    panel.appendChild(grid);
+
+    const details = document.createElement("details");
+    details.className = "jak2-peak-details";
+
+    const summary = document.createElement("summary");
+    summary.textContent = "Show Peak Details";
+    details.appendChild(summary);
+
+    const peakGrid = document.createElement("div");
+    peakGrid.className = "jak2-peak-grid";
+
+    const peakResults = [
+      ["A Peak", peaks.peak_heights?.A],
+      ["C Peak", peaks.peak_heights?.C],
+      ["G Peak", peaks.peak_heights?.G],
+      ["T Peak", peaks.peak_heights?.T],
+      ["Overlap Ratio", peaks.overlap_ratio]
+    ];
+
+    peakResults.forEach(([label, value]) => {
+      const item = document.createElement("div");
+      item.className = "jak2-peak-item";
+
+      const name = document.createElement("span");
+      name.textContent = label;
+
+      const number = document.createElement("strong");
+      number.textContent = value ?? "N/A";
+
+      item.append(name, number);
+      peakGrid.appendChild(item);
+    });
+
+    details.appendChild(peakGrid);
+    panel.appendChild(details);
+
+    const note = document.createElement("p");
+    note.textContent =
+      "Preliminary research analysis only. Results do not confirm or exclude a mutation.";
+    panel.appendChild(note);
   }
 
   // geneglass-viewer-v2: drag, wheel zoom, search and overview slider.
@@ -447,6 +575,38 @@
         note.textContent = traceError.message;
         message.appendChild(note);
       }
+
+        // Load preliminary JAK2 analysis.
+        try {
+          const jak2Response = await fetch(
+            `${apiBaseUrl}/analyses/${data.id}/jak2-target`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (!jak2Response.ok) {
+            throw new Error("JAK2 analysis unavailable.");
+          }
+
+          const jak2Data = await jak2Response.json();
+          showJak2Results(jak2Data);
+
+        } catch (jak2Error) {
+          console.error("JAK2 analysis:", jak2Error);
+
+          const oldPanel = document.getElementById("jak2ResultsPanel");
+          if (oldPanel) oldPanel.remove();
+
+          const note = document.createElement("p");
+          note.textContent =
+            "Preliminary JAK2 analysis is unavailable. No mutation conclusion can be made.";
+
+          document.getElementById("ggQualityPanel")?.appendChild(note);
+        }
+
     } catch (error) {
       message.textContent = error.message;
     } finally {

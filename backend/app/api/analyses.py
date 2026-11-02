@@ -285,3 +285,51 @@ def get_analysis_chromatogram(
         return read_chromatogram(analysis.stored_file_path)
     except (ValueError, OSError, FileNotFoundError) as exc:
         raise HTTPException(status_code=422, detail="Chromatogram unavailable for this AB1 file") from exc
+
+@analyses_router.get("/{analysis_id}/jak2-target")
+def get_jak2_target_analysis(
+    analysis_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_db)],
+) -> dict:
+    """Return preliminary JAK2 target and peak analysis."""
+
+    from app.services.ab1_reader import read_chromatogram
+    from app.services.variant_detector import analyze_jak2_chromatogram
+
+    analysis = session.scalar(
+        select(Analysis).where(
+            Analysis.id == analysis_id,
+            Analysis.user_id == current_user.id,
+        )
+    )
+
+    if analysis is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Analysis not found",
+        )
+
+    if analysis.gene != "JAK2":
+        raise HTTPException(
+            status_code=400,
+            detail="This endpoint supports JAK2 only.",
+        )
+
+    try:
+        data = read_chromatogram(analysis.stored_file_path)
+        result = analyze_jak2_chromatogram(data)
+
+    except (ValueError, FileNotFoundError, OSError) as exc:
+        raise HTTPException(
+            status_code=422,
+            detail="JAK2 target analysis unavailable.",
+        ) from exc
+
+    return {
+        "analysis_id": analysis.id,
+        "gene": analysis.gene,
+        "target_variant": analysis.target_variant,
+        "analysis_type": "preliminary",
+        "result": result,
+    }

@@ -1,0 +1,94 @@
+
+/* GeneGlass - Analysis Details */
+
+.details-card {
+  position: relative;
+  z-index: 2;
+  padding: 25px 27px;
+  margin-bottom: 22px;
+  border-radius: 22px;
+}
+
+.details-card h2 {
+  font-size: 19px;
+  font-weight: 700;
+  color: #12363b;
+  margin: 0 0 22px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.details-item {
+  background: #f5fbfb;
+  border: 1px solid #e0eeee;
+  border-radius: 13px;
+  padding: 18px 20px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.details-label {
+  color: #71858a;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.details-value {
+  color: #12363b;
+  font-size: 20px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.details-card p {
+  color: #71858a;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+#detailsChromatogram {
+  width: 100%;
+  min-height: 180px;
+}
+
+#detailsChromatogram canvas {
+  display: block;
+  width: 100%;
+  border: 1px solid #dceaea;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+#detailsMessage {
+  position: relative;
+  z-index: 2;
+  color: #607e82;
+  font-size: 13px;
+  margin: 12px 0;
+}
+
+@media (max-width: 900px) {
+  .details-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .details-card {
+    padding: 20px 16px;
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .details-value {
+    font-size: 18px;
+  }
+}

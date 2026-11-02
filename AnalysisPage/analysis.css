@@ -879,3 +879,195 @@ body {
 .chromatogram-card[hidden] {
   display: none !important;
 }
+
+/* GeneGlass JAK2 Target Analysis */
+#jak2ResultsPanel {
+  position: relative;
+  z-index: 2;
+  margin-top: 22px;
+  padding: 24px;
+  overflow: hidden;
+}
+
+#jak2ResultsPanel h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #12363b;
+  margin: 0 0 18px;
+}
+
+#jak2ResultsPanel .qc-results-grid {
+  margin-top: 0;
+  gap: 12px;
+}
+
+#jak2ResultsPanel .qc-result-card {
+  padding: 14px 16px;
+  background: #f5fbfb;
+  border: 1px solid #d8ebeb;
+  border-radius: 14px;
+}
+
+#jak2ResultsPanel .qc-result-label {
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #6b858b;
+}
+
+#jak2ResultsPanel .qc-result-value {
+  font-size: 18px;
+  color: #083b40;
+}
+
+#jak2ResultsPanel > p {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #e9f7f7;
+  color: #476b73;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 800px) {
+  #jak2ResultsPanel {
+    padding: 18px;
+  }
+}
+
+/* Consistent typography for GeneGlass result panels */
+
+.gg-quality-panel,
+#jak2ResultsPanel {
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 24px;
+}
+
+.gg-quality-panel #message > strong,
+#jak2ResultsPanel h3 {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #587b81;
+  margin: 0 0 20px;
+}
+
+.gg-quality-panel .qc-results-grid,
+#jak2ResultsPanel .qc-results-grid {
+  margin-top: 0;
+  gap: 14px;
+}
+
+.gg-quality-panel .qc-result-card,
+#jak2ResultsPanel .qc-result-card {
+  padding: 18px 22px;
+  min-height: 115px;
+  background: #f5fbfb;
+  border: 1px solid #d8ebeb;
+  border-radius: 16px;
+}
+
+.gg-quality-panel .qc-result-label,
+#jak2ResultsPanel .qc-result-label {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: #6b858b;
+  margin-bottom: 10px;
+}
+
+.gg-quality-panel .qc-result-value,
+#jak2ResultsPanel .qc-result-value {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #083b40;
+}
+
+@media (max-width: 520px) {
+  .gg-quality-panel,
+  #jak2ResultsPanel {
+    padding: 16px;
+  }
+}
+
+
+
+/* Shared collapsible details styling */
+
+.gg-quality-panel .jak2-peak-details,
+#jak2ResultsPanel .jak2-peak-details {
+  margin-top: 20px;
+  border: 1px solid #d8ebeb;
+  border-radius: 14px;
+  background: #f5fbfb;
+  overflow: hidden;
+}
+
+.gg-quality-panel .jak2-peak-details summary,
+#jak2ResultsPanel .jak2-peak-details summary {
+  padding: 15px 18px;
+  color: #087f81;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gg-quality-panel .jak2-peak-details summary:hover,
+#jak2ResultsPanel .jak2-peak-details summary:hover {
+  background: #e9f7f7;
+}
+
+.gg-quality-panel .jak2-peak-grid,
+#jak2ResultsPanel .jak2-peak-grid {
+  display: grid;
+  gap: 12px;
+  padding: 0 18px 18px;
+}
+
+.gg-quality-panel .jak2-peak-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#jak2ResultsPanel .jak2-peak-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.gg-quality-panel .jak2-peak-item,
+#jak2ResultsPanel .jak2-peak-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: white;
+  min-width: 0;
+}
+
+.gg-quality-panel .jak2-peak-item span,
+#jak2ResultsPanel .jak2-peak-item span {
+  color: #6b858b;
+  font-size: 12px;
+}
+
+.gg-quality-panel .jak2-peak-item strong,
+#jak2ResultsPanel .jak2-peak-item strong {
+  color: #083b40;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 800px) {
+  .gg-quality-panel .jak2-peak-grid,
+  #jak2ResultsPanel .jak2-peak-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .gg-quality-panel .jak2-peak-grid,
+  #jak2ResultsPanel .jak2-peak-grid {
+    grid-template-columns: 1fr;
+  }
+}
