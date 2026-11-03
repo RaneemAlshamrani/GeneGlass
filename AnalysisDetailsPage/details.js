@@ -1,9 +1,9 @@
 
+
 /* GeneGlass - Saved Analysis Details */
 
 (() => {
   const fileDetails = document.getElementById("fileDetails");
-  const qcDetails = document.getElementById("qcDetails");
   const chromatogram = document.getElementById("detailsChromatogram");
   const jak2Details = document.getElementById("jak2Details");
   const message = document.getElementById("detailsMessage");
@@ -61,91 +61,50 @@
 
       showCards(fileDetails, [
         ["File Name", details.original_file_name],
-        ["Gene", details.gene],
-        ["Target Variant", details.target_variant],
-        ["Analysis Status", details.status],
-        ["QC Status", details.qc_status],
         ["Date", details.created_at
           ? new Date(details.created_at).toLocaleDateString()
           : "N/A"],
       ]);
 
-      
-const qc = details.quality_control || {};
-
-showCards(qcDetails, [
-  ["Sequence Length", qc.sequence_length],
-  ["Average Quality", qc.average_quality],
-  ["Low Quality Bases", qc.low_quality_count],
-  ["Retained Percentage",
-    qc.retained_percentage != null
-      ? `${qc.retained_percentage}%`
-      : "N/A"],
-  ["Quality Assessment", qc.quality_assessment],
-  ["QC Status", details.qc_status],
-]);
-
 
      
 try {
-  const traceResponse = await fetch(
-    `${apiBaseUrl}/analyses/${analysisId}/chromatogram`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    }
-  );
-
-  if (!traceResponse.ok) {
-    throw new Error("Unable to load chromatogram.");
-  }
-
-  const trace = await traceResponse.json();
-
-  window.GeneGlassChromatogram.render(trace);
-
-  document.getElementById("chromatogramLoading").hidden = true;
-
-} catch (traceError) {
-  console.error("Chromatogram error:", traceError);
-
-  document.getElementById("chromatogramLoading").textContent =
-    "Chromatogram could not be loaded.";
-}
-
-
-      
-try {
-  const jak2Response = await fetch(
-    `${apiBaseUrl}/analyses/${analysisId}/jak2-target`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    }
-  );
-
-  if (!jak2Response.ok) {
-    throw new Error("Unable to load JAK2 target analysis.");
-  }
-
-  const jak2Data = await jak2Response.json();
-  const result = jak2Data.result;
-
-  showCards(jak2Details, [
-    ["AB1 Position", result.ab1_base_number],
-    ["Direction", result.direction],
-    ["Observed Base", result.observed_base],
-    ["Target Phred", result.quality_score],
-    ["Review Status", result.needs_review ? "Needs Review" : "Not flagged"]
+  const [traceResponse, jak2Response] = await Promise.all([
+    fetch(`${apiBaseUrl}/analyses/${analysisId}/chromatogram`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+    fetch(`${apiBaseUrl}/analyses/${analysisId}/jak2-target`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
   ]);
 
-} catch (jak2Error) {
-  console.error("JAK2 analysis error:", jak2Error);
-  jak2Details.textContent =
-    "JAK2 target analysis could not be loaded.";
+  let targetBase = null;
+  if (jak2Response.ok) {
+    const jak2Data = await jak2Response.json();
+    const result = jak2Data.result || {};
+    targetBase = Number(result.ab1_base_number);
+    showCards(jak2Details, [
+      ["AB1 Position", result.ab1_base_number],
+      ["Direction", result.direction],
+      ["Review Status", result.needs_review ? "Needs Review" : "Not flagged"]
+    ]);
+  } else {
+    jak2Details.textContent = "JAK2 target analysis could not be loaded.";
+  }
+
+  if (!traceResponse.ok) throw new Error("Unable to load chromatogram.");
+  const trace = await traceResponse.json();
+  if (!window.GeneGlassChromatogram) throw new Error("Chromatogram viewer script missing.");
+  await window.GeneGlassChromatogram.render(trace, {
+    targetBase: Number.isInteger(targetBase) && targetBase > 0 ? targetBase : undefined
+  });
+  document.getElementById("chromatogramLoading").hidden = true;
+} catch (error) {
+  console.error("Chromatogram / JAK2 error:", error);
+  document.getElementById("chromatogramLoading").textContent =
+    "Chromatogram could not be loaded: " + error.message;
 }
+
 
 
       message.textContent = "";

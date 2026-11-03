@@ -92,3 +92,7 @@
     font-size: 18px;
   }
 }
+
+/* Compact summary cards: file/date and target position/direction/review. */
+#fileDetails { grid-template-columns: minmax(0, 2fr) minmax(150px, 1fr); }
+@media (max-width: 600px) { #fileDetails { grid-template-columns: 1fr; } }
