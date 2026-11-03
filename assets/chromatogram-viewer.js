@@ -1,4 +1,3 @@
-
 window.GeneGlassChromatogram = {
   render: function (trace) {
     const section = document.getElementById("chromatogramSection");
@@ -23,7 +22,7 @@ window.GeneGlassChromatogram = {
     }
 
     section.hidden = false;
-section.classList.add("gg-viewer-v2");
+    section.classList.add("gg-viewer-v2");
     const ctx = canvas.getContext("2d");
     const colors = {
       A: "#249e69",
@@ -39,6 +38,8 @@ section.classList.add("gg-viewer-v2");
     let drag = null;
 
     section.replaceChildren();
+    const title = document.createElement("h2");
+    title.textContent = "Chromatogram Viewer";
 
     const toolbar = document.createElement("div");
     toolbar.className = "gg-viewer-toolbar";
@@ -50,11 +51,6 @@ section.classList.add("gg-viewer-v2");
           <button class="gg-go-button" type="button">Go</button>
         </span>
       </label>
-      <div class="gg-zoom-controls">
-        <span>Zoom</span>
-        <button class="gg-zoom-out" type="button">−</button>
-        <button class="gg-zoom-in" type="button">+</button>
-      </div>
       <span class="gg-mouse-hint">Drag to move · Mouse wheel to zoom</span>
     `;
 
@@ -78,7 +74,6 @@ section.classList.add("gg-viewer-v2");
       <span class="gg-c">● C</span>
       <span class="gg-g">● G</span>
       <span class="gg-t">● T</span>
-      <span class="gg-low">▧ Low quality (Q &lt; 20)</span>
     `;
 
     const overview = document.createElement("div");
@@ -92,7 +87,7 @@ section.classList.add("gg-viewer-v2");
     const selectedInfo = document.createElement("div");
     selectedInfo.className = "gg-selected-base";
 
-    section.append(toolbar, legend, chartWrapper, overview, selectedInfo, detail);
+    section.append(title, toolbar, legend, chartWrapper, overview, selectedInfo, detail);
 
     const goInput = toolbar.querySelector(".gg-go-base");
     const verticalSlider = scaleControl.querySelector(".gg-vertical-scale");
@@ -138,19 +133,6 @@ section.classList.add("gg-viewer-v2");
 
       for (let i = first; i <= last; i++) {
         const px = x(positions[i]);
-
-        if ((quality[i] ?? 0) < 20) {
-          const l = i === 0 ? positions[i] - 7 : (positions[i - 1] + positions[i]) / 2;
-          const r = i === n - 1 ? positions[i] + 7 : (positions[i] + positions[i + 1]) / 2;
-          const a = x(Math.max(left, l));
-          const b = x(Math.min(right, r));
-
-          if (b > a) {
-            ctx.fillStyle = "rgba(235, 176, 46, .16)";
-            ctx.fillRect(a, top, b - a, bottom - top);
-          }
-        }
-
         if (selected === i) {
           ctx.fillStyle = "rgba(0, 132, 139, .10)";
           ctx.fillRect(px - 8, top, 16, bottom - top + 22);
@@ -163,13 +145,6 @@ section.classList.add("gg-viewer-v2");
           ctx.setLineDash([]);
         }
 
-        ctx.fillStyle = colors[trace.sequence[i].toUpperCase()] || "#666";
-        ctx.font = "bold 12px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText(trace.sequence[i], px, h - 35);
-        ctx.fillStyle = "#71858a";
-        ctx.font = "10px Arial";
-        ctx.fillText(String(i + 1), px, h - 18);
         labels.push({ x: px, index: i });
       }
 
@@ -186,6 +161,47 @@ section.classList.add("gg-viewer-v2");
           }
         }
         ctx.stroke();
+      }
+
+      // Keep all original signal peaks. Only thin text labels when there is
+      // insufficient horizontal space, so letters/numbers never collide.
+      const selectedX = selected !== null && selected >= first && selected <= last
+        ? x(positions[selected]) : null;
+      const baseFont = "bold 12px Arial";
+      const numberFont = "10px Arial";
+      ctx.textAlign = "center";
+      const labelCandidates = labels.map(({ x: px, index }) => {
+        const base = trace.sequence[index].toUpperCase();
+        ctx.font = baseFont;
+        const baseWidth = ctx.measureText(base).width;
+        ctx.font = numberFont;
+        const numberWidth = ctx.measureText(String(index + 1)).width;
+        return { x: px, index, base, halfWidth: Math.max(baseWidth, numberWidth) / 2 + 5 };
+      });
+
+      let lastRight = -Infinity;
+      for (const label of labelCandidates) {
+        if (label.index === selected) continue;
+        if (selectedX !== null &&
+            Math.abs(label.x - selectedX) < label.halfWidth + 15) continue;
+        if (label.x - label.halfWidth < lastRight) continue;
+        if (label.x + label.halfWidth > w - 4) continue;
+        ctx.font = baseFont;
+        ctx.fillStyle = colors[label.base] || "#666";
+        ctx.fillText(label.base, label.x, h - 35);
+        ctx.font = numberFont;
+        ctx.fillStyle = "#71858a";
+        ctx.fillText(String(label.index + 1), label.x, h - 18);
+        lastRight = label.x + label.halfWidth;
+      }
+      // The selected base remains visible even when zoomed far out.
+      if (selectedX !== null) {
+        ctx.font = baseFont;
+        ctx.fillStyle = colors[trace.sequence[selected].toUpperCase()] || "#666";
+        ctx.fillText(trace.sequence[selected], selectedX, h - 35);
+        ctx.font = numberFont;
+        ctx.fillStyle = "#00848b";
+        ctx.fillText(String(selected + 1), selectedX, h - 18);
       }
 
       detail.textContent =
@@ -230,9 +246,6 @@ section.classList.add("gg-viewer-v2");
     };
 
     goInput.oninput = () => goInput.setCustomValidity("");
-
-    toolbar.querySelector(".gg-zoom-in").onclick = () => zoom(count - 10);
-    toolbar.querySelector(".gg-zoom-out").onclick = () => zoom(count + 10);
 
     horizontalSlider.oninput = () => {
       const anchor = selected ?? first + (count - 1) / 2;

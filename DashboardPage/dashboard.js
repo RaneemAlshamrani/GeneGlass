@@ -43,11 +43,10 @@ function updateStatCards(data) {
     ".stats-grid .stat-card"
   );
 
-  if (cards.length < 3) return;
+  if (cards.length < 2) return;
 
   const totalElement = cards[0].querySelector(".stat-info h2");
   const resultElement = cards[1].querySelector(".stat-info h2");
-  const qcElement = cards[2].querySelector(".stat-info h2");
 
   if (totalElement) {
     totalElement.textContent = data.total_analyses ?? 0;
@@ -58,10 +57,6 @@ function updateStatCards(data) {
       `${data.positive ?? 0} / ${data.negative ?? 0}`;
   }
 
-  if (qcElement) {
-    qcElement.textContent =
-      `${data.qc_success_rate ?? 0}%`;
-  }
 }
 
 /* =========================================================
@@ -79,8 +74,7 @@ function updateGeneChart(data) {
   const distribution = data.gene_distribution || {};
 
   const jak2 = distribution.JAK2 ?? 0;
-  const calr = distribution.CALR ?? 0;
-  const mpl = distribution.MPL ?? 0;
+ 
 
   if (geneChart) {
     geneChart.destroy();
@@ -90,16 +84,12 @@ function updateGeneChart(data) {
     type: "doughnut",
 
     data: {
-      labels: ["JAK2", "CALR", "MPL"],
+      labels: ["JAK2"],
 
       datasets: [
         {
-          data: [jak2, calr, mpl],
-          backgroundColor: [
-            "#056d70",
-            "#0ca9a2",
-            "#79d8d4",
-          ],
+          data: [jak2],
+          backgroundColor: ["#056d70"],
           borderWidth: 0,
           hoverOffset: 3,
         },
@@ -121,17 +111,15 @@ function updateGeneChart(data) {
 
   updateText(
     ".donut-center strong",
-    data.total_analyses ?? 0
+    jak2
   );
 
   const geneValues = document.querySelectorAll(
     ".gene-list > div strong"
   );
 
-  if (geneValues.length >= 3) {
+  if (geneValues.length >= 1) {
     geneValues[0].textContent = jak2;
-    geneValues[1].textContent = calr;
-    geneValues[2].textContent = mpl;
   }
 }
 
@@ -430,4 +418,5 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener("geneglass:auth-ready", () => {
   loadDashboardSummary();
 });
+
 

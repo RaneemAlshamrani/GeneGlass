@@ -288,7 +288,9 @@
   color: #183c40;
   font: inherit;
   font-size: 14px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .password-form input:focus {
@@ -310,11 +312,65 @@
 }
 
 @media (max-width: 600px) {
-  .password-form {
-    max-width: 100%;
-  }
-
   .password-form button {
     width: 100%;
   }
+}
+/* Collapsible password section: closed until the specialist chooses to open it. */
+.password-card {
+  padding: 20px 28px;
+}
+.password-toggle-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  cursor: pointer;
+  list-style: none;
+}
+.password-toggle-heading::-webkit-details-marker {
+  display: none;
+}
+.password-toggle-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.password-toggle-copy strong {
+  font-size: 19px;
+  color: #10363b;
+}
+.password-toggle-copy small {
+  font-size: 13px;
+  color: #789098;
+}
+.password-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+.password-toggle[open] .password-toggle-button .fa-chevron-down {
+  transform: rotate(180deg);
+}
+.password-toggle-content {
+  border-top: 1px solid #e0eeee;
+  margin-top: 20px;
+  padding-top: 4px;
+}
+.password-toggle-content .password-form {
+  margin-top: 14px;
+}
+@media (max-width: 600px) {
+  .password-toggle-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .password-toggle-button {
+    width: auto;
+  }
+}
+/* Consistent spacing below the profile cards */
+.profile-grid + .password-card {
+  margin-top: 20px;
 }

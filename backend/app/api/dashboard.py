@@ -97,8 +97,6 @@ def get_dashboard_summary(
 
     gene_distribution = {
         "JAK2": 0,
-        "CALR": 0,
-        "MPL": 0,
     }
 
     for gene, count in gene_rows:

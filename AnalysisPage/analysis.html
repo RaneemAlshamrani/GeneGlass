@@ -11,6 +11,7 @@
     />
     <script src="../assets/config.js" defer></script>
     <script src="../assets/auth.js" defer></script>
+    <script src="../assets/chromatogram-viewer.js" defer></script>
     <script src="analysis.js" defer></script>
   </head>
 
@@ -36,9 +37,9 @@
             ><span>History</span></a
           >
           <a href="../ProfilePage/profile.html" class="nav-item">
-    <i class="fa-solid fa-user"></i>
-    <span>Profile</span>
-</a>
+            <i class="fa-solid fa-user"></i>
+            <span>Profile</span>
+          </a>
         </nav>
         <img
           class="sidebar-dna"
@@ -80,12 +81,6 @@
           <div class="file-info" id="fileInfo" role="status">
             No file selected
           </div>
-          <div class="field">
-            <label for="gene">Target gene</label
-            ><select id="gene">
-              <option value="JAK2">JAK2 — V617F (c.1849G&gt;T)</option>
-            </select>
-          </div>
           <div class="analysis-actions">
             <button id="analyze" type="button" disabled>
               Start Analysis <i class="fa-solid fa-arrow-right"></i>
@@ -93,20 +88,19 @@
           </div>
           <p id="message" class="message" role="status"></p>
         </section>
-
-        <!-- chromatogram-viewer-v1 -->
-        <section class="dashboard-card chromatogram-card" id="chromatogramSection" hidden>
-          <h2><i class="fa-solid fa-chart-line"></i> Chromatogram Viewer</h2>
-          <p class="hint">Raw AB1 signal. Select a base range to inspect the peaks and quality scores.</p>
-          <div class="chromatogram-controls">
-            <label for="chromStart">First base <input type="number" id="chromStart" min="1" value="1"></label>
-            <label for="chromCount">Bases shown <input type="number" id="chromCount" min="5" max="100" value="30"></label>
-            <button type="button" id="chromPrevious">Previous</button>
-            <button type="button" id="chromNext">Next</button>
-          </div>
-          <div class="chromatogram-scroll"><canvas id="chromatogramCanvas" width="1050" height="320" aria-label="AB1 fluorescence chromatogram"></canvas></div>
-          <p class="chromatogram-detail" id="chromatogramDetail">Click a base label to see its quality.</p>
-          <p class="hint">Highlighted regions have Phred quality below 20. Peak labels use original AB1 base positions.</p>
+        <section
+          class="dashboard-card chromatogram-card"
+          id="chromatogramSection"
+          hidden
+        >
+          <h2>Chromatogram Viewer</h2>
+          <canvas
+            id="chromatogramCanvas"
+            width="1200"
+            height="350"
+            aria-label="AB1 chromatogram"
+          ></canvas>
+          <p id="chromatogramDetail" class="chromatogram-detail"></p>
         </section>
       </main>
     </div>
