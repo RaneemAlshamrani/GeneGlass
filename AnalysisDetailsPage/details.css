@@ -149,8 +149,22 @@
 
 .research-source-link {
   grid-column: 1 / -1;
+  width: fit-content;
+  padding: 9px 13px;
+  border: 1px solid #8fcfd2;
+  border-radius: 9px;
+  background: #eaf8f8;
   color: #007b82;
   font-weight: 700;
+  text-decoration: none;
+}
+
+.research-source-link:hover {
+  background: #d9f1f1;
+}
+
+.research-search-link {
+  background: #fff;
 }
 
 .research-empty {

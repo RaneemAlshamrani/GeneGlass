@@ -252,3 +252,27 @@ def test_research_lookup_sends_hgvs_only_and_caches_clinvar(
     finally:
         app.dependency_overrides.clear()
         test_engine.dispose()
+
+
+def test_reverse_candidate_exposes_raw_and_reference_orientations() -> None:
+    candidate = CandidateVariant(
+        analysis_id=1,
+        reference_accession="NM_004972.4",
+        transcript_position=2332,
+        coding_position=1865,
+        reference_allele="A",
+        observed_allele="G",
+        hgvs="NM_004972.4:c.1865A>G",
+        ab1_base_number=180,
+        direction="Reverse",
+        phred_quality=62,
+        review_status="Needs Review",
+        lookup_eligible=False,
+    )
+
+    payload = analyses_api._serialize_candidate(candidate)
+
+    assert payload["reference_oriented_change"] == "A>G"
+    assert payload["raw_ab1_change"] == "T>C"
+    assert payload["raw_ab1_observed_allele"] == "C"
+    assert "NM_004972.4%3Ac.1865A%3EG" in payload["clinvar_search_url"]

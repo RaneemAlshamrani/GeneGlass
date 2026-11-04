@@ -75,6 +75,13 @@
       title.textContent = candidate.hgvs;
       card.appendChild(title);
       appendResearchField(card, "AB1 base", String(candidate.ab1_base_number));
+      appendResearchField(card, "Read direction", candidate.direction);
+      appendResearchField(card, "Raw AB1 change", candidate.raw_ab1_change);
+      appendResearchField(
+        card,
+        "Reference-oriented change",
+        candidate.reference_oriented_change
+      );
       appendResearchField(card, "Phred", candidate.phred_quality == null
         ? "N/A" : `Q${candidate.phred_quality}`);
       appendResearchField(card, "Candidate status", candidate.review_status);
@@ -109,9 +116,18 @@
           link.href = clinvar.source_url;
           link.target = "_blank";
           link.rel = "noopener noreferrer";
-          link.textContent = "Open the source record in ClinVar";
+          link.textContent = "Open the matched ClinVar record";
           card.appendChild(link);
         }
+      }
+      if (candidate.clinvar_search_url) {
+        const searchLink = document.createElement("a");
+        searchLink.className = "research-source-link research-search-link";
+        searchLink.href = candidate.clinvar_search_url;
+        searchLink.target = "_blank";
+        searchLink.rel = "noopener noreferrer";
+        searchLink.textContent = "Search this reference-oriented candidate in ClinVar";
+        card.appendChild(searchLink);
       }
       researchResults.appendChild(card);
     });

@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 from math import ceil
 from pathlib import Path
 from typing import Annotated
+from urllib.parse import urlencode
 
 from fastapi import (
     APIRouter,
@@ -69,6 +70,14 @@ def _serialize_external_annotation(annotation: ExternalAnnotation) -> dict:
 
 
 def _serialize_candidate(candidate: CandidateVariant) -> dict:
+    complement = str.maketrans("ACGT", "TGCA")
+    if candidate.direction == "Reverse":
+        raw_reference_allele = candidate.reference_allele.translate(complement)
+        raw_observed_allele = candidate.observed_allele.translate(complement)
+    else:
+        raw_reference_allele = candidate.reference_allele
+        raw_observed_allele = candidate.observed_allele
+
     return {
         "id": candidate.id,
         "reference_accession": candidate.reference_accession,
@@ -76,7 +85,17 @@ def _serialize_candidate(candidate: CandidateVariant) -> dict:
         "coding_position": candidate.coding_position,
         "reference_allele": candidate.reference_allele,
         "observed_allele": candidate.observed_allele,
+        "reference_oriented_change": (
+            f"{candidate.reference_allele}>{candidate.observed_allele}"
+        ),
+        "raw_ab1_reference_allele": raw_reference_allele,
+        "raw_ab1_observed_allele": raw_observed_allele,
+        "raw_ab1_change": f"{raw_reference_allele}>{raw_observed_allele}",
         "hgvs": candidate.hgvs,
+        "clinvar_search_url": (
+            "https://www.ncbi.nlm.nih.gov/clinvar/?" +
+            urlencode({"term": candidate.hgvs})
+        ),
         "ab1_base_number": candidate.ab1_base_number,
         "direction": candidate.direction,
         "phred_quality": candidate.phred_quality,
@@ -104,6 +123,7 @@ def _research_response(analysis: Analysis) -> dict:
             "Base-call SNV candidates only; indels and mixed secondary peaks are not called.",
             "A ClinVar match is an external research annotation, not a diagnosis.",
             "No ClinVar match must not be interpreted as benign.",
+            "ClinVar links use reference-oriented HGVS; reverse AB1 reads show complementary raw bases.",
         ],
         "candidate_count": len(candidates),
         "candidates": [_serialize_candidate(item) for item in candidates],
