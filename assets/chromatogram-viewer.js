@@ -1,5 +1,10 @@
-function smoothChromatogramSignal(values) {
-  const weights = [1, 2, 3, 2, 1];
+const CHROMATOGRAM_SMOOTHING_PRESETS = Object.freeze({
+  light: Object.freeze([1, 2, 1]),
+  medium: Object.freeze([1, 2, 3, 2, 1]),
+  strong: Object.freeze([1, 2, 3, 4, 3, 2, 1])
+});
+
+function smoothChromatogramSignal(values, weights) {
   const radius = Math.floor(weights.length / 2);
 
   return values.map((_value, index) => {
@@ -49,9 +54,14 @@ window.GeneGlassChromatogram = {
       T: "#d84c4c"
     };
     const smoothedChannels = Object.fromEntries(
-      ["A", "C", "G", "T"].map((base) => [
-        base,
-        smoothChromatogramSignal(channels[base])
+      Object.entries(CHROMATOGRAM_SMOOTHING_PRESETS).map(([level, weights]) => [
+        level,
+        Object.fromEntries(
+          ["A", "C", "G", "T"].map((base) => [
+            base,
+            smoothChromatogramSignal(channels[base], weights)
+          ])
+        )
       ])
     );
 
@@ -82,12 +92,15 @@ window.GeneGlassChromatogram = {
         </span>
       </label>
       <label class="gg-signal-label">
-        Signal View
+        Visual Smoothing
         <select class="gg-signal-mode">
-          <option value="original">Original signal</option>
-          <option value="smoothed">Smoothed preview + original</option>
+          <option value="original">Original (off)</option>
+          <option value="light">Light · 3 points</option>
+          <option value="medium">Medium · 5 points</option>
+          <option value="strong">Strong · 7 points</option>
         </select>
       </label>
+      <button class="gg-reset-signal" type="button">Reset to Original</button>
       <span class="gg-mouse-hint">Drag to move · Mouse wheel to zoom</span>
     `;
 
@@ -204,9 +217,9 @@ window.GeneGlassChromatogram = {
       }
 
       for (const base of ["A", "C", "G", "T"]) {
-        if (signalMode.value === "smoothed") {
+        if (signalMode.value !== "original") {
           drawTrace(channels[base], base, 0.22, 0.8);
-          drawTrace(smoothedChannels[base], base, 1, 1.5);
+          drawTrace(smoothedChannels[signalMode.value][base], base, 1, 1.5);
         } else {
           drawTrace(channels[base], base, 1, 1.35);
         }
@@ -253,11 +266,17 @@ window.GeneGlassChromatogram = {
         ctx.fillText(String(selected + 1), selectedX, h - 18);
       }
 
-      const signalDescription = signalMode.value === "smoothed"
-        ? "Smoothed preview is displayed over a faint original trace. QC and target analysis still use the original signal."
-        : "Original AB1 signal is displayed.";
+      const smoothingDescriptions = {
+        original: "Original AB1 signal is displayed.",
+        light: "Light 3-point smoothing is displayed over a faint original trace.",
+        medium: "Medium 5-point smoothing is displayed over a faint original trace.",
+        strong: "Strong 7-point smoothing may hide small or overlapping peaks; compare it with the faint original trace."
+      };
+      const signalDescription = smoothingDescriptions[signalMode.value] ||
+        smoothingDescriptions.original;
       detail.textContent =
-        `Showing AB1 bases ${first + 1}–${last + 1} of ${n}. ${signalDescription} Drag the trace or click a base to inspect it.`;
+        `Showing AB1 bases ${first + 1}–${last + 1} of ${n}. ${signalDescription} ` +
+        "QC and target analysis always use the original signal. Drag the trace or click a base to inspect it.";
 
       horizontalSlider.value = String(count);
       horizontalValue.textContent = `${count} bases`;
@@ -300,6 +319,11 @@ window.GeneGlassChromatogram = {
     goInput.oninput = () => goInput.setCustomValidity("");
 
     signalMode.onchange = draw;
+
+    toolbar.querySelector(".gg-reset-signal").onclick = () => {
+      signalMode.value = "original";
+      draw();
+    };
 
     horizontalSlider.oninput = () => {
       const anchor = selected ?? first + (count - 1) / 2;
