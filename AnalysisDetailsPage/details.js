@@ -57,13 +57,16 @@
 
   function renderResearchResults(data) {
     researchResults.replaceChildren();
-    const candidates = Array.isArray(data.candidates) ? data.candidates : [];
+    const candidates = (Array.isArray(data.candidates) ? data.candidates : [])
+      .filter((candidate) => (candidate.external_annotations || []).some(
+        (item) => item.source === "NCBI ClinVar" && item.lookup_status === "matched"
+      ));
     if (!candidates.length) {
       const empty = document.createElement("p");
       empty.className = "research-empty";
       empty.textContent =
-        "No explicit SNV base-call differences were found in the aligned JAK2 region. " +
-        "This does not evaluate mixed secondary peaks or regions outside this read.";
+        "No exact ClinVar-matched variants were found among the eligible candidates. " +
+        "Unmatched and Needs Review candidates are not displayed as external results.";
       researchResults.appendChild(empty);
       return;
     }
@@ -89,21 +92,7 @@
       const annotations = Array.isArray(candidate.external_annotations)
         ? candidate.external_annotations : [];
       const clinvar = annotations.find((item) => item.source === "NCBI ClinVar");
-      if (!clinvar) {
-        appendResearchField(
-          card,
-          "ClinVar",
-          candidate.lookup_eligible
-            ? "Not searched yet"
-            : "Not searched — candidate needs review"
-        );
-      } else if (clinvar.lookup_status === "not_found") {
-        appendResearchField(
-          card,
-          "ClinVar",
-          "No matching record found — this does not mean benign"
-        );
-      } else {
+      if (clinvar?.lookup_status === "matched") {
         appendResearchField(card, "ClinVar accession", clinvar.accession_version || clinvar.accession);
         const classifications = (clinvar.classifications || []).map((item) =>
           `${item.type}: ${item.description}${item.review_status ? ` (${item.review_status})` : ""}`
@@ -120,15 +109,6 @@
           card.appendChild(link);
         }
       }
-      if (candidate.clinvar_search_url) {
-        const searchLink = document.createElement("a");
-        searchLink.className = "research-source-link research-search-link";
-        searchLink.href = candidate.clinvar_search_url;
-        searchLink.target = "_blank";
-        searchLink.rel = "noopener noreferrer";
-        searchLink.textContent = "Search this reference-oriented candidate in ClinVar";
-        card.appendChild(searchLink);
-      }
       researchResults.appendChild(card);
     });
   }
@@ -140,11 +120,10 @@
     );
     if (!response.ok) return;
     const data = await response.json();
-    if (data.candidate_count > 0) {
-      researchStatus.textContent =
-        `${data.candidate_count} saved research candidate(s). Research use only.`;
-      renderResearchResults(data);
-    }
+    researchStatus.textContent = data.candidate_count > 0
+      ? `${data.candidate_count} saved ClinVar-matched variant(s). Research use only.`
+      : "No exact ClinVar-matched variants are saved for this analysis.";
+    renderResearchResults(data);
   }
 
   async function refreshResearchResults() {
@@ -168,7 +147,7 @@
       }
       researchStatus.textContent = data.candidate_count
         ? `${data.candidate_count} candidate(s) displayed; eligible candidates were checked in ClinVar. Research use only.`
-        : "No explicit SNV base-call differences were found in the covered region.";
+        : "No exact ClinVar-matched variants were found. Unmatched candidates are not displayed.";
       renderResearchResults(data);
     } catch (error) {
       researchStatus.textContent = error.message;

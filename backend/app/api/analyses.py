@@ -6,7 +6,6 @@ from datetime import UTC, datetime, timedelta
 from math import ceil
 from pathlib import Path
 from typing import Annotated
-from urllib.parse import urlencode
 
 from fastapi import (
     APIRouter,
@@ -92,10 +91,6 @@ def _serialize_candidate(candidate: CandidateVariant) -> dict:
         "raw_ab1_observed_allele": raw_observed_allele,
         "raw_ab1_change": f"{raw_reference_allele}>{raw_observed_allele}",
         "hgvs": candidate.hgvs,
-        "clinvar_search_url": (
-            "https://www.ncbi.nlm.nih.gov/clinvar/?" +
-            urlencode({"term": candidate.hgvs})
-        ),
         "ab1_base_number": candidate.ab1_base_number,
         "direction": candidate.direction,
         "phred_quality": candidate.phred_quality,
@@ -109,10 +104,19 @@ def _serialize_candidate(candidate: CandidateVariant) -> dict:
 
 
 def _research_response(analysis: Analysis) -> dict:
-    candidates = sorted(
+    screened_candidates = sorted(
         analysis.candidate_variants,
         key=lambda item: (item.transcript_position, item.id),
     )
+    matched_candidates = [
+        candidate for candidate in screened_candidates
+        if any(
+            annotation.source == CLINVAR_SOURCE
+            and annotation.lookup_status == "matched"
+            and annotation.source_record_id
+            for annotation in candidate.external_annotations
+        )
+    ]
     return {
         "analysis_id": analysis.id,
         "gene": analysis.gene,
@@ -123,10 +127,13 @@ def _research_response(analysis: Analysis) -> dict:
             "Base-call SNV candidates only; indels and mixed secondary peaks are not called.",
             "A ClinVar match is an external research annotation, not a diagnosis.",
             "No ClinVar match must not be interpreted as benign.",
-            "ClinVar links use reference-oriented HGVS; reverse AB1 reads show complementary raw bases.",
+            "Candidates without an exact ClinVar match are withheld from displayed external results.",
         ],
-        "candidate_count": len(candidates),
-        "candidates": [_serialize_candidate(item) for item in candidates],
+        "screened_candidate_count": len(screened_candidates),
+        "candidate_count": len(matched_candidates),
+        "candidates": [
+            _serialize_candidate(item) for item in matched_candidates
+        ],
     }
 
 

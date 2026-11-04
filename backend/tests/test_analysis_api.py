@@ -275,4 +275,11 @@ def test_reverse_candidate_exposes_raw_and_reference_orientations() -> None:
     assert payload["reference_oriented_change"] == "A>G"
     assert payload["raw_ab1_change"] == "T>C"
     assert payload["raw_ab1_observed_allele"] == "C"
-    assert "NM_004972.4%3Ac.1865A%3EG" in payload["clinvar_search_url"]
+    assert "clinvar_search_url" not in payload
+
+    analysis = Analysis(user_id=1, original_file_name="reverse.ab1")
+    analysis.candidate_variants.append(candidate)
+    response = analyses_api._research_response(analysis)
+    assert response["screened_candidate_count"] == 1
+    assert response["candidate_count"] == 0
+    assert response["candidates"] == []
