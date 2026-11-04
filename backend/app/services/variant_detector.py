@@ -21,6 +21,20 @@ JAK2_V617F_REFERENCE_INDEX = JAK2_V617F_REFERENCE_POSITION - 1
 MIN_ALIGNMENT_IDENTITY_PERCENT = 80.0
 MIN_ALIGNMENT_READ_COVERAGE_PERCENT = 50.0
 
+JAK2_V617F_REFERENCE_EVIDENCE = {
+    "source": "NCBI ClinVar",
+    "variation_id": 14662,
+    "accession": "VCV000014662",
+    "transcript": "NM_004972.4",
+    "hgvs_c": "c.1849G>T",
+    "protein_change": "p.Val617Phe",
+    "url": "https://www.ncbi.nlm.nih.gov/clinvar/variation/14662/",
+    "note": (
+        "External reference record only; GeneGlass does not infer a clinical "
+        "classification from this link."
+    ),
+}
+
 
 def load_jak2_reference() -> str:
     """Load the complete JAK2 reference sequence without trimming."""
@@ -358,6 +372,7 @@ def analyze_jak2_chromatogram(data: dict) -> dict:
     if not result["found"]:
         return {
             **result,
+            "reference_evidence": JAK2_V617F_REFERENCE_EVIDENCE,
             "target_region": {"available": False, "reason": result.get("reason", "Target not mapped.")},
             "review_reasons": [result.get("reason", "Target position could not be mapped.")],
             "review_status": "Needs Review",
@@ -394,6 +409,7 @@ def analyze_jak2_chromatogram(data: dict) -> dict:
 
     return {
         **result,
+        "reference_evidence": JAK2_V617F_REFERENCE_EVIDENCE,
         "peak_analysis": peaks,
         "target_region": region,
         "review_reasons": review_reasons,

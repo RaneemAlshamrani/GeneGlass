@@ -33,6 +33,14 @@
     });
   }
 
+  function formatPercent(value) {
+    return Number.isFinite(Number(value)) ? `${Number(value).toFixed(2)}%` : "N/A";
+  }
+
+  function formatRatio(value) {
+    return Number.isFinite(Number(value)) ? Number(value).toFixed(3) : "N/A";
+  }
+
   async function loadDetails() {
     const token = window.GeneGlassAuth?.token;
 
@@ -82,12 +90,45 @@ try {
   if (jak2Response.ok) {
     const jak2Data = await jak2Response.json();
     const result = jak2Data.result || {};
+    const peaks = result.peak_analysis || {};
+    const heights = peaks.peak_heights || {};
+    const reasons = Array.isArray(result.review_reasons)
+      ? result.review_reasons.filter(Boolean).join("; ")
+      : "";
     targetBase = Number(result.ab1_base_number);
     showCards(jak2Details, [
       ["AB1 Position", result.ab1_base_number],
       ["Direction", result.direction],
-      ["Review Status", result.needs_review ? "Needs Review" : "Not flagged"]
+      ["Observed Base", result.observed_base],
+      ["Target Phred Quality", result.quality_score],
+      ["Alignment Identity", formatPercent(result.alignment_identity_percentage)],
+      ["Read Coverage", formatPercent(result.alignment_coverage_percentage)],
+      ["A Peak", heights.A],
+      ["C Peak", heights.C],
+      ["G Peak", heights.G],
+      ["T Peak", heights.T],
+      ["Primary Peak", peaks.primary_base],
+      ["Secondary Peak", peaks.secondary_base],
+      ["Secondary / Primary", formatRatio(peaks.overlap_ratio)],
+      ["Review Status", result.needs_review ? "Needs Review" : "Not flagged"],
+      ["Review Reason", reasons || "No preliminary QC review reason"]
     ]);
+    const reference = result.reference_evidence;
+    if (reference?.url) {
+      const referenceCard = document.createElement("div");
+      referenceCard.className = "details-item";
+      const label = document.createElement("span");
+      label.className = "details-label";
+      label.textContent = "External Reference";
+      const link = document.createElement("a");
+      link.className = "details-value";
+      link.href = reference.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = `${reference.source}: ${reference.accession}`;
+      referenceCard.append(label, link);
+      jak2Details.append(referenceCard);
+    }
   } else {
     jak2Details.textContent = "JAK2 target analysis could not be loaded.";
   }

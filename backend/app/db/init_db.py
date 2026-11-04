@@ -18,6 +18,7 @@ QUALITY_COLUMNS = {
     "low_quality_percentage": "FLOAT",
     "retained_percentage": "FLOAT",
     "quality_assessment": "VARCHAR(20)",
+    "preliminary_result_json": "TEXT",
 }
 
 

@@ -1,5 +1,5 @@
 window.GeneGlassChromatogram = {
-  render: function (trace) {
+  render: function (trace, options = {}) {
     const section = document.getElementById("chromatogramSection");
     const canvas = document.getElementById("chromatogramCanvas");
     const detail = document.getElementById("chromatogramDetail");
@@ -31,9 +31,15 @@ window.GeneGlassChromatogram = {
       T: "#d84c4c"
     };
 
-    let first = 0;
     let count = Math.min(30, n);
-    let selected = null;
+    const requestedTarget = Number(options.targetBase);
+    let selected = Number.isInteger(requestedTarget) &&
+      requestedTarget >= 1 && requestedTarget <= n
+      ? requestedTarget - 1
+      : null;
+    let first = selected === null
+      ? 0
+      : Math.max(0, selected - Math.floor(count / 2));
     let labels = [];
     let drag = null;
 
@@ -215,7 +221,7 @@ window.GeneGlassChromatogram = {
       } else {
         const q = quality[selected];
         selectedInfo.textContent =
-          `Selected base ${selected + 1}: ${trace.sequence[selected]} · Phred Q${q ?? "N/A"} · Sample ${positions[selected]}`;
+          `${selected + 1 === requestedTarget ? "Target" : "Selected"} base ${selected + 1}: ${trace.sequence[selected]} · Phred Q${q ?? "N/A"} · Sample ${positions[selected]}`;
       }
     }
 

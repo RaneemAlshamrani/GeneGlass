@@ -51,6 +51,18 @@
       explanation.textContent = "No preliminary review issues detected. This does not confirm a normal result.";
       panel.append(explanation);
     }
+
+    const reference = result.reference_evidence;
+    if (reference?.url) {
+      const referenceLink = document.createElement("a");
+      referenceLink.href = reference.url;
+      referenceLink.target = "_blank";
+      referenceLink.rel = "noopener noreferrer";
+      referenceLink.textContent = `${reference.source || "ClinVar"}: ${reference.transcript || "JAK2"}:${reference.hgvs_c || "c.1849G>T"}`;
+      const referenceNote = document.createElement("p");
+      referenceNote.append("Reference evidence: ", referenceLink, ". This link does not replace specialist review.");
+      panel.append(referenceNote);
+    }
     section.after(panel);
   }
 
@@ -77,13 +89,19 @@
       if (!upload.ok) throw new Error(data.detail || "Upload failed.");
       const traceResponse = await fetch(`${base}/analyses/${data.id}/chromatogram`, { headers });
       if (!traceResponse.ok) throw new Error("Chromatogram could not be loaded.");
-      window.GeneGlassChromatogram.render(await traceResponse.json());
+      const trace = await traceResponse.json();
+      window.GeneGlassChromatogram.render(trace);
       document.querySelector(".upload-card").hidden = true;
       message.textContent = "";
       try {
         const targetResponse = await fetch(`${base}/analyses/${data.id}/jak2-target`, { headers });
         if (!targetResponse.ok) throw new Error("Target analysis unavailable.");
-        showTarget(await targetResponse.json());
+        const targetData = await targetResponse.json();
+        showTarget(targetData);
+        const targetBase = Number(targetData.result?.ab1_base_number);
+        if (Number.isInteger(targetBase) && targetBase > 0) {
+          window.GeneGlassChromatogram.render(trace, { targetBase });
+        }
       } catch (error) {
         const note = document.createElement("p");
         note.id = "jak2TargetError";

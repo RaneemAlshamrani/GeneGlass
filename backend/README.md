@@ -13,9 +13,16 @@ Backend مشروع GeneGlass بعد إكمال الإعداد وقاعدة ال�
 - تسجيل دخول فعلي عبر OAuth2 Password Flow وJWT.
 - تشفير كلمات المرور باستخدام Argon2؛ لا تُحفظ كلمات المرور بصورتها الأصلية.
 - حماية الصفحات الداخلية والتحقق من الجلسة عبر `GET /api/auth/me`.
-- اختبارات آلية للنقاط الأساسية وCORS وقاعدة البيانات.
+- رفع ملفات AB1 مع التحقق من الامتداد والتوقيع والحجم وSHA-256.
+- منع رفع الملف نفسه أكثر من مرة للمستخدم نفسه.
+- قراءة تسلسل Sanger ودرجات Phred وعرض Chromatogram تفاعلي.
+- محاذاة JAK2 المبدئية في الاتجاهين وتحديد موضع V617F المرجعي.
+- عرض ارتفاعات A/C/G/T ونسبة القمة الثانوية إلى الأساسية وأسباب Needs Review.
+- ربط مرجعي مباشر بسجل NCBI ClinVar من دون استنتاج تشخيصي.
+- حفظ الأدلة المبدئية في SQLite وربط Profile وHistory وDashboard بالبيانات.
+- 12 اختبارًا آليًا للنقاط الأساسية والمصادقة وقاعدة البيانات ورفع AB1 والتحليل المبدئي.
 
-لم يُنفّذ رفع ملفات JAK2 أو فحص V617F بعد. بيانات التحليلات الظاهرة حاليًا في Dashboard ما زالت عرضًا ثابتًا وليست نتائج مخبرية حقيقية.
+لم يُنفّذ بعد نموذج مصنّف ومتحقق منه لإصدار نتيجة Positive/Negative، ولا Specialist Review workflow أو PDF Report. لذلك تبقى `v617f_detected` فارغة، وتعرض الواجهة الأدلة المبدئية وحالة المراجعة فقط.
 
 ## التشغيل على Windows PowerShell
 
@@ -131,6 +138,21 @@ python -m app.db.init_db
 
 لا توجد بيانات Seed افتراضية؛ لذلك تبدأ الجداول فارغة.
 
+## رفع AB1 والتحليل المبدئي
+
+المسارات الحالية:
+
+- `POST /api/analyses`: رفع ملف AB1 وتشغيل QC وتخزين الأدلة المبدئية.
+- `GET /api/analyses`: History مع البحث والفلاتر والصفحات.
+- `GET /api/analyses/{id}`: معلومات التحليل المحفوظ.
+- `GET /api/analyses/{id}/chromatogram`: الإشارات الأصلية A/C/G/T.
+- `GET /api/analyses/{id}/jak2-target`: محاذاة JAK2 وموضع الهدف والقِمم وأسباب المراجعة.
+- `GET /api/dashboard/summary`: إحصاءات المستخدم من قاعدة البيانات.
+
+التحليل الحالي **مبدئي وغير تشخيصي**. يحدد موضع `NM_004972.4:c.1849G>T` ويعرض جودة الإشارة، لكنه لا يصنف الطفرة قبل اعتماد قواعد قرار واختبارها بملفات مرجعية معلومة النتيجة.
+
+ملفات المستخدمين تحفظ محليًا تحت `backend/uploads/`، وهذا المسار مستبعد من Git لمنع رفع بيانات التسلسل أو metadata الخاصة بالعينة.
+
 ## تسجيل الدخول والمصادقة
 
 المسارات:
@@ -173,7 +195,7 @@ backend/
 │   ├── db/           # SQLite engine, sessions, and initialization
 │   ├── models/       # Users, analyses, and reviews
 │   ├── schemas/      # Request/response schemas
-│   ├── services/     # Password, JWT, and user services
+│   ├── services/     # Auth, AB1 parsing, QC, storage, and target mapping
 │   └── main.py       # FastAPI application entry point
 ├── tests/
 ├── .env.example

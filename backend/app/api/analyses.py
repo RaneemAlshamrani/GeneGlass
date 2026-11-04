@@ -1,6 +1,7 @@
 
 """Analysis upload, history, and detail endpoints."""
 
+import json
 from math import ceil
 from pathlib import Path
 from typing import Annotated
@@ -24,8 +25,10 @@ from app.models.analysis import Analysis, AnalysisStatus, QCStatus
 from app.models.user import User
 from app.schemas.analysis import AnalysisListItem, AnalysisListResponse
 from app.services.ab1_reader import read_ab1_file
+from app.services.ab1_reader import read_chromatogram
 from app.services.sequence_cleaner import clean_sequence
 from app.services.storage.ab1_storage import save_ab1_file
+from app.services.variant_detector import analyze_jak2_chromatogram
 
 analyses_router = APIRouter(prefix="/analyses", tags=["analyses"])
 
@@ -43,6 +46,22 @@ async def upload_analysis(
         user_id=current_user.id,
     )
 
+    existing_analysis = session.scalar(
+        select(Analysis).where(
+            Analysis.user_id == current_user.id,
+            Analysis.file_sha256 == file_sha256,
+        )
+    )
+    if existing_analysis is not None:
+        stored_path.unlink(missing_ok=True)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "This AB1 file was already uploaded as analysis "
+                f"#{existing_analysis.id}."
+            ),
+        )
+
     try:
         sequencing_data = read_ab1_file(stored_path)
 
@@ -59,11 +78,27 @@ async def upload_analysis(
             detail="The AB1 file could not be read or processed.",
         ) from exc
 
-    # These are preliminary project QC categories.
-    # Final acceptance criteria should be confirmed by the project team.
+    try:
+        preliminary_result = analyze_jak2_chromatogram(
+            read_chromatogram(stored_path)
+        )
+    except (ValueError, FileNotFoundError, OSError) as exc:
+        preliminary_result = {
+            "found": False,
+            "needs_review": True,
+            "review_status": "Needs Review",
+            "review_reasons": [
+                "JAK2 target evidence could not be generated from this AB1 file."
+            ],
+            "error": type(exc).__name__,
+        }
+
+    # Preliminary QC only. Mutation classification remains unset until the
+    # project has validated decision rules and labelled reference samples.
     qc_status = (
         QCStatus.PASSED
         if quality_result["quality_assessment"] == "good"
+        and not preliminary_result.get("needs_review", True)
         else QCStatus.NEEDS_REVIEW
     )
 
@@ -85,6 +120,15 @@ async def upload_analysis(
         low_quality_percentage=quality_result["low_quality_percentage"],
         retained_percentage=quality_result["retained_percentage"],
         quality_assessment=quality_result["quality_assessment"],
+        preliminary_result_json=json.dumps(
+            preliminary_result,
+            ensure_ascii=True,
+            separators=(",", ":"),
+        ),
+        result_summary=(
+            "Preliminary JAK2 target evidence generated. No mutation "
+            "classification has been made."
+        ),
     )
 
     try:
@@ -120,7 +164,11 @@ async def upload_analysis(
             "retained_percentage": analysis.retained_percentage,
             "quality_assessment": analysis.quality_assessment,
         },
-        "message": "File uploaded and preliminary quality control completed. Variant detection is pending.",
+        "preliminary_target_analysis": preliminary_result,
+        "message": (
+            "File uploaded and preliminary evidence generated. Mutation "
+            "classification remains pending validation."
+        ),
     }
 
 
@@ -294,9 +342,6 @@ def get_jak2_target_analysis(
 ) -> dict:
     """Return preliminary JAK2 target and peak analysis."""
 
-    from app.services.ab1_reader import read_chromatogram
-    from app.services.variant_detector import analyze_jak2_chromatogram
-
     analysis = session.scalar(
         select(Analysis).where(
             Analysis.id == analysis_id,
@@ -316,9 +361,18 @@ def get_jak2_target_analysis(
             detail="This endpoint supports JAK2 only.",
         )
 
+    if analysis.preliminary_result_json:
+        try:
+            result = json.loads(analysis.preliminary_result_json)
+        except json.JSONDecodeError:
+            result = None
+    else:
+        result = None
+
     try:
-        data = read_chromatogram(analysis.stored_file_path)
-        result = analyze_jak2_chromatogram(data)
+        if result is None:
+            data = read_chromatogram(analysis.stored_file_path)
+            result = analyze_jak2_chromatogram(data)
 
     except (ValueError, FileNotFoundError, OSError) as exc:
         raise HTTPException(

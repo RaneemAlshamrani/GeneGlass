@@ -123,6 +123,10 @@ class Analysis(TimestampMixin, Base):
     # Variant detection fields - reserved for the later module
     v617f_detected: Mapped[bool | None] = mapped_column(nullable=True)
     result_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    preliminary_result_json: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
 
     error_message: Mapped[str | None] = mapped_column(
         Text, nullable=True
