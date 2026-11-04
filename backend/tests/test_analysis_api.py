@@ -12,6 +12,7 @@ from app.db.init_db import initialize_database
 from app.db.session import create_sqlite_engine, get_db
 from app.main import app
 from app.models.analysis import Analysis
+from app.models.research_variant import CandidateVariant, ExternalAnnotation
 from app.api import analyses as analyses_api
 from app.schemas.auth import UserCreate
 from app.services.storage import ab1_storage
@@ -142,6 +143,112 @@ def test_duplicate_ab1_upload_is_rejected(
 
         stored_files = list(upload_root.rglob("*.ab1"))
         assert len(stored_files) == 1
+    finally:
+        app.dependency_overrides.clear()
+        test_engine.dispose()
+
+
+def test_research_lookup_sends_hgvs_only_and_caches_clinvar(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    test_engine = create_sqlite_engine(tmp_path / "research_api.db")
+    initialize_database(test_engine)
+    test_sessions = sessionmaker(
+        bind=test_engine,
+        class_=Session,
+        expire_on_commit=False,
+    )
+    with test_sessions() as session:
+        create_user(
+            session,
+            UserCreate(
+                full_name="Research Specialist",
+                email="research@example.com",
+                password="CorrectPassword123!",
+            ),
+        )
+
+    def override_get_db() -> Generator[Session, None, None]:
+        with test_sessions() as session:
+            yield session
+
+    sequencing_data, chromatogram_data = build_synthetic_sequencing_data()
+    sequence = list(sequencing_data["sequence"])
+    sequence[100] = "T"
+    mutated_sequence = "".join(sequence)
+    sequencing_data["sequence"] = mutated_sequence
+    chromatogram_data["sequence"] = mutated_sequence
+    monkeypatch.setattr(ab1_storage, "UPLOAD_ROOT", tmp_path / "uploads")
+    monkeypatch.setattr(analyses_api, "read_ab1_file", lambda _path: sequencing_data)
+    monkeypatch.setattr(analyses_api, "read_chromatogram", lambda _path: chromatogram_data)
+    observed_queries = []
+
+    def fake_lookup(_client, hgvs: str) -> dict:
+        observed_queries.append(hgvs)
+        return {
+            "source_record_id": "14662",
+            "accession": "VCV000014662",
+            "accession_version": "VCV000014662.144",
+            "title": "NM_004972.4(JAK2):c.1849G>T (p.Val617Phe)",
+            "variant_type": "single nucleotide variant",
+            "canonical_spdi": "NC_000009.12:5073769:G:T",
+            "classifications": [{
+                "type": "Oncogenicity",
+                "description": "Likely oncogenic",
+                "review_status": "criteria provided, single submitter",
+                "last_evaluated": "2026/10/26 00:00",
+            }],
+            "conditions": ["Acute myeloid leukemia"],
+            "review_status": "criteria provided, single submitter",
+            "source_url": "https://www.ncbi.nlm.nih.gov/clinvar/variation/14662/",
+        }
+
+    monkeypatch.setattr(analyses_api.ClinVarClient, "lookup_variant", fake_lookup)
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        with TestClient(app) as client:
+            login = client.post(
+                "/api/auth/login",
+                data={
+                    "username": "research@example.com",
+                    "password": "CorrectPassword123!",
+                },
+            )
+            headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+            upload = client.post(
+                "/api/analyses",
+                headers=headers,
+                files={"file": ("research.ab1", BytesIO(b"ABIFresearch"), "application/octet-stream")},
+            )
+            assert upload.status_code == 201
+            analysis_id = upload.json()["id"]
+
+            refresh = client.post(
+                f"/api/analyses/{analysis_id}/research-variants/refresh",
+                headers=headers,
+            )
+            saved = client.get(
+                f"/api/analyses/{analysis_id}/research-variants",
+                headers=headers,
+            )
+
+        assert refresh.status_code == 200
+        assert saved.status_code == 200
+        assert observed_queries == ["NM_004972.4:c.1849G>T"]
+        payload = refresh.json()
+        assert payload["research_use_only"] is True
+        assert payload["candidate_count"] == 1
+        candidate = payload["candidates"][0]
+        assert candidate["external_annotations"][0]["accession"] == "VCV000014662"
+        assert candidate["external_annotations"][0]["conditions"] == [
+            "Acute myeloid leukemia"
+        ]
+
+        with test_sessions() as session:
+            assert session.scalar(select(func.count()).select_from(CandidateVariant)) == 1
+            assert session.scalar(select(func.count()).select_from(ExternalAnnotation)) == 1
     finally:
         app.dependency_overrides.clear()
         test_engine.dispose()

@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     cors_origins: str = "http://localhost:5500,http://127.0.0.1:5500"
+    ncbi_tool: str = "GeneGlass"
+    ncbi_email: str | None = None
+    ncbi_api_key: str | None = None
+    clinvar_cache_hours: int = 24
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -78,6 +82,13 @@ class Settings(BaseSettings):
         if any(not origin.startswith(("http://", "https://")) for origin in origins):
             raise ValueError("Every CORS origin must start with http:// or https://")
         return ",".join(origins)
+
+    @field_validator("clinvar_cache_hours")
+    @classmethod
+    def validate_clinvar_cache_hours(cls, value: int) -> int:
+        if not 1 <= value <= 720:
+            raise ValueError("CLINVAR_CACHE_HOURS must be between 1 and 720")
+        return value
 
     @property
     def cors_origin_list(self) -> list[str]:

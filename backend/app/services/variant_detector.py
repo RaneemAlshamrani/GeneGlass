@@ -14,12 +14,14 @@ REFERENCE_PATH = (
 
 JAK2_V617F_CDNA_POSITION = 1849
 JAK2_CDS_START = 468
+JAK2_CDS_END = 3866
 JAK2_V617F_REFERENCE_POSITION = JAK2_CDS_START + JAK2_V617F_CDNA_POSITION - 1
 JAK2_V617F_REFERENCE_INDEX = JAK2_V617F_REFERENCE_POSITION - 1
 
 # Conservative preliminary alignment screening limits, not clinical cutoffs.
 MIN_ALIGNMENT_IDENTITY_PERCENT = 80.0
 MIN_ALIGNMENT_READ_COVERAGE_PERCENT = 50.0
+MIN_RESEARCH_CANDIDATE_PHRED = 20
 
 JAK2_V617F_REFERENCE_EVIDENCE = {
     "source": "NCBI ClinVar",
@@ -133,6 +135,107 @@ def align_ab1_to_jak2(ab1_sequence: str) -> dict:
         "identity_percentage": identity_percentage,
         "coverage_percentage": coverage_percentage,
     }
+
+
+def extract_jak2_candidate_snvs(data: dict) -> list[dict]:
+    """Return research-only SNV candidates from aligned AB1 base calls.
+
+    Only explicit A/C/G/T substitutions are emitted. Mixed secondary peaks and
+    insertions/deletions are intentionally excluded until independently
+    validated rules are available.
+    """
+
+    sequence = str(data.get("sequence") or "").upper()
+    quality_scores = list(data.get("quality_scores") or [])
+    if len(quality_scores) < len(sequence):
+        quality_scores.extend([None] * (len(sequence) - len(quality_scores)))
+
+    alignment = align_ab1_to_jak2(sequence)
+    reference = load_jak2_reference()
+    direction = alignment["direction"]
+    oriented_sequence = (
+        sequence
+        if direction == "Forward"
+        else str(Seq(sequence).reverse_complement())
+    )
+    oriented_quality = (
+        quality_scores
+        if direction == "Forward"
+        else list(reversed(quality_scores))
+    )
+    alignment_is_eligible = (
+        alignment["identity_percentage"] >= MIN_ALIGNMENT_IDENTITY_PERCENT
+        and alignment["coverage_percentage"] >= MIN_ALIGNMENT_READ_COVERAGE_PERCENT
+    )
+
+    candidates = []
+    for reference_block, read_block in zip(
+        alignment["reference_positions"],
+        alignment["read_positions"],
+    ):
+        reference_start, reference_end = map(int, reference_block)
+        read_start, read_end = map(int, read_block)
+        block_length = min(reference_end - reference_start, read_end - read_start)
+
+        for offset in range(block_length):
+            reference_index = reference_start + offset
+            read_index = read_start + offset
+            reference_base = reference[reference_index]
+            observed_base = oriented_sequence[read_index]
+            if (
+                reference_base == observed_base
+                or reference_base not in "ACGT"
+                or observed_base not in "ACGT"
+            ):
+                continue
+
+            transcript_position = reference_index + 1
+            if transcript_position < JAK2_CDS_START:
+                coding_position = None
+                coordinate = f"c.-{JAK2_CDS_START - transcript_position}"
+            elif transcript_position <= JAK2_CDS_END:
+                coding_position = transcript_position - JAK2_CDS_START + 1
+                coordinate = f"c.{coding_position}"
+            else:
+                coding_position = None
+                coordinate = f"c.*{transcript_position - JAK2_CDS_END}"
+            quality = oriented_quality[read_index]
+            quality = int(quality) if quality is not None else None
+            original_read_index = (
+                read_index
+                if direction == "Forward"
+                else len(sequence) - 1 - read_index
+            )
+            lookup_eligible = (
+                alignment_is_eligible
+                and quality is not None
+                and quality >= MIN_RESEARCH_CANDIDATE_PHRED
+            )
+
+            candidates.append({
+                "reference_accession": "NM_004972.4",
+                "transcript_position": transcript_position,
+                "coding_position": coding_position if coding_position > 0 else None,
+                "reference_allele": reference_base,
+                "observed_allele": observed_base,
+                "hgvs": (
+                    f"NM_004972.4:{coordinate}"
+                    f"{reference_base}>{observed_base}"
+                ),
+                "ab1_base_number": original_read_index + 1,
+                "direction": direction,
+                "phred_quality": quality,
+                "review_status": (
+                    "Research Candidate" if lookup_eligible else "Needs Review"
+                ),
+                "lookup_eligible": lookup_eligible,
+                "note": (
+                    "Base-call mismatch only; non-diagnostic and subject to "
+                    "specialist review."
+                ),
+            })
+
+    return candidates
 
 def find_jak2_v617f_position(ab1_sequence: str) -> dict:
     """Map the JAK2 V617F reference position to an AB1 base index."""

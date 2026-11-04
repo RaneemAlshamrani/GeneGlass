@@ -131,6 +131,25 @@
         </div>
       </section>
 
+      <section class="dashboard-card details-card research-card">
+        <div class="research-heading">
+          <div>
+            <h2>Extended Research Screening</h2>
+            <p>
+              Search ClinVar for base-call SNV candidates within the JAK2 region
+              covered by this AB1 read. Research use only — not for diagnosis.
+            </p>
+          </div>
+          <button id="researchLookupButton" type="button">
+            Search ClinVar
+          </button>
+        </div>
+        <p id="researchStatus" role="status">
+          No external search has been requested in this session.
+        </p>
+        <div id="researchResults" class="research-results"></div>
+      </section>
+
       <p id="detailsMessage" role="status"></p>
 
     </main>

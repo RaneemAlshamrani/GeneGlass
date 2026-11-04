@@ -3,6 +3,7 @@
 from app.services.variant_detector import (
     JAK2_V617F_REFERENCE_INDEX,
     analyze_jak2_chromatogram,
+    extract_jak2_candidate_snvs,
     load_jak2_reference,
 )
 
@@ -62,3 +63,21 @@ def test_synthetic_reference_read_maps_target_and_peak_details() -> None:
     assert evidence["transcript"] == "NM_004972.4"
     assert evidence["hgvs_c"] == "c.1849G>T"
     assert evidence["url"].startswith("https://www.ncbi.nlm.nih.gov/clinvar/")
+
+
+def test_extracts_high_quality_v617f_as_research_candidate() -> None:
+    trace = build_synthetic_target_trace()
+    sequence = list(trace["sequence"])
+    sequence[100] = "T"
+    trace["sequence"] = "".join(sequence)
+
+    candidates = extract_jak2_candidate_snvs(trace)
+
+    assert len(candidates) == 1
+    candidate = candidates[0]
+    assert candidate["hgvs"] == "NM_004972.4:c.1849G>T"
+    assert candidate["reference_allele"] == "G"
+    assert candidate["observed_allele"] == "T"
+    assert candidate["phred_quality"] == 40
+    assert candidate["lookup_eligible"] is True
+    assert candidate["review_status"] == "Research Candidate"
