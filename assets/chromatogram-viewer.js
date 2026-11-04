@@ -1,3 +1,21 @@
+function smoothChromatogramSignal(values) {
+  const weights = [1, 2, 3, 2, 1];
+  const radius = Math.floor(weights.length / 2);
+
+  return values.map((_value, index) => {
+    let weightedTotal = 0;
+    let appliedWeight = 0;
+    for (let offset = -radius; offset <= radius; offset++) {
+      const sourceIndex = index + offset;
+      if (sourceIndex < 0 || sourceIndex >= values.length) continue;
+      const weight = weights[offset + radius];
+      weightedTotal += (Number(values[sourceIndex]) || 0) * weight;
+      appliedWeight += weight;
+    }
+    return appliedWeight ? weightedTotal / appliedWeight : 0;
+  });
+}
+
 window.GeneGlassChromatogram = {
   render: function (trace, options = {}) {
     const section = document.getElementById("chromatogramSection");
@@ -30,6 +48,12 @@ window.GeneGlassChromatogram = {
       G: "#333333",
       T: "#d84c4c"
     };
+    const smoothedChannels = Object.fromEntries(
+      ["A", "C", "G", "T"].map((base) => [
+        base,
+        smoothChromatogramSignal(channels[base])
+      ])
+    );
 
     let count = Math.min(30, n);
     const requestedTarget = Number(options.targetBase);
@@ -56,6 +80,13 @@ window.GeneGlassChromatogram = {
           <input class="gg-go-base" type="number" min="1" max="${n}" placeholder="e.g. 184">
           <button class="gg-go-button" type="button">Go</button>
         </span>
+      </label>
+      <label class="gg-signal-label">
+        Signal View
+        <select class="gg-signal-mode">
+          <option value="original">Original signal</option>
+          <option value="smoothed">Smoothed preview + original</option>
+        </select>
       </label>
       <span class="gg-mouse-hint">Drag to move · Mouse wheel to zoom</span>
     `;
@@ -96,6 +127,7 @@ window.GeneGlassChromatogram = {
     section.append(title, toolbar, legend, chartWrapper, overview, selectedInfo, detail);
 
     const goInput = toolbar.querySelector(".gg-go-base");
+    const signalMode = toolbar.querySelector(".gg-signal-mode");
     const verticalSlider = scaleControl.querySelector(".gg-vertical-scale");
     const verticalValue = scaleControl.querySelector(".gg-vertical-value");
     const horizontalSlider = overview.querySelector(".gg-overview-range");
@@ -154,19 +186,30 @@ window.GeneGlassChromatogram = {
         labels.push({ x: px, index: i });
       }
 
-      for (const base of ["A", "C", "G", "T"]) {
+      function drawTrace(values, base, opacity, lineWidth) {
         ctx.beginPath();
         ctx.strokeStyle = colors[base];
-        ctx.lineWidth = 1.35;
+        ctx.globalAlpha = opacity;
+        ctx.lineWidth = lineWidth;
 
         for (let sample = left; sample <= right; sample++) {
           if (sample === left) {
-            ctx.moveTo(x(sample), y(channels[base][sample]));
+            ctx.moveTo(x(sample), y(values[sample]));
           } else {
-            ctx.lineTo(x(sample), y(channels[base][sample]));
+            ctx.lineTo(x(sample), y(values[sample]));
           }
         }
         ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      for (const base of ["A", "C", "G", "T"]) {
+        if (signalMode.value === "smoothed") {
+          drawTrace(channels[base], base, 0.22, 0.8);
+          drawTrace(smoothedChannels[base], base, 1, 1.5);
+        } else {
+          drawTrace(channels[base], base, 1, 1.35);
+        }
       }
 
       // Keep all original signal peaks. Only thin text labels when there is
@@ -210,8 +253,11 @@ window.GeneGlassChromatogram = {
         ctx.fillText(String(selected + 1), selectedX, h - 18);
       }
 
+      const signalDescription = signalMode.value === "smoothed"
+        ? "Smoothed preview is displayed over a faint original trace. QC and target analysis still use the original signal."
+        : "Original AB1 signal is displayed.";
       detail.textContent =
-        `Showing AB1 bases ${first + 1}–${last + 1} of ${n}. Drag the trace or click a base to inspect it.`;
+        `Showing AB1 bases ${first + 1}–${last + 1} of ${n}. ${signalDescription} Drag the trace or click a base to inspect it.`;
 
       horizontalSlider.value = String(count);
       horizontalValue.textContent = `${count} bases`;
@@ -252,6 +298,8 @@ window.GeneGlassChromatogram = {
     };
 
     goInput.oninput = () => goInput.setCustomValidity("");
+
+    signalMode.onchange = draw;
 
     horizontalSlider.oninput = () => {
       const anchor = selected ?? first + (count - 1) / 2;

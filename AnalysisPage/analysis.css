@@ -582,6 +582,24 @@ body {
   font-size: 13px;
   font-weight: 650;
 }
+
+.gg-signal-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #315a60;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.gg-signal-label select {
+  min-width: 220px;
+  padding: 10px 12px;
+  border: 1px solid #b9dedf;
+  border-radius: 10px;
+  background: #fff;
+  color: #123c40;
+}
 .gg-search-row {
   display: flex;
   gap: 8px;
