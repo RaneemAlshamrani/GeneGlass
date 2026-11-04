@@ -78,8 +78,10 @@ window.GeneGlassChromatogram = {
     let drag = null;
 
     section.replaceChildren();
-    const title = document.createElement("h2");
-    title.textContent = "Chromatogram Viewer";
+    const title = options.showTitle === false
+      ? null
+      : document.createElement("h2");
+    if (title) title.textContent = "Chromatogram Viewer";
 
     const toolbar = document.createElement("div");
     toolbar.className = "gg-viewer-toolbar";
@@ -137,7 +139,17 @@ window.GeneGlassChromatogram = {
     const selectedInfo = document.createElement("div");
     selectedInfo.className = "gg-selected-base";
 
-    section.append(title, toolbar, legend, chartWrapper, overview, selectedInfo, detail);
+    section.append(
+      ...[
+        title,
+        toolbar,
+        legend,
+        chartWrapper,
+        overview,
+        selectedInfo,
+        detail,
+      ].filter(Boolean)
+    );
 
     const goInput = toolbar.querySelector(".gg-go-base");
     const signalMode = toolbar.querySelector(".gg-signal-mode");

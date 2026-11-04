@@ -253,7 +253,8 @@ try {
   const trace = await traceResponse.json();
   if (!window.GeneGlassChromatogram) throw new Error("Chromatogram viewer script missing.");
   await window.GeneGlassChromatogram.render(trace, {
-    targetBase: Number.isInteger(targetBase) && targetBase > 0 ? targetBase : undefined
+    targetBase: Number.isInteger(targetBase) && targetBase > 0 ? targetBase : undefined,
+    showTitle: false
   });
   document.getElementById("chromatogramLoading").hidden = true;
 } catch (error) {
