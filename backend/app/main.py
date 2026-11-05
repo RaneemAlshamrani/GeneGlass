@@ -11,6 +11,7 @@ from app.api.analyses import analyses_router
 from app.api.auth import auth_router
 from app.api.dashboard import dashboard_router
 from app.api.routes import api_router, health_router
+from app.api.reviews import reviews_router
 from app.api.users import users_router
 from app.core.config import get_settings
 from app.db.init_db import initialize_database
@@ -51,6 +52,10 @@ def create_app() -> FastAPI:
     )
     application.include_router(
         analyses_router,
+        prefix=settings.api_prefix,
+    )
+    application.include_router(
+        reviews_router,
         prefix=settings.api_prefix,
     )
 

@@ -131,6 +131,48 @@
         </div>
       </section>
 
+      <section class="dashboard-card details-card review-card">
+        <div class="review-heading">
+          <div>
+            <h2>Specialist Review</h2>
+            <p>
+              Record your assessment of the available evidence. This decision
+              does not classify the sample as positive or negative for V617F.
+            </p>
+          </div>
+          <span id="latestReviewBadge" class="review-badge">Not reviewed</span>
+        </div>
+
+        <form id="reviewForm" class="review-form">
+          <label>
+            Review decision
+            <select id="reviewDecision" required>
+              <option value="">Select a decision</option>
+              <option value="approved">Accept available evidence</option>
+              <option value="rejected">Reject available evidence</option>
+              <option value="needs_more_data">Request more data</option>
+            </select>
+          </label>
+          <label>
+            Review comment
+            <textarea
+              id="reviewComment"
+              minlength="3"
+              maxlength="2000"
+              required
+              placeholder="Explain the evidence behind this decision"
+            ></textarea>
+          </label>
+          <div class="review-form-footer">
+            <small>Every submission is kept as a new history entry.</small>
+            <button id="reviewSubmitButton" type="submit">Save Review</button>
+          </div>
+        </form>
+
+        <p id="reviewStatus" class="review-status" role="status"></p>
+        <div id="reviewHistory" class="review-history"></div>
+      </section>
+
       <section class="dashboard-card details-card research-card">
         <div class="research-heading">
           <div>

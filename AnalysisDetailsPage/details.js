@@ -10,6 +10,13 @@
   const researchButton = document.getElementById("researchLookupButton");
   const researchStatus = document.getElementById("researchStatus");
   const researchResults = document.getElementById("researchResults");
+  const reviewForm = document.getElementById("reviewForm");
+  const reviewDecision = document.getElementById("reviewDecision");
+  const reviewComment = document.getElementById("reviewComment");
+  const reviewSubmitButton = document.getElementById("reviewSubmitButton");
+  const reviewStatus = document.getElementById("reviewStatus");
+  const reviewHistory = document.getElementById("reviewHistory");
+  const latestReviewBadge = document.getElementById("latestReviewBadge");
 
   const apiBaseUrl = window.GeneGlassConfig.apiBaseUrl;
 
@@ -53,6 +60,96 @@
     content.textContent = value || "N/A";
     row.append(name, content);
     container.appendChild(row);
+  }
+
+  const reviewLabels = {
+    approved: "Evidence accepted",
+    rejected: "Evidence rejected",
+    needs_more_data: "More data requested",
+  };
+
+  function renderReviewHistory(data) {
+    const reviews = Array.isArray(data.reviews) ? data.reviews : [];
+    reviewHistory.replaceChildren();
+    latestReviewBadge.textContent = data.latest_decision
+      ? reviewLabels[data.latest_decision] || data.latest_decision
+      : "Not reviewed";
+    latestReviewBadge.dataset.decision = data.latest_decision || "none";
+
+    if (!reviews.length) {
+      const empty = document.createElement("p");
+      empty.className = "review-empty";
+      empty.textContent = "No specialist review has been recorded yet.";
+      reviewHistory.appendChild(empty);
+      return;
+    }
+
+    reviews.forEach((review) => {
+      const entry = document.createElement("article");
+      entry.className = "review-entry";
+      const heading = document.createElement("div");
+      heading.className = "review-entry-heading";
+      const decision = document.createElement("strong");
+      decision.textContent = reviewLabels[review.decision] || review.decision;
+      const time = document.createElement("time");
+      time.dateTime = review.created_at;
+      time.textContent = new Date(review.created_at).toLocaleString();
+      heading.append(decision, time);
+
+      const comment = document.createElement("p");
+      comment.textContent = review.comment;
+      const reviewer = document.createElement("small");
+      reviewer.textContent = `${review.reviewer_name} · ${review.reviewer_role}`;
+      entry.append(heading, comment, reviewer);
+      reviewHistory.appendChild(entry);
+    });
+  }
+
+  async function loadReviewHistory(token) {
+    const response = await fetch(
+      `${apiBaseUrl}/analyses/${analysisId}/reviews`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!response.ok) {
+      throw new Error("Unable to load specialist review history.");
+    }
+    renderReviewHistory(await response.json());
+  }
+
+  async function submitReview(event) {
+    event.preventDefault();
+    const token = window.GeneGlassAuth?.token;
+    if (!token || !analysisId) return;
+
+    reviewSubmitButton.disabled = true;
+    reviewStatus.textContent = "Saving review…";
+    try {
+      const response = await fetch(`${apiBaseUrl}/analyses/${analysisId}/reviews`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          decision: reviewDecision.value,
+          comment: reviewComment.value,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        const detail = Array.isArray(data.detail)
+          ? data.detail.map((item) => item.msg).join("; ")
+          : data.detail;
+        throw new Error(detail || "Review could not be saved.");
+      }
+      reviewForm.reset();
+      reviewStatus.textContent = "Review saved as a new history entry.";
+      await loadReviewHistory(token);
+    } catch (error) {
+      reviewStatus.textContent = error.message;
+    } finally {
+      reviewSubmitButton.disabled = false;
+    }
   }
 
   function renderResearchResults(data) {
@@ -266,7 +363,10 @@ try {
 
 
       message.textContent = "";
-      await loadSavedResearchResults(token);
+      await Promise.all([
+        loadSavedResearchResults(token),
+        loadReviewHistory(token),
+      ]);
     } catch (error) {
       message.textContent = error.message;
     }
@@ -274,6 +374,7 @@ try {
 
   document.addEventListener("geneglass:auth-ready", loadDetails);
   researchButton.addEventListener("click", refreshResearchResults);
+  reviewForm.addEventListener("submit", submitReview);
 
   if (window.GeneGlassAuth?.token) {
     loadDetails();
