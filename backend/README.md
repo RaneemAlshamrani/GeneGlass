@@ -24,7 +24,7 @@ Backend مشروع GeneGlass بعد إكمال الإعداد وقاعدة ال�
 - مسار Specialist Review لحفظ قبول الأدلة أو رفضها أو طلب بيانات إضافية مع تعليق وسجل زمني كامل.
 - Audit Trail للعمليات المهمة مع المستخدم المنفذ والوقت، من دون حفظ كلمات المرور أو التوكنات أو محتوى AB1.
 - حفظ الأدلة المبدئية في SQLite وربط Profile وHistory وDashboard بالبيانات.
-- 22 اختبارًا آليًا للنقاط الأساسية والمصادقة وترحيلات قاعدة البيانات ورفع AB1 والتحليل المبدئي والربط البحثي والمراجعات وسجل التدقيق.
+- 25 اختبارًا آليًا للنقاط الأساسية والمصادقة وترحيلات قاعدة البيانات ورفع AB1 والتحليل المبدئي والربط البحثي والمراجعات وسجل التدقيق والتحقق التقني.
 
 لم يُنفّذ بعد نموذج مصنّف ومتحقق منه لإصدار نتيجة Positive/Negative أو PDF Report. لذلك تبقى `v617f_detected` فارغة. قرار Specialist Review يقيّم الأدلة المتاحة ويحفظها في سجل المراجعة، لكنه لا يحوّلها تلقائيًا إلى نتيجة طفرة.
 
@@ -184,6 +184,20 @@ python -m alembic upgrade head
 
 التحليل الحالي **مبدئي وغير تشخيصي**. يحدد موضع `NM_004972.4:c.1849G>T` ويعرض جودة الإشارة، لكنه لا يصنف الطفرة قبل اعتماد قواعد قرار واختبارها بملفات مرجعية معلومة النتيجة.
 
+## Reference Dataset and Pipeline Validation
+
+توجد أداة offline للتحقق القابل لإعادة التشغيل في `app.cli.validate_pipeline`. تستخدم manifest منزوع الهوية، وتحفظ SHA-256 للـmanifest ومرجع `NM_004972.4` وكل ملف AB1، ولا تضع المسار المحلي أو التسلسل الخام داخل التقرير.
+
+```powershell
+.\.venv\Scripts\python.exe -m app.cli.validate_pipeline `
+  --manifest validation/private/reference_manifest.csv `
+  --output validation/reports/validation-2026-11-05.json
+```
+
+القالب والتعليمات التفصيلية داخل `validation/`. البيانات والتقارير الفعلية مستبعدة من Git. الأداة تقيس نجاح القراءة، محاذاة الهدف، الهوية، التغطية، Phred وتوفر القمم، لكنها تضع classification metrics في `not_calculated` لأن النظام لا يملك classifier متحققًا منه ولا reference labels مستقلة كافية.
+
+تشغيل التطوير المحلي بتاريخ 2026-11-05 عالج 5 ملفات بنجاح، لكنه لم يمرر أي ملف كـtechnical pass: الهوية كانت قرابة 98.92% والتغطية 19.66–20.00% مقابل حد screening مبدئي 50%. لذلك يجب مراجعة amplicon/reference mapping وجودة أو trimming القراءة قبل تدريب أي model. هذه الملفات موسومة `unknown` وليست مجموعة تحقق موجبة/سالبة.
+
 ## Extended Research Screening وClinVar
 
 من صفحة Analysis Details يستطيع المختص الضغط على `Search ClinVar`. يقوم النظام حينها بما يلي:
@@ -246,6 +260,7 @@ python -m app.cli.create_user `
 ```text
 backend/
 ├── migrations/       # Alembic revisions and migration environment
+├── validation/       # Manifest template and private validation workflow
 ├── app/
 │   ├── api/          # HTTP routes
 │   ├── cli/          # Interactive user administration
@@ -254,6 +269,7 @@ backend/
 │   ├── models/       # Users, analyses, and reviews
 │   ├── schemas/      # Request/response schemas
 │   ├── services/     # Auth, AB1 parsing, QC, storage, and target mapping
+│   ├── validation/   # Reference dataset validation and report generation
 │   └── main.py       # FastAPI application entry point
 ├── tests/
 ├── alembic.ini
