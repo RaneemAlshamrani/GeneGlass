@@ -1,9 +1,14 @@
 from pathlib import Path
 
+from alembic import command
+from alembic.migration import MigrationContext
+import pytest
 from sqlalchemy import inspect, select, text
 from sqlalchemy.orm import Session
 
-from app.db.init_db import initialize_database
+import app.models  # noqa: F401
+from app.db.base import Base
+from app.db.init_db import build_alembic_config, initialize_database
 from app.db.session import create_sqlite_engine
 from app.models import Analysis, CandidateVariant, ExternalAnnotation, Review, User
 
@@ -14,6 +19,7 @@ def test_database_schema_and_foreign_keys(tmp_path: Path) -> None:
     tables = initialize_database(test_engine)
 
     assert tables == [
+        "alembic_version",
         "analyses",
         "candidate_variants",
         "external_annotations",
@@ -21,6 +27,7 @@ def test_database_schema_and_foreign_keys(tmp_path: Path) -> None:
         "users",
     ]
     assert set(inspect(test_engine).get_table_names()) == {
+        "alembic_version",
         "users",
         "analyses",
         "candidate_variants",
@@ -29,7 +36,66 @@ def test_database_schema_and_foreign_keys(tmp_path: Path) -> None:
     }
     with test_engine.connect() as connection:
         assert connection.execute(text("PRAGMA foreign_keys")).scalar_one() == 1
+        assert MigrationContext.configure(connection).get_current_revision() == (
+            "20261105_0001"
+        )
 
+    command.check(build_alembic_config(test_engine))
+
+    test_engine.dispose()
+
+
+def test_existing_current_schema_is_stamped_without_data_loss(
+    tmp_path: Path,
+) -> None:
+    test_engine = create_sqlite_engine(tmp_path / "legacy.db")
+    Base.metadata.create_all(test_engine)
+    with Session(test_engine) as session:
+        session.add(User(full_name="Legacy User", email="legacy@example.com"))
+        session.commit()
+
+    tables = initialize_database(test_engine)
+
+    assert "alembic_version" in tables
+    with Session(test_engine) as session:
+        user = session.scalar(select(User).where(User.email == "legacy@example.com"))
+        assert user is not None
+        assert user.full_name == "Legacy User"
+    with test_engine.connect() as connection:
+        assert MigrationContext.configure(connection).get_current_revision() == (
+            "20261105_0001"
+        )
+
+    test_engine.dispose()
+
+
+def test_migration_can_downgrade_and_upgrade_a_temporary_database(
+    tmp_path: Path,
+) -> None:
+    test_engine = create_sqlite_engine(tmp_path / "round_trip.db")
+    config = build_alembic_config(test_engine)
+    command.upgrade(config, "head")
+
+    command.downgrade(config, "base")
+    tables_after_downgrade = set(inspect(test_engine).get_table_names())
+    assert not (set(Base.metadata.tables) & tables_after_downgrade)
+
+    command.upgrade(config, "head")
+    assert set(Base.metadata.tables).issubset(
+        set(inspect(test_engine).get_table_names())
+    )
+
+    test_engine.dispose()
+
+
+def test_partial_legacy_schema_is_rejected(tmp_path: Path) -> None:
+    test_engine = create_sqlite_engine(tmp_path / "partial_legacy.db")
+    Base.metadata.tables["users"].create(test_engine)
+
+    with pytest.raises(RuntimeError, match="does not match"):
+        initialize_database(test_engine)
+
+    assert "alembic_version" not in inspect(test_engine).get_table_names()
     test_engine.dispose()
 
 

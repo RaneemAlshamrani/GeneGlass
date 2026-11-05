@@ -1,0 +1,12 @@
+GeneGlass database migrations
+================================
+
+Run migrations from the backend directory:
+
+    python -m alembic upgrade head
+
+Create future revisions only after changing the SQLAlchemy models:
+
+    python -m alembic revision --autogenerate -m "describe change"
+
+Review every generated migration before applying it.

@@ -22,7 +22,7 @@ Backend مشروع GeneGlass بعد إكمال الإعداد وقاعدة ال�
 - ربط مرجعي مباشر بسجل NCBI ClinVar من دون استنتاج تشخيصي.
 - فحص بحثي اختياري لاختلافات SNV الظاهرة في base calls ضمن الجزء المقروء من JAK2، مع بحث ClinVar باستخدام HGVS فقط وتخزين النتائج مؤقتًا.
 - حفظ الأدلة المبدئية في SQLite وربط Profile وHistory وDashboard بالبيانات.
-- 17 اختبارًا آليًا للنقاط الأساسية والمصادقة وقاعدة البيانات ورفع AB1 والتحليل المبدئي والربط البحثي.
+- 20 اختبارًا آليًا للنقاط الأساسية والمصادقة وترحيلات قاعدة البيانات ورفع AB1 والتحليل المبدئي والربط البحثي.
 
 لم يُنفّذ بعد نموذج مصنّف ومتحقق منه لإصدار نتيجة Positive/Negative، ولا Specialist Review workflow أو PDF Report. لذلك تبقى `v617f_detected` فارغة، وتعرض الواجهة الأدلة المبدئية وحالة المراجعة فقط.
 
@@ -110,7 +110,7 @@ CORS_ORIGINS=http://localhost:5500,http://127.0.0.1:5500
 http://127.0.0.1:8000
 ```
 
-لم تُضف اتصالات API إلى صفحات الواجهة في هذه المهمة لأن المسارات الوظيفية للمصادقة والتحليل والسجل لم تُنفّذ بعد. إضافة طلبات وهمية الآن ستعطي تكاملًا شكليًا لا يعمل.
+صفحات المصادقة والتحليل والسجل ولوحة المعلومات والملف الشخصي مرتبطة حاليًا بالـ API المحلي.
 
 ## قاعدة البيانات
 
@@ -126,17 +126,39 @@ backend/data/geneglass.db
 DATABASE_PATH=data/geneglass.db
 ```
 
-تهيئة الجداول أو التأكد من وجودها عملية غير مدمرة؛ فهي تنشئ الجداول الناقصة ولا تحذف البيانات:
+تدار بنية قاعدة البيانات بواسطة Alembic. يشغّل التطبيق `upgrade head` عند البدء، ويمكن تشغيله يدويًا:
 
 ```powershell
 python -m app.db.init_db
 ```
 
+أو باستخدام Alembic مباشرة:
+
+```powershell
+python -m alembic upgrade head
+python -m alembic current
+python -m alembic history
+```
+
+عند أول تشغيل على قاعدة GeneGlass قديمة مطابقة للبنية الحالية، يفحص النظام الجداول والأعمدة ثم ينشئ baseline stamp من دون حذف البيانات. إذا كانت القاعدة قديمة جزئيًا أو ناقصة، يوقف التشغيل بدل تعديلها بصمت، ويجب أخذ نسخة احتياطية وإنشاء migration صريح لها.
+
+بعد تعديل SQLAlchemy models مستقبلًا:
+
+```powershell
+python -m alembic revision --autogenerate -m "describe schema change"
+python -m alembic upgrade head
+```
+
+يجب مراجعة migration المولّد قبل تطبيقه.
+
 الجداول الحالية:
 
-- `users`: بيانات الحساب الأساسية، الدور، حالة الحساب، وحقل hash لكلمة المرور سيُستخدم في مهمة المصادقة.
+- `alembic_version`: رقم migration المطبق حاليًا.
+- `users`: بيانات الحساب الأساسية، الدور، حالة الحساب وhash كلمة المرور.
 - `analyses`: ملف AB1 المرتبط بالمستخدم، حالة المعالجة، JAK2/V617F، حالة الجودة والنتيجة المستقبلية.
 - `reviews`: قرار المراجع وتعليقه وربطه بالتحليل والمستخدم المراجع.
+- `candidate_variants`: اختلافات JAK2 البحثية المرشحة.
+- `external_annotations`: نتائج ClinVar المخزنة مؤقتًا.
 
 لا توجد بيانات Seed افتراضية؛ لذلك تبدأ الجداول فارغة.
 
@@ -216,6 +238,7 @@ python -m app.cli.create_user `
 
 ```text
 backend/
+├── migrations/       # Alembic revisions and migration environment
 ├── app/
 │   ├── api/          # HTTP routes
 │   ├── cli/          # Interactive user administration
@@ -226,6 +249,7 @@ backend/
 │   ├── services/     # Auth, AB1 parsing, QC, storage, and target mapping
 │   └── main.py       # FastAPI application entry point
 ├── tests/
+├── alembic.ini
 ├── .env.example
 ├── requirements.txt
 └── requirements-dev.txt
