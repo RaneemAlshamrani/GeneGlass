@@ -17,6 +17,9 @@
   const reviewStatus = document.getElementById("reviewStatus");
   const reviewHistory = document.getElementById("reviewHistory");
   const latestReviewBadge = document.getElementById("latestReviewBadge");
+  const auditCount = document.getElementById("auditCount");
+  const auditStatus = document.getElementById("auditStatus");
+  const auditTimeline = document.getElementById("auditTimeline");
 
   const apiBaseUrl = window.GeneGlassConfig.apiBaseUrl;
 
@@ -67,6 +70,74 @@
     rejected: "Evidence rejected",
     needs_more_data: "More data requested",
   };
+
+  const auditLabels = {
+    "analysis.uploaded": "Analysis uploaded",
+    "analysis.review_created": "Specialist review recorded",
+    "analysis.clinvar_refreshed": "ClinVar research lookup completed",
+  };
+
+  function formatAuditDetails(details) {
+    if (!details || typeof details !== "object") return "";
+    const readable = [];
+    if (details.decision) {
+      readable.push(`Decision: ${reviewLabels[details.decision] || details.decision}`);
+    }
+    if (Number.isInteger(details.screened_candidate_count)) {
+      readable.push(`Candidates screened: ${details.screened_candidate_count}`);
+    }
+    if (Number.isInteger(details.matched_annotation_count)) {
+      readable.push(`ClinVar matches: ${details.matched_annotation_count}`);
+    }
+    if (details.qc_status) readable.push(`QC: ${details.qc_status}`);
+    return readable.join(" · ");
+  }
+
+  function renderAuditTrail(data) {
+    const events = Array.isArray(data.events) ? data.events : [];
+    auditTimeline.replaceChildren();
+    auditCount.textContent = `${events.length} event${events.length === 1 ? "" : "s"}`;
+    auditStatus.textContent = events.length
+      ? "Audit records are read-only."
+      : "No audit events are recorded for this analysis yet.";
+
+    events.forEach((event) => {
+      const entry = document.createElement("article");
+      entry.className = "audit-entry";
+      const marker = document.createElement("span");
+      marker.className = "audit-marker";
+      marker.setAttribute("aria-hidden", "true");
+      const content = document.createElement("div");
+      const heading = document.createElement("div");
+      heading.className = "audit-entry-heading";
+      const action = document.createElement("strong");
+      action.textContent = auditLabels[event.action] || event.action;
+      const time = document.createElement("time");
+      time.dateTime = event.created_at;
+      time.textContent = new Date(event.created_at).toLocaleString();
+      heading.append(action, time);
+      const actor = document.createElement("p");
+      actor.textContent = `${event.actor_name} · ${event.actor_role}`;
+      content.append(heading, actor);
+      const details = formatAuditDetails(event.details);
+      if (details) {
+        const detail = document.createElement("small");
+        detail.textContent = details;
+        content.appendChild(detail);
+      }
+      entry.append(marker, content);
+      auditTimeline.appendChild(entry);
+    });
+  }
+
+  async function loadAuditTrail(token) {
+    const response = await fetch(
+      `${apiBaseUrl}/analyses/${analysisId}/audit-events`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!response.ok) throw new Error("Unable to load audit trail.");
+    renderAuditTrail(await response.json());
+  }
 
   function renderReviewHistory(data) {
     const reviews = Array.isArray(data.reviews) ? data.reviews : [];
@@ -145,6 +216,7 @@
       reviewForm.reset();
       reviewStatus.textContent = "Review saved as a new history entry.";
       await loadReviewHistory(token);
+      await loadAuditTrail(token);
     } catch (error) {
       reviewStatus.textContent = error.message;
     } finally {
@@ -366,6 +438,7 @@ try {
       await Promise.all([
         loadSavedResearchResults(token),
         loadReviewHistory(token),
+        loadAuditTrail(token),
       ]);
     } catch (error) {
       message.textContent = error.message;

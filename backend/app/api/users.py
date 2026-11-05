@@ -16,6 +16,7 @@ from app.schemas.profile import (
     ProfileStatisticsResponse,
     ProfileUpdate,
 )
+from app.services.audit import AuditAction, add_audit_event
 
 users_router = APIRouter(prefix="/users", tags=["users"])
 
@@ -43,16 +44,34 @@ def update_my_profile(
             detail="This email is already in use.",
         )
 
-    current_user.full_name = profile_data.full_name.strip()
-    current_user.email = email
-    current_user.department = (
+    normalized_name = profile_data.full_name.strip()
+    normalized_department = (
         profile_data.department.strip()
         if profile_data.department
         and profile_data.department.strip()
         else None
     )
+    changed_fields = [
+        field
+        for field, old_value, new_value in (
+            ("full_name", current_user.full_name, normalized_name),
+            ("email", current_user.email, email),
+            ("department", current_user.department, normalized_department),
+        )
+        if old_value != new_value
+    ]
+
+    current_user.full_name = normalized_name
+    current_user.email = email
+    current_user.department = normalized_department
 
     try:
+        add_audit_event(
+            session,
+            actor_id=current_user.id,
+            action=AuditAction.PROFILE_UPDATED,
+            details={"changed_fields": changed_fields},
+        )
         session.commit()
         session.refresh(current_user)
     except IntegrityError:

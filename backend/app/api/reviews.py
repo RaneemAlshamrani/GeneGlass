@@ -17,6 +17,7 @@ from app.schemas.review import (
     ReviewHistoryResponse,
     ReviewResponse,
 )
+from app.services.audit import AuditAction, add_audit_event
 
 reviews_router = APIRouter(prefix="/analyses", tags=["reviews"])
 
@@ -103,6 +104,17 @@ def create_review(
     )
     try:
         session.add(review)
+        session.flush()
+        add_audit_event(
+            session,
+            actor_id=current_user.id,
+            analysis_id=analysis_id,
+            action=AuditAction.REVIEW_CREATED,
+            details={
+                "review_id": review.id,
+                "decision": review.decision.value,
+            },
+        )
         session.commit()
         review = session.scalar(
             select(Review)

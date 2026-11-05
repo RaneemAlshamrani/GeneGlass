@@ -18,6 +18,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
+    from app.models.audit import AuditEvent
     from app.models.research_variant import CandidateVariant
     from app.models.review import Review
     from app.models.user import User
@@ -146,5 +147,9 @@ class Analysis(TimestampMixin, Base):
     candidate_variants: Mapped[list["CandidateVariant"]] = relationship(
         back_populates="analysis",
         cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    audit_events: Mapped[list["AuditEvent"]] = relationship(
+        back_populates="analysis",
         passive_deletes=True,
     )

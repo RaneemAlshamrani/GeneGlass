@@ -21,6 +21,7 @@ from app.services.security import (
     verify_password,
 )
 from app.services.users import authenticate_user
+from app.services.audit import AuditAction, add_audit_event
 
 auth_router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -47,6 +48,12 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    add_audit_event(
+        session,
+        actor_id=user.id,
+        action=AuditAction.LOGIN_SUCCEEDED,
+    )
+    session.commit()
     token, expires_in = create_access_token(user.id)
 
     return TokenResponse(
@@ -96,6 +103,11 @@ def change_password(
 
     current_user.password_hash = hash_password(password_data.new_password)
 
+    add_audit_event(
+        session,
+        actor_id=current_user.id,
+        action=AuditAction.PASSWORD_CHANGED,
+    )
     session.commit()
 
     return {"message": "Password changed successfully."}

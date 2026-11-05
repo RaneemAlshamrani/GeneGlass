@@ -10,7 +10,14 @@ import app.models  # noqa: F401
 from app.db.base import Base
 from app.db.init_db import build_alembic_config, initialize_database
 from app.db.session import create_sqlite_engine
-from app.models import Analysis, CandidateVariant, ExternalAnnotation, Review, User
+from app.models import (
+    Analysis,
+    AuditEvent,
+    CandidateVariant,
+    ExternalAnnotation,
+    Review,
+    User,
+)
 
 
 def test_database_schema_and_foreign_keys(tmp_path: Path) -> None:
@@ -21,6 +28,7 @@ def test_database_schema_and_foreign_keys(tmp_path: Path) -> None:
     assert tables == [
         "alembic_version",
         "analyses",
+        "audit_events",
         "candidate_variants",
         "external_annotations",
         "reviews",
@@ -30,6 +38,7 @@ def test_database_schema_and_foreign_keys(tmp_path: Path) -> None:
         "alembic_version",
         "users",
         "analyses",
+        "audit_events",
         "candidate_variants",
         "external_annotations",
         "reviews",
@@ -37,7 +46,7 @@ def test_database_schema_and_foreign_keys(tmp_path: Path) -> None:
     with test_engine.connect() as connection:
         assert connection.execute(text("PRAGMA foreign_keys")).scalar_one() == 1
         assert MigrationContext.configure(connection).get_current_revision() == (
-            "20261105_0001"
+            "20261105_0002"
         )
 
     command.check(build_alembic_config(test_engine))
@@ -63,7 +72,7 @@ def test_existing_current_schema_is_stamped_without_data_loss(
         assert user.full_name == "Legacy User"
     with test_engine.connect() as connection:
         assert MigrationContext.configure(connection).get_current_revision() == (
-            "20261105_0001"
+            "20261105_0002"
         )
 
     test_engine.dispose()
@@ -121,6 +130,11 @@ def test_user_analysis_review_relationships(tmp_path: Path) -> None:
             comment="Database relationship test",
         )
         session.add(review)
+        session.add(AuditEvent(
+            actor_id=user.id,
+            analysis_id=analysis.id,
+            action="analysis.review_created",
+        ))
         candidate = CandidateVariant(
             analysis_id=analysis.id,
             reference_accession="NM_004972.4",
@@ -148,6 +162,7 @@ def test_user_analysis_review_relationships(tmp_path: Path) -> None:
 
         stored_analysis = session.scalar(select(Analysis))
         stored_review = session.scalar(select(Review))
+        stored_audit_event = session.scalar(select(AuditEvent))
 
         assert stored_analysis is not None
         assert stored_analysis.owner.email == "specialist@example.com"
@@ -155,6 +170,9 @@ def test_user_analysis_review_relationships(tmp_path: Path) -> None:
         assert stored_analysis.target_variant == "V617F"
         assert stored_review is not None
         assert stored_review.analysis_id == stored_analysis.id
+        assert stored_audit_event is not None
+        assert stored_audit_event.actor.email == "specialist@example.com"
+        assert stored_audit_event.analysis_id == stored_analysis.id
         assert stored_analysis.candidate_variants[0].hgvs == "NM_004972.4:c.1849G>T"
         assert stored_analysis.candidate_variants[0].external_annotations[0].source_record_id == "14662"
 

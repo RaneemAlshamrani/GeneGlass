@@ -10,6 +10,7 @@ from app.db.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.analysis import Analysis
+    from app.models.audit import AuditEvent
     from app.models.review import Review
 
 
@@ -50,4 +51,8 @@ class User(TimestampMixin, Base):
     reviews: Mapped[list["Review"]] = relationship(
         back_populates="reviewer",
         foreign_keys="Review.reviewer_id",
+    )
+    audit_events: Mapped[list["AuditEvent"]] = relationship(
+        back_populates="actor",
+        foreign_keys="AuditEvent.actor_id",
     )

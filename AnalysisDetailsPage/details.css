@@ -219,6 +219,87 @@
   background: #f8fcfc;
 }
 
+.audit-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.audit-heading h2 {
+  margin-bottom: 8px;
+}
+
+.audit-heading p {
+  margin: 0;
+}
+
+.audit-count {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #edf5f5;
+  color: #42666a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.audit-timeline {
+  display: grid;
+  gap: 0;
+  margin-top: 12px;
+}
+
+.audit-entry {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 12px;
+  position: relative;
+  padding: 0 0 18px;
+}
+
+.audit-entry:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 13px;
+  bottom: 0;
+  left: 5px;
+  width: 2px;
+  background: #d4e8e9;
+}
+
+.audit-marker {
+  position: relative;
+  z-index: 1;
+  width: 12px;
+  height: 12px;
+  margin-top: 3px;
+  border-radius: 50%;
+  background: #008f96;
+  box-shadow: 0 0 0 4px #e6f5f5;
+}
+
+.audit-entry-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #12363b;
+}
+
+.audit-entry-heading time {
+  color: #71858a;
+  font-size: 12px;
+}
+
+.audit-entry p {
+  margin: 5px 0 2px;
+  color: #42666a;
+}
+
+.audit-entry small {
+  color: #71858a;
+}
+
 .research-heading {
   display: flex;
   align-items: flex-start;
@@ -340,6 +421,7 @@
   }
 
   .review-heading,
+  .audit-heading,
   .review-form-footer {
     align-items: stretch;
     flex-direction: column;

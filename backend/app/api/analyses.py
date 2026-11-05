@@ -29,6 +29,7 @@ from app.models.user import User
 from app.schemas.analysis import AnalysisListItem, AnalysisListResponse
 from app.services.ab1_reader import read_ab1_file
 from app.services.ab1_reader import read_chromatogram
+from app.services.audit import AuditAction, add_audit_event
 from app.services.sequence_cleaner import clean_sequence
 from app.services.storage.ab1_storage import save_ab1_file
 from app.services.clinvar import CLINVAR_SOURCE, ClinVarClient, ClinVarServiceError
@@ -291,6 +292,18 @@ async def upload_analysis(
 
     try:
         session.add(analysis)
+        session.flush()
+        add_audit_event(
+            session,
+            actor_id=current_user.id,
+            analysis_id=analysis.id,
+            action=AuditAction.ANALYSIS_UPLOADED,
+            details={
+                "gene": analysis.gene,
+                "target_variant": analysis.target_variant,
+                "qc_status": analysis.qc_status.value,
+            },
+        )
         session.commit()
         session.refresh(analysis)
 
@@ -597,6 +610,24 @@ def refresh_research_variants(
                         ensure_ascii=False,
                     )
 
+        matched_count = sum(
+            1
+            for candidate in candidates
+            for annotation in candidate.external_annotations
+            if annotation.source == CLINVAR_SOURCE
+            and annotation.lookup_status == "matched"
+        )
+        add_audit_event(
+            session,
+            actor_id=current_user.id,
+            analysis_id=analysis.id,
+            action=AuditAction.CLINVAR_REFRESHED,
+            details={
+                "screened_candidate_count": len(candidates),
+                "matched_annotation_count": matched_count,
+                "force_external_refresh": force_external_refresh,
+            },
+        )
         session.commit()
     except ClinVarServiceError as exc:
         session.rollback()
