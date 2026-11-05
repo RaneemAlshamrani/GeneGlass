@@ -12,21 +12,22 @@ from app.db.init_db import initialize_database
 from app.db.session import create_sqlite_engine, get_db
 from app.main import app
 from app.models.analysis import Analysis
+from app.models.audit import AuditEvent
 from app.models.research_variant import CandidateVariant, ExternalAnnotation
 from app.api import analyses as analyses_api
 from app.schemas.auth import UserCreate
 from app.services.storage import ab1_storage
 from app.services.users import create_user
 from app.services.variant_detector import (
-    JAK2_V617F_REFERENCE_INDEX,
-    load_jak2_reference,
+    JAK2_V617F_GENOMIC_INDEX,
+    load_jak2_genomic_reference,
 )
 
 
 def build_synthetic_sequencing_data() -> tuple[dict, dict]:
-    reference = load_jak2_reference()
-    start = JAK2_V617F_REFERENCE_INDEX - 100
-    sequence = reference[start : JAK2_V617F_REFERENCE_INDEX + 101]
+    reference = load_jak2_genomic_reference()
+    start = JAK2_V617F_GENOMIC_INDEX - 100
+    sequence = reference[start : JAK2_V617F_GENOMIC_INDEX + 101]
     quality_scores = [40] * len(sequence)
     base_positions = [index * 2 for index in range(len(sequence))]
     trace_length = base_positions[-1] + 2
@@ -124,6 +125,20 @@ def test_duplicate_ab1_upload_is_rejected(
                 },
             )
 
+            analysis_id = first_response.json()["id"]
+            with test_sessions() as session:
+                stale = session.get(Analysis, analysis_id)
+                assert stale is not None
+                stale.preliminary_result_json = (
+                    '{"found":true,"alignment_coverage_percentage":20}'
+                )
+                session.commit()
+
+            recalculated_response = client.get(
+                f"/api/analyses/{analysis_id}/jak2-target",
+                headers=headers,
+            )
+
         assert first_response.status_code == 201
         first_data = first_response.json()
         assert "v617f_detected" not in first_data
@@ -132,6 +147,10 @@ def test_duplicate_ab1_upload_is_rejected(
         assert "classification remains pending" in first_data["message"]
         assert duplicate_response.status_code == 409
         assert "already uploaded" in duplicate_response.json()["detail"]
+        assert recalculated_response.status_code == 200
+        recalculated = recalculated_response.json()["result"]
+        assert recalculated["pipeline_version"] == "jak2-genomic-grch38-v2"
+        assert recalculated["alignment_coverage_percentage"] == 100
 
         with test_sessions() as session:
             count = session.scalar(select(func.count()).select_from(Analysis))
@@ -140,6 +159,8 @@ def test_duplicate_ab1_upload_is_rejected(
             assert analysis is not None
             assert analysis.v617f_detected is None
             assert analysis.preliminary_result_json is not None
+            actions = set(session.scalars(select(AuditEvent.action)).all())
+            assert "analysis.preliminary_evidence_recalculated" in actions
 
         stored_files = list(upload_root.rglob("*.ab1"))
         assert len(stored_files) == 1

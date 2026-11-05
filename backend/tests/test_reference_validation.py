@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 
 from app.services.variant_detector import (
-    JAK2_V617F_REFERENCE_INDEX,
-    load_jak2_reference,
+    JAK2_V617F_GENOMIC_INDEX,
+    load_jak2_genomic_reference,
 )
 from app.validation import reference_dataset
 from app.validation.reference_dataset import (
@@ -19,9 +19,9 @@ from app.validation.reference_dataset import (
 
 
 def build_synthetic_target_trace() -> dict:
-    reference = load_jak2_reference()
-    start = JAK2_V617F_REFERENCE_INDEX - 100
-    sequence = reference[start : JAK2_V617F_REFERENCE_INDEX + 101]
+    reference = load_jak2_genomic_reference()
+    start = JAK2_V617F_GENOMIC_INDEX - 100
+    sequence = reference[start : JAK2_V617F_GENOMIC_INDEX + 101]
     base_positions = [index * 2 for index in range(len(sequence))]
     trace_length = base_positions[-1] + 2
     channels = {base: [5] * trace_length for base in "ACGT"}
@@ -66,8 +66,9 @@ def test_reference_validation_reports_technical_evidence_without_raw_data(
     report = run_reference_validation(manifest)
 
     assert report["research_use_only"] is True
-    assert report["reference"]["accession"] == "NM_004972.4"
-    assert len(report["reference"]["fasta_sha256"]) == 64
+    assert report["reference"]["alignment_accession"] == "NC_000009.12"
+    assert report["reference"]["transcript_accession"] == "NM_004972.4"
+    assert len(report["reference"]["genomic_fasta_sha256"]) == 64
     assert report["summary"]["total_samples"] == 1
     assert report["summary"]["technical_checks_passed"] == 1
     assert all(

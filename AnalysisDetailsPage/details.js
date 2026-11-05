@@ -73,6 +73,7 @@
 
   const auditLabels = {
     "analysis.uploaded": "Analysis uploaded",
+    "analysis.preliminary_evidence_recalculated": "JAK2 evidence recalculated",
     "analysis.review_created": "Specialist review recorded",
     "analysis.clinvar_refreshed": "ClinVar research lookup completed",
   };
@@ -247,6 +248,13 @@
       title.textContent = candidate.hgvs;
       card.appendChild(title);
       appendResearchField(card, "AB1 base", String(candidate.ab1_base_number));
+      if (candidate.genomic_position) {
+        appendResearchField(
+          card,
+          "Genomic position",
+          `NC_000009.12:g.${candidate.genomic_position}`
+        );
+      }
       appendResearchField(card, "Read direction", candidate.direction);
       appendResearchField(card, "Raw AB1 change", candidate.raw_ab1_change);
       appendResearchField(
@@ -383,6 +391,10 @@ try {
     targetBase = Number(result.ab1_base_number);
     showCards(jak2Details, [
       ["AB1 Position", result.ab1_base_number],
+      ["Genomic Coordinate", result.genomic_position
+        ? `NC_000009.12:g.${result.genomic_position}` : "N/A"],
+      ["Transcript Coordinate", result.coding_position
+        ? `NM_004972.4:c.${result.coding_position}` : "N/A"],
       ["Direction", result.direction],
       ["Observed Base", result.observed_base],
       ["Target Phred Quality", result.quality_score],
@@ -396,7 +408,8 @@ try {
       ["Secondary Peak", peaks.secondary_base],
       ["Secondary / Primary", formatRatio(peaks.overlap_ratio)],
       ["Review Status", result.needs_review ? "Needs Review" : "Not flagged"],
-      ["Review Reason", reasons || "No preliminary QC review reason"]
+      ["Review Reason", reasons || "No preliminary QC review reason"],
+      ["Pipeline Version", result.pipeline_version]
     ]);
     const reference = result.reference_evidence;
     if (reference?.url) {

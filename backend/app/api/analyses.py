@@ -34,6 +34,7 @@ from app.services.sequence_cleaner import clean_sequence
 from app.services.storage.ab1_storage import save_ab1_file
 from app.services.clinvar import CLINVAR_SOURCE, ClinVarClient, ClinVarServiceError
 from app.services.variant_detector import (
+    JAK2_PIPELINE_VERSION,
     analyze_jak2_chromatogram,
     extract_jak2_candidate_snvs,
 )
@@ -83,6 +84,7 @@ def _serialize_candidate(candidate: CandidateVariant) -> dict:
         "reference_accession": candidate.reference_accession,
         "transcript_position": candidate.transcript_position,
         "coding_position": candidate.coding_position,
+        "genomic_position": candidate.genomic_position,
         "reference_allele": candidate.reference_allele,
         "observed_allele": candidate.observed_allele,
         "reference_oriented_change": (
@@ -107,7 +109,11 @@ def _serialize_candidate(candidate: CandidateVariant) -> dict:
 def _research_response(analysis: Analysis) -> dict:
     screened_candidates = sorted(
         analysis.candidate_variants,
-        key=lambda item: (item.transcript_position, item.id),
+        key=lambda item: (
+            item.genomic_position or 0,
+            item.transcript_position or 0,
+            item.id,
+        ),
     )
     matched_candidates = [
         candidate for candidate in screened_candidates
@@ -163,6 +169,7 @@ def _sync_research_candidates(
                     "reference_accession",
                     "transcript_position",
                     "coding_position",
+                    "genomic_position",
                     "reference_allele",
                     "observed_allele",
                     "hgvs",
@@ -178,6 +185,7 @@ def _sync_research_candidates(
             for key in (
                 "transcript_position",
                 "coding_position",
+                "genomic_position",
                 "reference_allele",
                 "observed_allele",
                 "ab1_base_number",
@@ -699,9 +707,32 @@ def get_jak2_target_analysis(
         result = None
 
     try:
-        if result is None:
+        cache_is_current = (
+            isinstance(result, dict)
+            and result.get("pipeline_version") == JAK2_PIPELINE_VERSION
+        )
+        if not cache_is_current:
             data = read_chromatogram(analysis.stored_file_path)
             result = analyze_jak2_chromatogram(data)
+            analysis.preliminary_result_json = json.dumps(
+                result,
+                ensure_ascii=True,
+                separators=(",", ":"),
+            )
+            analysis.qc_status = (
+                QCStatus.PASSED
+                if analysis.quality_assessment == "good"
+                and not result.get("needs_review", True)
+                else QCStatus.NEEDS_REVIEW
+            )
+            add_audit_event(
+                session,
+                actor_id=current_user.id,
+                analysis_id=analysis.id,
+                action=AuditAction.ANALYSIS_RECALCULATED,
+                details={"pipeline_version": JAK2_PIPELINE_VERSION},
+            )
+            session.commit()
 
     except (ValueError, FileNotFoundError, OSError) as exc:
         raise HTTPException(

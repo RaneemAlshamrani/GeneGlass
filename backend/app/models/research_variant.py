@@ -39,8 +39,12 @@ class CandidateVariant(TimestampMixin, Base):
         index=True,
     )
     reference_accession: Mapped[str] = mapped_column(String(50), nullable=False)
-    transcript_position: Mapped[int] = mapped_column(Integer, nullable=False)
+    transcript_position: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
     coding_position: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    genomic_position: Mapped[int | None] = mapped_column(Integer, nullable=True)
     reference_allele: Mapped[str] = mapped_column(String(10), nullable=False)
     observed_allele: Mapped[str] = mapped_column(String(10), nullable=False)
     hgvs: Mapped[str] = mapped_column(String(150), nullable=False)

@@ -1,5 +1,6 @@
 """Reference utilities for JAK2 variant detection."""
 
+from functools import lru_cache
 from pathlib import Path
 
 from Bio import SeqIO
@@ -11,12 +12,27 @@ REFERENCE_PATH = (
     / "references"
     / "JAK2_NM_004972.4.fasta"
 )
+GENOMIC_REFERENCE_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "references"
+    / "JAK2_NC_000009.12_5073170_5074370.fasta"
+)
 
 JAK2_V617F_CDNA_POSITION = 1849
 JAK2_CDS_START = 468
 JAK2_CDS_END = 3866
-JAK2_V617F_REFERENCE_POSITION = JAK2_CDS_START + JAK2_V617F_CDNA_POSITION - 1
-JAK2_V617F_REFERENCE_INDEX = JAK2_V617F_REFERENCE_POSITION - 1
+JAK2_TRANSCRIPT_ACCESSION = "NM_004972.4"
+JAK2_GENOMIC_ACCESSION = "NC_000009.12"
+JAK2_GENOMIC_REFERENCE_START = 5_073_170
+JAK2_GENOMIC_REFERENCE_STOP = 5_074_370
+JAK2_V617F_TRANSCRIPT_POSITION = (
+    JAK2_CDS_START + JAK2_V617F_CDNA_POSITION - 1
+)
+JAK2_V617F_GENOMIC_POSITION = 5_073_770
+JAK2_V617F_GENOMIC_INDEX = (
+    JAK2_V617F_GENOMIC_POSITION - JAK2_GENOMIC_REFERENCE_START
+)
+JAK2_PIPELINE_VERSION = "jak2-genomic-grch38-v2"
 
 # Conservative preliminary alignment screening limits, not clinical cutoffs.
 MIN_ALIGNMENT_IDENTITY_PERCENT = 80.0
@@ -29,6 +45,8 @@ JAK2_V617F_REFERENCE_EVIDENCE = {
     "accession": "VCV000014662",
     "transcript": "NM_004972.4",
     "hgvs_c": "c.1849G>T",
+    "genomic_reference": "NC_000009.12",
+    "hgvs_g": "g.5073770G>T",
     "protein_change": "p.Val617Phe",
     "url": "https://www.ncbi.nlm.nih.gov/clinvar/variation/14662/",
     "note": (
@@ -39,7 +57,7 @@ JAK2_V617F_REFERENCE_EVIDENCE = {
 
 
 def load_jak2_reference() -> str:
-    """Load the complete JAK2 reference sequence without trimming."""
+    """Load the JAK2 transcript reference used for HGVS conversion."""
     record = SeqIO.read(REFERENCE_PATH, "fasta")
 
     if record.id != "NM_004972.4":
@@ -48,23 +66,41 @@ def load_jak2_reference() -> str:
     return str(record.seq).upper()
 
 
-def get_jak2_target() -> dict:
-    """Return the reference nucleotide at JAK2 c.1849."""
-    sequence = load_jak2_reference()
+def load_jak2_genomic_reference() -> str:
+    """Load the pinned GRCh38 JAK2 exon 14 genomic window."""
 
-    # c.1849 is a coding-DNA position, not a FASTA index.
-    # We will map it using the verified CDS annotation next.
+    record = SeqIO.read(GENOMIC_REFERENCE_PATH, "fasta")
+    if record.id != (
+        f"{JAK2_GENOMIC_ACCESSION}:"
+        f"{JAK2_GENOMIC_REFERENCE_START}-{JAK2_GENOMIC_REFERENCE_STOP}"
+    ):
+        raise ValueError("Unexpected JAK2 genomic reference window")
+    sequence = str(record.seq).upper()
+    expected_length = (
+        JAK2_GENOMIC_REFERENCE_STOP - JAK2_GENOMIC_REFERENCE_START + 1
+    )
+    if len(sequence) != expected_length:
+        raise ValueError("Unexpected JAK2 genomic reference length")
+    if sequence[JAK2_V617F_GENOMIC_INDEX] != "G":
+        raise ValueError("Unexpected JAK2 V617F genomic reference allele")
+    return sequence
+
+
+def get_jak2_target() -> dict:
+    """Return pinned genomic and transcript coordinates for JAK2 V617F."""
     return {
-        "reference": "NM_004972.4",
-        "sequence_length": len(sequence),
+        "genomic_reference": JAK2_GENOMIC_ACCESSION,
+        "genomic_position": JAK2_V617F_GENOMIC_POSITION,
+        "transcript_reference": JAK2_TRANSCRIPT_ACCESSION,
+        "transcript_position": JAK2_V617F_TRANSCRIPT_POSITION,
         "cdna_position": JAK2_V617F_CDNA_POSITION,
-        "reference_sequence": sequence,
+        "reference_allele": "G",
     }
 
 
 def align_ab1_to_jak2(ab1_sequence: str) -> dict:
-    """Align the original AB1 sequence to JAK2 in both orientations."""
-    reference = load_jak2_reference()
+    """Align AB1 to the pinned JAK2 genomic window in both orientations."""
+    reference = load_jak2_genomic_reference()
     sequence = ab1_sequence.upper()
 
   
@@ -128,6 +164,9 @@ def align_ab1_to_jak2(ab1_sequence: str) -> dict:
     )
     
     return {
+        "reference_accession": JAK2_GENOMIC_ACCESSION,
+        "reference_start": JAK2_GENOMIC_REFERENCE_START,
+        "reference_stop": JAK2_GENOMIC_REFERENCE_STOP,
         "direction": direction,
         "alignment_score": float(best.score),
         "reference_positions": best.aligned[0].tolist(),
@@ -135,6 +174,57 @@ def align_ab1_to_jak2(ab1_sequence: str) -> dict:
         "identity_percentage": identity_percentage,
         "coverage_percentage": coverage_percentage,
     }
+
+
+@lru_cache(maxsize=1)
+def _genomic_to_transcript_map() -> dict[int, int]:
+    """Map bases shared by the genomic window and spliced transcript."""
+
+    transcript = load_jak2_reference()
+    genomic = load_jak2_genomic_reference()
+    aligner = PairwiseAligner()
+    aligner.mode = "local"
+    aligner.match_score = 2
+    aligner.mismatch_score = -3
+    aligner.open_gap_score = -5
+    aligner.extend_gap_score = -1
+    alignment = aligner.align(transcript, genomic)[0]
+    mapping: dict[int, int] = {}
+    for transcript_block, genomic_block in zip(
+        alignment.aligned[0],
+        alignment.aligned[1],
+    ):
+        transcript_start, transcript_end = map(int, transcript_block)
+        genomic_start, genomic_end = map(int, genomic_block)
+        block_length = min(
+            transcript_end - transcript_start,
+            genomic_end - genomic_start,
+        )
+        for offset in range(block_length):
+            genomic_position = (
+                JAK2_GENOMIC_REFERENCE_START + genomic_start + offset
+            )
+            mapping[genomic_position] = transcript_start + offset + 1
+    return mapping
+
+
+def map_genomic_to_transcript_position(
+    genomic_position: int,
+) -> int | None:
+    """Return the NM_004972.4 position for an exonic genomic base."""
+
+    return _genomic_to_transcript_map().get(genomic_position)
+
+
+def _transcript_hgvs_coordinate(
+    transcript_position: int,
+) -> tuple[int | None, str]:
+    if transcript_position < JAK2_CDS_START:
+        return None, f"c.-{JAK2_CDS_START - transcript_position}"
+    if transcript_position <= JAK2_CDS_END:
+        coding_position = transcript_position - JAK2_CDS_START + 1
+        return coding_position, f"c.{coding_position}"
+    return None, f"c.*{transcript_position - JAK2_CDS_END}"
 
 
 def extract_jak2_candidate_snvs(data: dict) -> list[dict]:
@@ -151,7 +241,7 @@ def extract_jak2_candidate_snvs(data: dict) -> list[dict]:
         quality_scores.extend([None] * (len(sequence) - len(quality_scores)))
 
     alignment = align_ab1_to_jak2(sequence)
-    reference = load_jak2_reference()
+    reference = load_jak2_genomic_reference()
     direction = alignment["direction"]
     oriented_sequence = (
         sequence
@@ -189,16 +279,26 @@ def extract_jak2_candidate_snvs(data: dict) -> list[dict]:
             ):
                 continue
 
-            transcript_position = reference_index + 1
-            if transcript_position < JAK2_CDS_START:
-                coding_position = None
-                coordinate = f"c.-{JAK2_CDS_START - transcript_position}"
-            elif transcript_position <= JAK2_CDS_END:
-                coding_position = transcript_position - JAK2_CDS_START + 1
-                coordinate = f"c.{coding_position}"
+            genomic_position = JAK2_GENOMIC_REFERENCE_START + reference_index
+            transcript_position = map_genomic_to_transcript_position(
+                genomic_position
+            )
+            if transcript_position is not None:
+                coding_position, coordinate = _transcript_hgvs_coordinate(
+                    transcript_position
+                )
+                reference_accession = JAK2_TRANSCRIPT_ACCESSION
+                hgvs = (
+                    f"{reference_accession}:{coordinate}"
+                    f"{reference_base}>{observed_base}"
+                )
             else:
                 coding_position = None
-                coordinate = f"c.*{transcript_position - JAK2_CDS_END}"
+                reference_accession = JAK2_GENOMIC_ACCESSION
+                hgvs = (
+                    f"{reference_accession}:g.{genomic_position}"
+                    f"{reference_base}>{observed_base}"
+                )
             quality = oriented_quality[read_index]
             quality = int(quality) if quality is not None else None
             original_read_index = (
@@ -213,15 +313,13 @@ def extract_jak2_candidate_snvs(data: dict) -> list[dict]:
             )
 
             candidates.append({
-                "reference_accession": "NM_004972.4",
+                "reference_accession": reference_accession,
                 "transcript_position": transcript_position,
-                "coding_position": coding_position if coding_position > 0 else None,
+                "coding_position": coding_position,
+                "genomic_position": genomic_position,
                 "reference_allele": reference_base,
                 "observed_allele": observed_base,
-                "hgvs": (
-                    f"NM_004972.4:{coordinate}"
-                    f"{reference_base}>{observed_base}"
-                ),
+                "hgvs": hgvs,
                 "ab1_base_number": original_read_index + 1,
                 "direction": direction,
                 "phred_quality": quality,
@@ -241,7 +339,7 @@ def find_jak2_v617f_position(ab1_sequence: str) -> dict:
     """Map the JAK2 V617F reference position to an AB1 base index."""
     result = align_ab1_to_jak2(ab1_sequence)
 
-    reference_index = JAK2_V617F_REFERENCE_INDEX
+    reference_index = JAK2_V617F_GENOMIC_INDEX
     read_length = len(ab1_sequence)
 
     for ref_block, read_block in zip(
@@ -274,7 +372,12 @@ def find_jak2_v617f_position(ab1_sequence: str) -> dict:
             return {
                 "found": True,
                 "direction": result["direction"],
-                "reference_position": JAK2_V617F_REFERENCE_POSITION,
+                "reference_accession": JAK2_GENOMIC_ACCESSION,
+                "reference_position": JAK2_V617F_GENOMIC_POSITION,
+                "genomic_position": JAK2_V617F_GENOMIC_POSITION,
+                "transcript_accession": JAK2_TRANSCRIPT_ACCESSION,
+                "transcript_position": JAK2_V617F_TRANSCRIPT_POSITION,
+                "coding_position": JAK2_V617F_CDNA_POSITION,
                 "ab1_base_index": original_index,
                 "ab1_base_number": original_index + 1,
                 "observed_base": observed_base,
@@ -287,7 +390,12 @@ def find_jak2_v617f_position(ab1_sequence: str) -> dict:
     return {
         "found": False,
         "direction": result["direction"],
-        "reference_position": JAK2_V617F_REFERENCE_POSITION,
+        "reference_accession": JAK2_GENOMIC_ACCESSION,
+        "reference_position": JAK2_V617F_GENOMIC_POSITION,
+        "genomic_position": JAK2_V617F_GENOMIC_POSITION,
+        "transcript_accession": JAK2_TRANSCRIPT_ACCESSION,
+        "transcript_position": JAK2_V617F_TRANSCRIPT_POSITION,
+        "coding_position": JAK2_V617F_CDNA_POSITION,
         "ab1_base_index": None,
         "ab1_base_number": None,
         "alignment_identity_percentage": result["identity_percentage"],
@@ -475,6 +583,7 @@ def analyze_jak2_chromatogram(data: dict) -> dict:
     if not result["found"]:
         return {
             **result,
+            "pipeline_version": JAK2_PIPELINE_VERSION,
             "reference_evidence": JAK2_V617F_REFERENCE_EVIDENCE,
             "target_region": {"available": False, "reason": result.get("reason", "Target not mapped.")},
             "review_reasons": [result.get("reason", "Target position could not be mapped.")],
@@ -512,6 +621,7 @@ def analyze_jak2_chromatogram(data: dict) -> dict:
 
     return {
         **result,
+        "pipeline_version": JAK2_PIPELINE_VERSION,
         "reference_evidence": JAK2_V617F_REFERENCE_EVIDENCE,
         "peak_analysis": peaks,
         "target_region": region,

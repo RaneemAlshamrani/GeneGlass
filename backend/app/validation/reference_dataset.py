@@ -11,15 +11,20 @@ from typing import Any
 
 from app.services.ab1_reader import read_chromatogram
 from app.services.variant_detector import (
+    GENOMIC_REFERENCE_PATH,
+    JAK2_GENOMIC_ACCESSION,
+    JAK2_GENOMIC_REFERENCE_START,
+    JAK2_GENOMIC_REFERENCE_STOP,
+    JAK2_PIPELINE_VERSION,
+    JAK2_TRANSCRIPT_ACCESSION,
     JAK2_V617F_CDNA_POSITION,
+    JAK2_V617F_GENOMIC_POSITION,
     MIN_ALIGNMENT_IDENTITY_PERCENT,
     MIN_ALIGNMENT_READ_COVERAGE_PERCENT,
     REFERENCE_PATH,
     analyze_jak2_chromatogram,
 )
 
-PIPELINE_VERSION = "preliminary-jak2-evidence-v1"
-REFERENCE_ACCESSION = "NM_004972.4"
 ALLOWED_EXPECTED_STATUSES = {"positive", "negative", "unknown"}
 ALLOWED_SOURCE_TYPES = {
     "commercial_reference_material",
@@ -254,7 +259,7 @@ def run_reference_validation(
         "research_use_only": True,
         "generated_at": datetime.now(UTC).isoformat(),
         "pipeline": {
-            "version": PIPELINE_VERSION,
+            "version": JAK2_PIPELINE_VERSION,
             "classification_available": False,
             "preliminary_thresholds": {
                 "minimum_alignment_identity_percentage": (
@@ -266,9 +271,16 @@ def run_reference_validation(
             },
         },
         "reference": {
-            "accession": REFERENCE_ACCESSION,
+            "alignment_accession": JAK2_GENOMIC_ACCESSION,
+            "alignment_window_1_based": [
+                JAK2_GENOMIC_REFERENCE_START,
+                JAK2_GENOMIC_REFERENCE_STOP,
+            ],
+            "v617f_genomic_position": JAK2_V617F_GENOMIC_POSITION,
+            "genomic_fasta_sha256": _sha256(GENOMIC_REFERENCE_PATH),
+            "transcript_accession": JAK2_TRANSCRIPT_ACCESSION,
             "v617f_cdna_position": JAK2_V617F_CDNA_POSITION,
-            "fasta_sha256": _sha256(REFERENCE_PATH),
+            "transcript_fasta_sha256": _sha256(REFERENCE_PATH),
         },
         "manifest_sha256": _sha256(manifest),
         "summary": {
