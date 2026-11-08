@@ -14,11 +14,11 @@
   const researchResults = document.getElementById("researchResults");
   const researchMatchBadge = document.getElementById("researchMatchBadge");
   const reviewForm = document.getElementById("reviewForm");
-  const reviewDecision = document.getElementById("reviewDecision");
   const reviewComment = document.getElementById("reviewComment");
   const reviewSubmitButton = document.getElementById("reviewSubmitButton");
   const reviewStatus = document.getElementById("reviewStatus");
   const reviewHistory = document.getElementById("reviewHistory");
+  const reviewHistoryCount = document.getElementById("reviewHistoryCount");
   const latestReviewBadge = document.getElementById("latestReviewBadge");
   const auditCount = document.getElementById("auditCount");
   const auditStatus = document.getElementById("auditStatus");
@@ -189,6 +189,7 @@
   function renderReviewHistory(data) {
     const reviews = Array.isArray(data.reviews) ? data.reviews : [];
     reviewHistory.replaceChildren();
+    reviewHistoryCount.textContent = String(reviews.length);
     latestReviewBadge.textContent = data.latest_decision
       ? reviewLabels[data.latest_decision] || data.latest_decision
       : "Not reviewed";
@@ -238,6 +239,14 @@
     event.preventDefault();
     const token = window.GeneGlassAuth?.token;
     if (!token || !analysisId) return;
+    const selectedDecision = reviewForm.querySelector(
+      'input[name="reviewDecision"]:checked'
+    );
+    if (!selectedDecision) {
+      reviewStatus.textContent = "Choose a review decision before saving.";
+      reviewForm.querySelector('input[name="reviewDecision"]')?.focus();
+      return;
+    }
 
     reviewSubmitButton.disabled = true;
     reviewStatus.textContent = "Saving review…";
@@ -249,8 +258,8 @@
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          decision: reviewDecision.value,
-          comment: reviewComment.value,
+          decision: selectedDecision.value,
+          comment: reviewComment.value.trim(),
         }),
       });
       const data = await response.json();

@@ -146,43 +146,55 @@
       <section class="dashboard-card details-card review-card">
         <div class="review-heading">
           <div>
+            <span class="section-kicker">Human validation</span>
             <h2>Specialist Review</h2>
-            <p>
-              Record your assessment of the available evidence. This decision
-              does not classify the sample as positive or negative for V617F.
-            </p>
+            <p>Record a review decision for the available technical evidence.</p>
           </div>
           <span id="latestReviewBadge" class="review-badge">Not reviewed</span>
         </div>
 
         <form id="reviewForm" class="review-form">
-          <label>
-            Review decision
-            <select id="reviewDecision" required>
-              <option value="">Select a decision</option>
-              <option value="approved">Accept available evidence</option>
-              <option value="rejected">Reject available evidence</option>
-              <option value="needs_more_data">Request more data</option>
-            </select>
-          </label>
-          <label>
-            Review comment
+          <fieldset class="review-decisions">
+            <legend>Choose a decision</legend>
+            <div class="review-choice-grid">
+              <label class="review-choice review-choice-approve">
+                <input type="radio" name="reviewDecision" value="approved" required>
+                <span class="review-choice-icon"><i class="fa-solid fa-check"></i></span>
+                <span><strong>Accept evidence</strong><small>Evidence is clear and sufficient for review.</small></span>
+              </label>
+              <label class="review-choice review-choice-more">
+                <input type="radio" name="reviewDecision" value="needs_more_data" required>
+                <span class="review-choice-icon"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
+                <span><strong>Request more data</strong><small>Evidence is incomplete or needs confirmation.</small></span>
+              </label>
+              <label class="review-choice review-choice-reject">
+                <input type="radio" name="reviewDecision" value="rejected" required>
+                <span class="review-choice-icon"><i class="fa-solid fa-xmark"></i></span>
+                <span><strong>Reject evidence</strong><small>Evidence is unreliable or unsuitable for use.</small></span>
+              </label>
+            </div>
+          </fieldset>
+          <label class="review-comment-label">
+            <span>Review note <small>Required</small></span>
             <textarea
               id="reviewComment"
               minlength="3"
               maxlength="2000"
               required
-              placeholder="Explain the evidence behind this decision"
+              placeholder="Briefly state the evidence supporting this decision…"
             ></textarea>
           </label>
           <div class="review-form-footer">
-            <small>Every submission is kept as a new history entry.</small>
-            <button id="reviewSubmitButton" type="submit">Save Review</button>
+            <small><i class="fa-solid fa-lock"></i> Saved reviews remain in the audit history.</small>
+            <button id="reviewSubmitButton" type="submit"><i class="fa-solid fa-check"></i> Save decision</button>
           </div>
         </form>
 
         <p id="reviewStatus" class="review-status" role="status"></p>
-        <div id="reviewHistory" class="review-history"></div>
+        <details class="review-history-disclosure">
+          <summary><span>Previous reviews</span><span id="reviewHistoryCount">0</span></summary>
+          <div id="reviewHistory" class="review-history"></div>
+        </details>
       </section>
 
       <section class="dashboard-card details-card audit-card">
