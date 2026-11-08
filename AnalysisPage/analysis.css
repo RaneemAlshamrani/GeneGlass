@@ -568,11 +568,15 @@ body {
 }
 
 .gg-viewer-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.55fr)
+    minmax(0, .9fr)
+    minmax(0, 1.1fr)
+    minmax(0, 1.15fr);
+  gap: 10px;
   align-items: end;
-  margin: 18px 0 12px;
+  margin: 18px 0 24px;
 }
 .gg-search-label {
   display: flex;
@@ -581,14 +585,15 @@ body {
   color: #21484d;
   font-size: 13px;
   font-weight: 650;
+  min-width: 0;
 }
 
 .gg-sequence-label {
   display: flex;
-  flex: 1 1 330px;
   flex-direction: column;
   gap: 6px;
-  min-width: 260px;
+  min-width: 0;
+  position: relative;
   color: #21484d;
   font-size: 13px;
   font-weight: 650;
@@ -601,7 +606,7 @@ body {
 
 .gg-sequence-row input {
   flex: 1;
-  min-width: 160px;
+  min-width: 0;
   padding: 10px 12px;
   border: 1px solid #b9dedf;
   border-radius: 10px;
@@ -618,7 +623,11 @@ body {
 }
 
 .gg-sequence-status {
-  min-height: 16px;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-height: 0;
+  margin-top: 4px;
   color: #698287;
   font-size: 11px;
   font-weight: 600;
@@ -639,10 +648,12 @@ body {
   color: #315a60;
   font-size: 13px;
   font-weight: 650;
+  min-width: 0;
 }
 
 .gg-signal-label select {
-  min-width: 220px;
+  width: 100%;
+  min-width: 0;
   padding: 10px 12px;
   border: 1px solid #b9dedf;
   border-radius: 10px;
@@ -657,10 +668,12 @@ body {
   color: #315a60;
   font-size: 13px;
   font-weight: 650;
+  min-width: 0;
 }
 
 .gg-viewer-toolbar .gg-toggle-direction {
-  min-width: 150px;
+  width: 100%;
+  min-width: 0;
   background: #123d43;
   border-color: #123d43;
   color: #fff;
@@ -680,7 +693,9 @@ body {
   gap: 8px;
 }
 .gg-search-row input {
-  width: 145px;
+  flex: 1;
+  width: 0;
+  min-width: 0;
   padding: 10px 12px;
   border: 1px solid #b9dedf;
   border-radius: 10px;
@@ -699,6 +714,19 @@ body {
 }
 .gg-viewer-toolbar button:hover {
   background: #d5efef;
+}
+
+@media (max-width: 700px) {
+  .gg-viewer-toolbar {
+    grid-template-columns: 1fr;
+    margin-bottom: 12px;
+  }
+
+  .gg-sequence-status {
+    position: static;
+    min-height: 16px;
+    margin-top: 0;
+  }
 }
 
 .gg-trace-legend {
