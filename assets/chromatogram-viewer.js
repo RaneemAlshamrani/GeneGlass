@@ -80,14 +80,15 @@ window.GeneGlassChromatogram = {
     }
 
     const n = trace.sequence?.length || 0;
-    const positions = trace.base_positions || [];
-    const channels = trace.channels || {};
-    const quality = trace.quality_scores || [];
+    const rawSequence = String(trace.sequence || "").toUpperCase();
+    const rawPositions = trace.base_positions || [];
+    const rawChannels = trace.channels || {};
+    const rawQuality = trace.quality_scores || [];
 
     if (
       !n ||
-      positions.length < n ||
-      ["A", "C", "G", "T"].some((base) => !channels[base]?.length)
+      rawPositions.length < n ||
+      ["A", "C", "G", "T"].some((base) => !rawChannels[base]?.length)
     ) {
       throw new Error("Chromatogram data is incomplete.");
     }
@@ -101,17 +102,48 @@ window.GeneGlassChromatogram = {
       G: "#333333",
       T: "#d84c4c"
     };
-    const smoothedChannels = Object.fromEntries(
-      Object.entries(CHROMATOGRAM_SMOOTHING_PRESETS).map(([level, weights]) => [
-        level,
-        Object.fromEntries(
-          ["A", "C", "G", "T"].map((base) => [
-            base,
-            smoothChromatogramSignal(channels[base], weights)
-          ])
-        )
-      ])
-    );
+    const rawDirection = String(options.readDirection || "Forward").toLowerCase() === "reverse"
+      ? "Reverse" : "Forward";
+    const sampleEnd = rawChannels.A.length - 1;
+    const rawData = {
+      sequence: rawSequence,
+      positions: rawPositions,
+      channels: rawChannels,
+      quality: rawQuality
+    };
+    const flippedData = {
+      sequence: reverseComplement(rawSequence),
+      positions: [...rawPositions].reverse().map((position) => sampleEnd - position),
+      channels: {
+        A: [...rawChannels.T].reverse(),
+        C: [...rawChannels.G].reverse(),
+        G: [...rawChannels.C].reverse(),
+        T: [...rawChannels.A].reverse()
+      },
+      quality: [...rawQuality].reverse()
+    };
+    let showingFlipped = false;
+    let sequence = rawData.sequence;
+    let positions = rawData.positions;
+    let channels = rawData.channels;
+    let quality = rawData.quality;
+    let displayDirection = rawDirection;
+    let smoothedChannels;
+
+    function refreshSmoothedChannels() {
+      smoothedChannels = Object.fromEntries(
+        Object.entries(CHROMATOGRAM_SMOOTHING_PRESETS).map(([level, weights]) => [
+          level,
+          Object.fromEntries(
+            ["A", "C", "G", "T"].map((base) => [
+              base,
+              smoothChromatogramSignal(channels[base], weights)
+            ])
+          )
+        ])
+      );
+    }
+    refreshSmoothedChannels();
 
     const requestedCount = Number(options.initialBaseCount);
     let count = Math.min(
@@ -119,6 +151,7 @@ window.GeneGlassChromatogram = {
       n
     );
     const requestedTarget = Number(options.targetBase);
+    let activeTarget = requestedTarget;
     let selected = Number.isInteger(requestedTarget) &&
       requestedTarget >= 1 && requestedTarget <= n
       ? requestedTarget - 1
@@ -147,8 +180,8 @@ window.GeneGlassChromatogram = {
     const targetBanner = document.createElement("div");
     targetBanner.className = "gg-target-banner";
     targetBanner.innerHTML = hasHighlight
-      ? `<span><strong>${highlightLabel}</strong> motif</span><small>AB1 ${highlightStart + 1}–${highlightEnd + 1}</small>`
-      : `<span><strong>V617F</strong> target</span><small>AB1 ${requestedTarget || "N/A"}</small>`;
+      ? `<span><strong>${highlightLabel}</strong> motif</span><small>${rawDirection} bases ${highlightStart + 1}–${highlightEnd + 1}</small>`
+      : `<span><strong>V617F</strong> target</span><small>${rawDirection} base ${requestedTarget || "N/A"}</small>`;
 
     const toolbar = document.createElement("div");
     toolbar.className = "gg-viewer-toolbar";
@@ -162,7 +195,7 @@ window.GeneGlassChromatogram = {
         <small id="ggSequenceStatus" class="gg-sequence-status" aria-live="polite"></small>
       </label>
       <label class="gg-search-label">
-        AB1 position
+        Displayed base
         <span class="gg-search-row">
           <input class="gg-go-base" type="number" min="1" max="${n}" placeholder="e.g. 184">
           <button class="gg-go-button" type="button">Go</button>
@@ -177,6 +210,10 @@ window.GeneGlassChromatogram = {
           <option value="strong">Strong · 7 points</option>
         </select>
       </label>
+      <div class="gg-direction-control">
+        <span>Display orientation</span>
+        <button class="gg-toggle-direction" type="button"></button>
+      </div>
       <button class="gg-reset-signal" type="button">Original signal</button>
       <span class="gg-mouse-hint">Drag · scroll to zoom</span>
     `;
@@ -232,6 +269,7 @@ window.GeneGlassChromatogram = {
     const sequenceStatus = toolbar.querySelector(".gg-sequence-status");
     const findSequenceButton = toolbar.querySelector(".gg-find-sequence");
     const signalMode = toolbar.querySelector(".gg-signal-mode");
+    const directionButton = toolbar.querySelector(".gg-toggle-direction");
     const verticalSlider = scaleControl.querySelector(".gg-vertical-scale");
     const verticalValue = scaleControl.querySelector(".gg-vertical-value");
     const horizontalSlider = overview.querySelector(".gg-overview-range");
@@ -243,8 +281,18 @@ window.GeneGlassChromatogram = {
 
     function updateTargetBanner() {
       if (hasHighlight) {
-        targetBanner.innerHTML = `<span><strong>${highlightLabel}</strong> match</span><small>AB1 ${highlightStart + 1}–${highlightEnd + 1}</small>`;
+        targetBanner.innerHTML = `<span><strong>${highlightLabel}</strong> match</span><small>${displayDirection} bases ${highlightStart + 1}–${highlightEnd + 1}</small>`;
       }
+    }
+
+    function updateDirectionButton() {
+      const nextDirection = displayDirection === "Forward" ? "Reverse" : "Forward";
+      directionButton.textContent = `${displayDirection} → ${nextDirection}`;
+      directionButton.setAttribute(
+        "aria-label",
+        `Currently showing ${displayDirection}. Switch chromatogram to ${nextDirection}.`
+      );
+      directionButton.dataset.direction = displayDirection.toLowerCase();
     }
 
     let lastSequenceQuery = "";
@@ -264,7 +312,7 @@ window.GeneGlassChromatogram = {
         return;
       }
       if (query !== lastSequenceQuery) {
-        sequenceMatches = findSequenceMatches(trace.sequence.toUpperCase(), query);
+        sequenceMatches = findSequenceMatches(sequence, query);
         sequenceMatchIndex = -1;
         lastSequenceQuery = query;
       }
@@ -378,7 +426,7 @@ window.GeneGlassChromatogram = {
       const numberFont = "10px Arial";
       ctx.textAlign = "center";
       const labelCandidates = labels.map(({ x: px, index }) => {
-        const base = trace.sequence[index].toUpperCase();
+        const base = sequence[index].toUpperCase();
         ctx.font = baseFont;
         const baseWidth = ctx.measureText(base).width;
         ctx.font = numberFont;
@@ -404,15 +452,15 @@ window.GeneGlassChromatogram = {
       // The selected base remains visible even when zoomed far out.
       if (selectedX !== null) {
         ctx.font = baseFont;
-        ctx.fillStyle = colors[trace.sequence[selected].toUpperCase()] || "#666";
-        ctx.fillText(trace.sequence[selected], selectedX, h - 35);
+        ctx.fillStyle = colors[sequence[selected].toUpperCase()] || "#666";
+        ctx.fillText(sequence[selected], selectedX, h - 35);
         ctx.font = numberFont;
         ctx.fillStyle = "#00848b";
         ctx.fillText(String(selected + 1), selectedX, h - 18);
       }
 
       detail.textContent = options.compact
-        ? `AB1 ${first + 1}–${last + 1} · ${signalMode.value === "original" ? "original signal" : `${signalMode.value} visual smoothing`}`
+        ? `${displayDirection} · AB1 ${first + 1}–${last + 1} · ${signalMode.value === "original" ? "original signal" : `${signalMode.value} visual smoothing`}`
         : `Showing AB1 bases ${first + 1}–${last + 1} of ${n}. QC uses the original signal.`;
 
       horizontalSlider.value = String(count);
@@ -423,7 +471,7 @@ window.GeneGlassChromatogram = {
       } else {
         const q = quality[selected];
         selectedInfo.textContent =
-          `${selected + 1 === requestedTarget ? "V617F target" : "Selected"} · AB1 ${selected + 1} · ${trace.sequence[selected]} · Q${q ?? "N/A"}`;
+          `${selected + 1 === activeTarget ? "V617F target" : "Selected"} · ${displayDirection} base ${selected + 1} · ${sequence[selected]} · Q${q ?? "N/A"}`;
       }
     }
 
@@ -473,6 +521,45 @@ window.GeneGlassChromatogram = {
     goInput.oninput = () => goInput.setCustomValidity("");
 
     signalMode.onchange = draw;
+
+    updateDirectionButton();
+    directionButton.onclick = () => {
+      const previousCenter = first + (count - 1) / 2;
+      showingFlipped = !showingFlipped;
+      const data = showingFlipped ? flippedData : rawData;
+      sequence = data.sequence;
+      positions = data.positions;
+      channels = data.channels;
+      quality = data.quality;
+      displayDirection = showingFlipped
+        ? (rawDirection === "Forward" ? "Reverse" : "Forward")
+        : rawDirection;
+      activeTarget = Number.isInteger(requestedTarget) ? n - requestedTarget + 1 : requestedTarget;
+      if (!showingFlipped) activeTarget = requestedTarget;
+      selected = selected === null ? null : n - 1 - selected;
+      if (hasHighlight) {
+        const previousStart = highlightStart;
+        highlightStart = n - 1 - highlightEnd;
+        highlightEnd = n - 1 - previousStart;
+        if ([...highlightLabel].every((base) => DNA_IUPAC[base])) {
+          highlightLabel = reverseComplement(highlightLabel);
+        }
+      }
+      const normalizedSearch = normalizeDnaQuery(sequenceInput.value);
+      if (normalizedSearch && [...normalizedSearch].every((base) => DNA_IUPAC[base])) {
+        sequenceInput.value = reverseComplement(normalizedSearch);
+      }
+      first = clampFirst(n - 1 - previousCenter - Math.floor(count / 2));
+      lastSequenceQuery = "";
+      sequenceMatches = [];
+      sequenceMatchIndex = -1;
+      sequenceStatus.textContent = `Viewing ${displayDirection} orientation`;
+      sequenceStatus.dataset.state = "found";
+      refreshSmoothedChannels();
+      updateDirectionButton();
+      updateTargetBanner();
+      draw();
+    };
 
     toolbar.querySelector(".gg-reset-signal").onclick = () => {
       signalMode.value = "original";

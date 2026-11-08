@@ -924,6 +924,7 @@
   .chromatogram-card-pro .gg-sequence-label,
   .chromatogram-card-pro .gg-search-label,
   .chromatogram-card-pro .gg-signal-label,
+  .chromatogram-card-pro .gg-direction-control,
   .chromatogram-card-pro .gg-sequence-row,
   .chromatogram-card-pro .gg-search-row {
     width: 100%;
@@ -944,6 +945,10 @@
   .chromatogram-card-pro .gg-signal-label select {
     width: 100%;
     min-width: 0;
+  }
+
+  .chromatogram-card-pro .gg-toggle-direction {
+    width: 100%;
   }
 
   .chromatogram-card-pro .gg-chart-with-scale {

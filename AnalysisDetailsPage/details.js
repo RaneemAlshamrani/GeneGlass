@@ -443,6 +443,7 @@ try {
   ]);
 
   let targetBase = null;
+  let readDirection = "Forward";
   if (jak2Response.ok) {
     const jak2Data = await jak2Response.json();
     const result = jak2Data.result || {};
@@ -452,6 +453,7 @@ try {
       ? result.review_reasons.filter(Boolean).join("; ")
       : "";
     targetBase = Number(result.ab1_base_number);
+    readDirection = result.direction || "Forward";
     renderEvidenceSummary(result);
     showCards(jak2Details, [
       ["AB1 Position", result.ab1_base_number],
@@ -506,6 +508,7 @@ try {
     highlightRange: motifRange,
     highlightLabel: motifRange ? "ACAT" : null,
     initialSequence: "ACAT",
+    readDirection,
     compact: true
   });
   document.getElementById("chromatogramLoading").hidden = true;
