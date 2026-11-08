@@ -65,15 +65,27 @@ window.GeneGlassChromatogram = {
       ])
     );
 
-    let count = Math.min(30, n);
+    const requestedCount = Number(options.initialBaseCount);
+    let count = Math.min(
+      Number.isInteger(requestedCount) ? Math.max(5, requestedCount) : 30,
+      n
+    );
     const requestedTarget = Number(options.targetBase);
     let selected = Number.isInteger(requestedTarget) &&
       requestedTarget >= 1 && requestedTarget <= n
       ? requestedTarget - 1
       : null;
-    let first = selected === null
+    const highlightStart = Number(options.highlightRange?.startBase) - 1;
+    const highlightEnd = Number(options.highlightRange?.endBase) - 1;
+    const hasHighlight = Number.isInteger(highlightStart) &&
+      Number.isInteger(highlightEnd) && highlightStart >= 0 &&
+      highlightEnd >= highlightStart && highlightEnd < n;
+    const initialAnchor = hasHighlight
+      ? (highlightStart + highlightEnd) / 2
+      : selected;
+    let first = initialAnchor === null
       ? 0
-      : Math.max(0, selected - Math.floor(count / 2));
+      : Math.max(0, initialAnchor - Math.floor(count / 2));
     let labels = [];
     let drag = null;
 
@@ -83,18 +95,24 @@ window.GeneGlassChromatogram = {
       : document.createElement("h2");
     if (title) title.textContent = "Chromatogram Viewer";
 
+    const targetBanner = document.createElement("div");
+    targetBanner.className = "gg-target-banner";
+    targetBanner.innerHTML = hasHighlight
+      ? `<span><strong>${options.highlightLabel || "Target region"}</strong> motif</span><small>AB1 ${highlightStart + 1}–${highlightEnd + 1}</small>`
+      : `<span><strong>V617F</strong> target</span><small>AB1 ${requestedTarget || "N/A"}</small>`;
+
     const toolbar = document.createElement("div");
     toolbar.className = "gg-viewer-toolbar";
     toolbar.innerHTML = `
       <label class="gg-search-label">
-        Go to AB1 base
+        AB1 position
         <span class="gg-search-row">
           <input class="gg-go-base" type="number" min="1" max="${n}" placeholder="e.g. 184">
           <button class="gg-go-button" type="button">Go</button>
         </span>
       </label>
       <label class="gg-signal-label">
-        Visual Smoothing
+        Signal view
         <select class="gg-signal-mode">
           <option value="original">Original (off)</option>
           <option value="light">Light · 3 points</option>
@@ -102,8 +120,8 @@ window.GeneGlassChromatogram = {
           <option value="strong">Strong · 7 points</option>
         </select>
       </label>
-      <button class="gg-reset-signal" type="button">Reset to Original</button>
-      <span class="gg-mouse-hint">Drag to move · Mouse wheel to zoom</span>
+      <button class="gg-reset-signal" type="button">Original signal</button>
+      <span class="gg-mouse-hint">Drag · scroll to zoom</span>
     `;
 
     const chartWrapper = document.createElement("div");
@@ -142,6 +160,7 @@ window.GeneGlassChromatogram = {
     section.append(
       ...[
         title,
+        targetBanner,
         toolbar,
         legend,
         chartWrapper,
@@ -196,6 +215,12 @@ window.GeneGlassChromatogram = {
 
       for (let i = first; i <= last; i++) {
         const px = x(positions[i]);
+        if (hasHighlight && i >= highlightStart && i <= highlightEnd) {
+          const previous = i === 0 ? positions[i] - 8 : (positions[i - 1] + positions[i]) / 2;
+          const next = i === n - 1 ? positions[i] + 8 : (positions[i] + positions[i + 1]) / 2;
+          ctx.fillStyle = "rgba(238, 177, 45, .13)";
+          ctx.fillRect(x(previous), top, Math.max(1, x(next) - x(previous)), bottom - top + 22);
+        }
         if (selected === i) {
           ctx.fillStyle = "rgba(0, 132, 139, .10)";
           ctx.fillRect(px - 8, top, 16, bottom - top + 22);
@@ -278,27 +303,19 @@ window.GeneGlassChromatogram = {
         ctx.fillText(String(selected + 1), selectedX, h - 18);
       }
 
-      const smoothingDescriptions = {
-        original: "Original AB1 signal is displayed.",
-        light: "Light 3-point smoothing is displayed over a faint original trace.",
-        medium: "Medium 5-point smoothing is displayed over a faint original trace.",
-        strong: "Strong 7-point smoothing may hide small or overlapping peaks; compare it with the faint original trace."
-      };
-      const signalDescription = smoothingDescriptions[signalMode.value] ||
-        smoothingDescriptions.original;
-      detail.textContent =
-        `Showing AB1 bases ${first + 1}–${last + 1} of ${n}. ${signalDescription} ` +
-        "QC and target analysis always use the original signal. Drag the trace or click a base to inspect it.";
+      detail.textContent = options.compact
+        ? `AB1 ${first + 1}–${last + 1} · ${signalMode.value === "original" ? "original signal" : `${signalMode.value} visual smoothing`}`
+        : `Showing AB1 bases ${first + 1}–${last + 1} of ${n}. QC uses the original signal.`;
 
       horizontalSlider.value = String(count);
       horizontalValue.textContent = `${count} bases`;
 
       if (selected === null) {
-        selectedInfo.textContent = "Click a base to view its quality and position.";
+        selectedInfo.textContent = "Select a base to inspect its quality.";
       } else {
         const q = quality[selected];
         selectedInfo.textContent =
-          `${selected + 1 === requestedTarget ? "Target" : "Selected"} base ${selected + 1}: ${trace.sequence[selected]} · Phred Q${q ?? "N/A"} · Sample ${positions[selected]}`;
+          `${selected + 1 === requestedTarget ? "V617F target" : "Selected"} · AB1 ${selected + 1} · ${trace.sequence[selected]} · Q${q ?? "N/A"}`;
       }
     }
 

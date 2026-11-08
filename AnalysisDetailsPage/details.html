@@ -77,8 +77,8 @@
 
       <header class="dashboard-header">
         <div>
-          <h1>Analysis Details</h1>
-          <p>Review your saved sequencing analysis.</p>
+          <p class="page-eyebrow">Sanger sequencing review</p>
+          <h1>JAK2 Analysis</h1>
         </div>
 
         <a class="new-analysis-button"
@@ -88,17 +88,20 @@
         </a>
       </header>
 
-      <!-- File information -->
-      <section class="dashboard-card details-card">
-        <h2>File Information</h2>
+      <section class="dashboard-card details-card file-summary-card">
         <div id="fileDetails" class="details-grid">
           <p>Loading file information...</p>
         </div>
       </section>
 
-      <!-- Chromatogram -->
-      <section class="dashboard-card details-card">
-        <h2>Chromatogram Viewer</h2>
+      <section class="dashboard-card details-card chromatogram-card-pro">
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">Primary evidence</span>
+            <h2>V617F Target Chromatogram</h2>
+          </div>
+          <span class="target-motif-chip"><i class="fa-solid fa-location-crosshairs"></i> ACAT region</span>
+        </div>
       
 <div id="detailsChromatogram">
   <div id="chromatogramSection" hidden>
@@ -123,12 +126,21 @@
 
       </section>
 
-      <!-- JAK2 analysis -->
-      <section class="dashboard-card details-card">
-        <h2>JAK2 V617F Target Analysis</h2>
-        <div id="jak2Details" class="details-grid">
-          <p>Loading JAK2 results...</p>
+      <section class="dashboard-card details-card evidence-card">
+        <div class="section-heading">
+          <div>
+            <span class="section-kicker">Technical evidence</span>
+            <h2>Variant Evidence</h2>
+          </div>
+          <span id="evidenceBadge" class="evidence-badge">Loading</span>
         </div>
+        <div id="jak2Summary" class="evidence-summary">
+          <p>Loading target evidence...</p>
+        </div>
+        <details class="evidence-disclosure">
+          <summary>Technical details</summary>
+          <div id="jak2Details" class="details-grid technical-grid"></div>
+        </details>
       </section>
 
       <section class="dashboard-card details-card review-card">
@@ -188,22 +200,39 @@
       </section>
 
       <section class="dashboard-card details-card research-card">
-        <div class="research-heading">
-          <div>
-            <h2>Extended Research Screening</h2>
-            <p>
-              Search ClinVar for base-call SNV candidates within the JAK2 region
-              covered by this AB1 read. Research use only — not for diagnosis.
-            </p>
+        <details class="research-disclosure">
+          <summary>
+            <span class="research-summary-icon"><i class="fa-solid fa-database"></i></span>
+            <span>
+              <strong>Research Databases</strong>
+              <small>Optional external evidence · research use only</small>
+            </span>
+            <span id="researchMatchBadge" class="research-match-badge">Not searched</span>
+          </summary>
+          <div class="research-panel">
+            <div class="source-dashboard">
+              <article class="source-card source-card-primary">
+                <div class="source-card-heading">
+                  <span class="source-icon"><i class="fa-solid fa-shield-halved"></i></span>
+                  <div><strong>NCBI ClinVar</strong><small>Primary reference source</small></div>
+                </div>
+                <p>Checks eligible HGVS candidates and displays exact database matches only.</p>
+                <button id="researchLookupButton" type="button">Search ClinVar</button>
+              </article>
+              <article class="source-card">
+                <div class="source-card-heading">
+                  <span class="source-icon"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                  <div><strong>Genovate</strong><small>Independent research workspace</small></div>
+                </div>
+                <p>Opens externally. Verify genome assembly before entering coordinates; GeneGlass sends no data.</p>
+                <a class="secondary-source-link" href="https://genovate-variant-validation-system-921860441860.us-west1.run.app/" target="_blank" rel="noopener noreferrer">Open Genovate</a>
+              </article>
+            </div>
+            <p id="researchStatus" class="research-status" role="status">No ClinVar search has been requested.</p>
+            <div id="researchResults" class="research-results"></div>
+            <p class="research-footnote"><i class="fa-solid fa-circle-info"></i> External results support research review and do not replace specialist interpretation.</p>
           </div>
-          <button id="researchLookupButton" type="button">
-            Search ClinVar
-          </button>
-        </div>
-        <p id="researchStatus" role="status">
-          No external search has been requested in this session.
-        </p>
-        <div id="researchResults" class="research-results"></div>
+        </details>
       </section>
 
       <p id="detailsMessage" role="status"></p>

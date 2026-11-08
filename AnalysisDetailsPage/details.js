@@ -6,10 +6,13 @@
   const fileDetails = document.getElementById("fileDetails");
   const chromatogram = document.getElementById("detailsChromatogram");
   const jak2Details = document.getElementById("jak2Details");
+  const jak2Summary = document.getElementById("jak2Summary");
+  const evidenceBadge = document.getElementById("evidenceBadge");
   const message = document.getElementById("detailsMessage");
   const researchButton = document.getElementById("researchLookupButton");
   const researchStatus = document.getElementById("researchStatus");
   const researchResults = document.getElementById("researchResults");
+  const researchMatchBadge = document.getElementById("researchMatchBadge");
   const reviewForm = document.getElementById("reviewForm");
   const reviewDecision = document.getElementById("reviewDecision");
   const reviewComment = document.getElementById("reviewComment");
@@ -52,6 +55,49 @@
 
   function formatRatio(value) {
     return Number.isFinite(Number(value)) ? Number(value).toFixed(3) : "N/A";
+  }
+
+  function findNearbyMotif(sequence, targetBase, motif = "ACAT") {
+    if (!sequence || !Number.isInteger(targetBase)) return null;
+    const normalized = sequence.toUpperCase();
+    const targetIndex = targetBase - 1;
+    const from = Math.max(0, targetIndex - 12);
+    const to = Math.min(normalized.length, targetIndex + 16);
+    let best = null;
+    let index = normalized.indexOf(motif, from);
+    while (index !== -1 && index < to) {
+      const distance = Math.abs(index - targetIndex);
+      if (!best || distance < best.distance) best = { start: index, distance };
+      index = normalized.indexOf(motif, index + 1);
+    }
+    return best ? { startBase: best.start + 1, endBase: best.start + motif.length } : null;
+  }
+
+  function renderEvidenceSummary(result) {
+    const status = result.needs_review ? "Needs review" : "Technical evidence ready";
+    evidenceBadge.textContent = status;
+    evidenceBadge.dataset.status = result.needs_review ? "review" : "ready";
+    const items = [
+      ["Target", result.genomic_position ? `NC_000009.12:g.${result.genomic_position}` : "JAK2 V617F"],
+      ["Read base", `${result.observed_base || "N/A"} · Q${result.quality_score ?? "N/A"}`],
+      ["Alignment", `${formatPercent(result.alignment_identity_percentage)} identity`],
+      ["Coverage", formatPercent(result.alignment_coverage_percentage)],
+    ];
+    jak2Summary.replaceChildren();
+    items.forEach(([label, value], index) => {
+      const item = document.createElement("div");
+      item.className = index === 0 ? "evidence-summary-item evidence-summary-target" : "evidence-summary-item";
+      const name = document.createElement("span");
+      name.textContent = label;
+      const content = document.createElement("strong");
+      content.textContent = value;
+      item.append(name, content);
+      jak2Summary.appendChild(item);
+    });
+    const pending = document.createElement("div");
+    pending.className = "classification-pending";
+    pending.innerHTML = '<i class="fa-solid fa-flask"></i><span><strong>Classification pending</strong><small>No predictive model is applied at this stage.</small></span>';
+    jak2Summary.appendChild(pending);
   }
 
   function appendResearchField(container, label, value) {
@@ -232,6 +278,8 @@
         (item) => item.source === "NCBI ClinVar" && item.lookup_status === "matched"
       ));
     if (!candidates.length) {
+      researchMatchBadge.textContent = "0 exact matches";
+      researchMatchBadge.dataset.state = "empty";
       const empty = document.createElement("p");
       empty.className = "research-empty";
       empty.textContent =
@@ -288,6 +336,8 @@
       }
       researchResults.appendChild(card);
     });
+    researchMatchBadge.textContent = `${candidates.length} exact match${candidates.length === 1 ? "" : "es"}`;
+    researchMatchBadge.dataset.state = "matched";
   }
 
   async function loadSavedResearchResults(token) {
@@ -300,6 +350,9 @@
     researchStatus.textContent = data.candidate_count > 0
       ? `${data.candidate_count} saved ClinVar-matched variant(s). Research use only.`
       : "No exact ClinVar-matched variants are saved for this analysis.";
+    researchMatchBadge.textContent = data.candidate_count > 0
+      ? `${data.candidate_count} exact match${data.candidate_count === 1 ? "" : "es"}`
+      : "Not searched";
     renderResearchResults(data);
   }
 
@@ -361,10 +414,11 @@
       const details = await response.json();
 
       showCards(fileDetails, [
-        ["File Name", details.original_file_name],
-        ["Date", details.created_at
+        ["AB1 file", details.original_file_name],
+        ["Uploaded", details.created_at
           ? new Date(details.created_at).toLocaleDateString()
           : "N/A"],
+        ["QC status", String(details.qc_status || "pending").replaceAll("_", " ")],
       ]);
 
 
@@ -389,6 +443,7 @@ try {
       ? result.review_reasons.filter(Boolean).join("; ")
       : "";
     targetBase = Number(result.ab1_base_number);
+    renderEvidenceSummary(result);
     showCards(jak2Details, [
       ["AB1 Position", result.ab1_base_number],
       ["Genomic Coordinate", result.genomic_position
@@ -434,9 +489,14 @@ try {
   if (!traceResponse.ok) throw new Error("Unable to load chromatogram.");
   const trace = await traceResponse.json();
   if (!window.GeneGlassChromatogram) throw new Error("Chromatogram viewer script missing.");
+  const motifRange = findNearbyMotif(trace.sequence, targetBase, "ACAT");
   await window.GeneGlassChromatogram.render(trace, {
     targetBase: Number.isInteger(targetBase) && targetBase > 0 ? targetBase : undefined,
-    showTitle: false
+    showTitle: false,
+    initialBaseCount: 9,
+    highlightRange: motifRange,
+    highlightLabel: motifRange ? "ACAT" : null,
+    compact: true
   });
   document.getElementById("chromatogramLoading").hidden = true;
 } catch (error) {
