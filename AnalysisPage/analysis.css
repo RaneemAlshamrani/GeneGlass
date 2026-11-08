@@ -583,6 +583,55 @@ body {
   font-weight: 650;
 }
 
+.gg-sequence-label {
+  display: flex;
+  flex: 1 1 330px;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 260px;
+  color: #21484d;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.gg-sequence-row {
+  display: flex;
+  gap: 8px;
+}
+
+.gg-sequence-row input {
+  flex: 1;
+  min-width: 160px;
+  padding: 10px 12px;
+  border: 1px solid #b9dedf;
+  border-radius: 10px;
+  background: #fff;
+  color: #123c40;
+  font: inherit;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.gg-sequence-row input:focus {
+  border-color: #008c95;
+  outline: 3px solid rgba(0, 140, 149, .10);
+}
+
+.gg-sequence-status {
+  min-height: 16px;
+  color: #698287;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.gg-sequence-status[data-state="found"] {
+  color: #16734a;
+}
+
+.gg-sequence-status[data-state="error"] {
+  color: #a23b3b;
+}
+
 .gg-signal-label {
   display: flex;
   flex-direction: column;

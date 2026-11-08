@@ -505,6 +505,7 @@ try {
     initialBaseCount: 9,
     highlightRange: motifRange,
     highlightLabel: motifRange ? "ACAT" : null,
+    initialSequence: "ACAT",
     compact: true
   });
   document.getElementById("chromatogramLoading").hidden = true;

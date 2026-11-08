@@ -21,6 +21,54 @@ function smoothChromatogramSignal(values, weights) {
   });
 }
 
+const DNA_IUPAC = Object.freeze({
+  A: "A", C: "C", G: "G", T: "T",
+  R: "AG", Y: "CT", S: "GC", W: "AT", K: "GT", M: "AC",
+  B: "CGT", D: "AGT", H: "ACT", V: "ACG", N: "ACGT"
+});
+
+const DNA_COMPLEMENT = Object.freeze({
+  A: "T", C: "G", G: "C", T: "A",
+  R: "Y", Y: "R", S: "S", W: "W", K: "M", M: "K",
+  B: "V", D: "H", H: "D", V: "B", N: "N"
+});
+
+function normalizeDnaQuery(value) {
+  return String(value || "")
+    .toUpperCase()
+    .replace(/5['’]?|3['’]?/g, "")
+    .replace(/[\s\-_]/g, "");
+}
+
+function reverseComplement(sequence) {
+  return [...sequence].reverse().map((base) => DNA_COMPLEMENT[base] || "").join("");
+}
+
+function findSequenceMatches(readSequence, query) {
+  const pattern = [...query].map((base) => `[${DNA_IUPAC[base]}]`).join("");
+  const find = (candidate, orientation) => {
+    const regex = new RegExp(`(?=(${pattern}))`, "g");
+    return [...readSequence.matchAll(regex)].map((match) => ({
+      start: match.index,
+      end: match.index + candidate.length - 1,
+      orientation
+    }));
+  };
+  const direct = find(query, "Forward");
+  const reverse = reverseComplement(query);
+  const reverseMatches = reverse === query ? [] : (() => {
+    const reversePattern = [...reverse]
+      .map((base) => `[${DNA_IUPAC[base]}]`).join("");
+    const regex = new RegExp(`(?=(${reversePattern}))`, "g");
+    return [...readSequence.matchAll(regex)].map((match) => ({
+      start: match.index,
+      end: match.index + reverse.length - 1,
+      orientation: "Reverse complement"
+    }));
+  })();
+  return [...direct, ...reverseMatches].sort((a, b) => a.start - b.start);
+}
+
 window.GeneGlassChromatogram = {
   render: function (trace, options = {}) {
     const section = document.getElementById("chromatogramSection");
@@ -75,9 +123,10 @@ window.GeneGlassChromatogram = {
       requestedTarget >= 1 && requestedTarget <= n
       ? requestedTarget - 1
       : null;
-    const highlightStart = Number(options.highlightRange?.startBase) - 1;
-    const highlightEnd = Number(options.highlightRange?.endBase) - 1;
-    const hasHighlight = Number.isInteger(highlightStart) &&
+    let highlightStart = Number(options.highlightRange?.startBase) - 1;
+    let highlightEnd = Number(options.highlightRange?.endBase) - 1;
+    let highlightLabel = options.highlightLabel || "Target region";
+    let hasHighlight = Number.isInteger(highlightStart) &&
       Number.isInteger(highlightEnd) && highlightStart >= 0 &&
       highlightEnd >= highlightStart && highlightEnd < n;
     const initialAnchor = hasHighlight
@@ -98,12 +147,20 @@ window.GeneGlassChromatogram = {
     const targetBanner = document.createElement("div");
     targetBanner.className = "gg-target-banner";
     targetBanner.innerHTML = hasHighlight
-      ? `<span><strong>${options.highlightLabel || "Target region"}</strong> motif</span><small>AB1 ${highlightStart + 1}–${highlightEnd + 1}</small>`
+      ? `<span><strong>${highlightLabel}</strong> motif</span><small>AB1 ${highlightStart + 1}–${highlightEnd + 1}</small>`
       : `<span><strong>V617F</strong> target</span><small>AB1 ${requestedTarget || "N/A"}</small>`;
 
     const toolbar = document.createElement("div");
     toolbar.className = "gg-viewer-toolbar";
     toolbar.innerHTML = `
+      <label class="gg-sequence-label">
+        Find primer or sequence
+        <span class="gg-sequence-row">
+          <input class="gg-sequence-query" type="text" maxlength="80" spellcheck="false" autocomplete="off" placeholder="e.g. ACAT or primer sequence" aria-describedby="ggSequenceStatus">
+          <button class="gg-find-sequence" type="button">Find</button>
+        </span>
+        <small id="ggSequenceStatus" class="gg-sequence-status" aria-live="polite"></small>
+      </label>
       <label class="gg-search-label">
         AB1 position
         <span class="gg-search-row">
@@ -171,6 +228,9 @@ window.GeneGlassChromatogram = {
     );
 
     const goInput = toolbar.querySelector(".gg-go-base");
+    const sequenceInput = toolbar.querySelector(".gg-sequence-query");
+    const sequenceStatus = toolbar.querySelector(".gg-sequence-status");
+    const findSequenceButton = toolbar.querySelector(".gg-find-sequence");
     const signalMode = toolbar.querySelector(".gg-signal-mode");
     const verticalSlider = scaleControl.querySelector(".gg-vertical-scale");
     const verticalValue = scaleControl.querySelector(".gg-vertical-value");
@@ -179,6 +239,54 @@ window.GeneGlassChromatogram = {
 
     function clampFirst(value) {
       return Math.max(0, Math.min(n - count, Math.round(value)));
+    }
+
+    function updateTargetBanner() {
+      if (hasHighlight) {
+        targetBanner.innerHTML = `<span><strong>${highlightLabel}</strong> match</span><small>AB1 ${highlightStart + 1}–${highlightEnd + 1}</small>`;
+      }
+    }
+
+    let lastSequenceQuery = "";
+    let sequenceMatches = [];
+    let sequenceMatchIndex = -1;
+
+    function runSequenceSearch() {
+      const query = normalizeDnaQuery(sequenceInput.value);
+      if (query.length < 3) {
+        sequenceStatus.textContent = "Enter at least 3 DNA bases.";
+        sequenceStatus.dataset.state = "error";
+        return;
+      }
+      if ([...query].some((base) => !DNA_IUPAC[base])) {
+        sequenceStatus.textContent = "Use valid IUPAC DNA bases only.";
+        sequenceStatus.dataset.state = "error";
+        return;
+      }
+      if (query !== lastSequenceQuery) {
+        sequenceMatches = findSequenceMatches(trace.sequence.toUpperCase(), query);
+        sequenceMatchIndex = -1;
+        lastSequenceQuery = query;
+      }
+      if (!sequenceMatches.length) {
+        sequenceStatus.textContent = "No matching sequence in this AB1 read.";
+        sequenceStatus.dataset.state = "error";
+        return;
+      }
+      sequenceMatchIndex = (sequenceMatchIndex + 1) % sequenceMatches.length;
+      const match = sequenceMatches[sequenceMatchIndex];
+      highlightStart = match.start;
+      highlightEnd = match.end;
+      highlightLabel = query;
+      hasHighlight = true;
+      selected = match.start;
+      const matchLength = match.end - match.start + 1;
+      if (matchLength + 4 > count) count = Math.min(n, Math.max(9, matchLength + 4));
+      first = clampFirst((match.start + match.end) / 2 - Math.floor(count / 2));
+      sequenceStatus.textContent = `Match ${sequenceMatchIndex + 1} of ${sequenceMatches.length} · ${match.orientation}`;
+      sequenceStatus.dataset.state = "found";
+      updateTargetBanner();
+      draw();
     }
 
     function draw() {
@@ -336,6 +444,23 @@ window.GeneGlassChromatogram = {
       selected = base - 1;
       first = clampFirst(selected - Math.floor(count / 2));
       draw();
+    };
+
+    sequenceInput.value = options.initialSequence || "";
+    if (sequenceInput.value && hasHighlight) {
+      sequenceStatus.textContent = `Default target · ${highlightLabel}`;
+      sequenceStatus.dataset.state = "found";
+    }
+    findSequenceButton.onclick = runSequenceSearch;
+    sequenceInput.onkeydown = event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        runSequenceSearch();
+      }
+    };
+    sequenceInput.oninput = () => {
+      sequenceStatus.textContent = "";
+      sequenceStatus.dataset.state = "";
     };
 
     goInput.onkeydown = event => {
