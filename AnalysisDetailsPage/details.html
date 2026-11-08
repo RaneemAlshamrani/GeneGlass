@@ -9,7 +9,7 @@
 
   <link rel="stylesheet" href="../DashboardPage/dashboard.css">
 <link rel="stylesheet" href="../AnalysisPage/analysis.css?v=20261108-7">
-<link rel="stylesheet" href="details.css?v=20261108-6">
+<link rel="stylesheet" href="details.css?v=20261108-8">
 
   <link rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -18,7 +18,7 @@
 <script src="../assets/config.js" defer></script>
 <script src="../assets/auth.js" defer></script>
 <script src="../assets/chromatogram-viewer.js?v=20261108-5" defer></script>
-<script src="details.js?v=20261108-5" defer></script>
+<script src="details.js?v=20261108-8" defer></script>
 
 </head>
 
@@ -170,6 +170,15 @@
               </label>
             </div>
           </fieldset>
+          <div class="review-quick-notes">
+            <div class="quick-notes-heading">
+              <strong>Quick notes</strong>
+              <small>Choose one or write your own</small>
+            </div>
+            <div id="reviewQuickNotes" class="quick-note-options" aria-live="polite">
+              <p class="quick-note-hint">Choose a decision to see suggested notes.</p>
+            </div>
+          </div>
           <label class="review-comment-label">
             <span>Review note <small>Required</small></span>
             <textarea

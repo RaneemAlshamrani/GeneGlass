@@ -15,6 +15,7 @@
   const researchMatchBadge = document.getElementById("researchMatchBadge");
   const reviewForm = document.getElementById("reviewForm");
   const reviewComment = document.getElementById("reviewComment");
+  const reviewQuickNotes = document.getElementById("reviewQuickNotes");
   const reviewSubmitButton = document.getElementById("reviewSubmitButton");
   const reviewStatus = document.getElementById("reviewStatus");
   const reviewHistory = document.getElementById("reviewHistory");
@@ -116,6 +117,55 @@
     rejected: "Evidence rejected",
     needs_more_data: "More data requested",
   };
+
+  const reviewNoteTemplates = {
+    approved: [
+      "Chromatogram peaks are clear and the available QC metrics are acceptable for technical review.",
+      "Target-region coverage and signal quality are sufficient for technical review.",
+      "The technical evidence is consistent across the chromatogram and QC results.",
+    ],
+    needs_more_data: [
+      "Overlapping peaks near the target region require confirmation with a repeat sequencing run.",
+      "Sequence quality around the target region is insufficient; additional data are required.",
+      "The available read does not provide enough evidence for technical review.",
+    ],
+    rejected: [
+      "Chromatogram quality is insufficient for reliable technical interpretation.",
+      "Technical artefacts prevent reliable review of the target region.",
+      "Target-region coverage is inadequate for this analysis.",
+    ],
+  };
+
+  function syncQuickNoteSelection() {
+    reviewQuickNotes.querySelectorAll("button").forEach((button) => {
+      button.classList.toggle("selected", button.dataset.note === reviewComment.value.trim());
+    });
+  }
+
+  function renderQuickNotes(decision) {
+    reviewQuickNotes.replaceChildren();
+    const notes = reviewNoteTemplates[decision] || [];
+    if (!notes.length) {
+      const hint = document.createElement("p");
+      hint.className = "quick-note-hint";
+      hint.textContent = "Choose a decision to see suggested notes.";
+      reviewQuickNotes.appendChild(hint);
+      return;
+    }
+    notes.forEach((note) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "quick-note-button";
+      button.dataset.note = note;
+      button.textContent = note;
+      button.addEventListener("click", () => {
+        reviewComment.value = note;
+        reviewComment.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      reviewQuickNotes.appendChild(button);
+    });
+    syncQuickNoteSelection();
+  }
 
   const auditLabels = {
     "analysis.uploaded": "Analysis uploaded",
@@ -270,6 +320,7 @@
         throw new Error(detail || "Review could not be saved.");
       }
       reviewForm.reset();
+      renderQuickNotes("");
       reviewStatus.textContent = "Review saved as a new history entry.";
       await loadReviewHistory(token);
       await loadAuditTrail(token);
@@ -533,6 +584,15 @@ try {
   document.addEventListener("geneglass:auth-ready", loadDetails);
   researchButton.addEventListener("click", refreshResearchResults);
   reviewForm.addEventListener("submit", submitReview);
+  reviewForm.addEventListener("change", (event) => {
+    if (event.target.matches('input[name="reviewDecision"]')) {
+      renderQuickNotes(event.target.value);
+    }
+  });
+  reviewComment.addEventListener("input", syncQuickNoteSelection);
+  renderQuickNotes(
+    reviewForm.querySelector('input[name="reviewDecision"]:checked')?.value || ""
+  );
 
   if (window.GeneGlassAuth?.token) {
     loadDetails();
