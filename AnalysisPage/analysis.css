@@ -701,11 +701,6 @@ body {
   background: #d5efef;
 }
 
-.gg-mouse-hint {
-  color: #6c868c;
-  font-size: 13px;
-  padding-bottom: 10px;
-}
 .gg-trace-legend {
   display: flex;
   gap: 16px;

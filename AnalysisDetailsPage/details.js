@@ -506,7 +506,6 @@ try {
     showTitle: false,
     initialBaseCount: 9,
     highlightRange: motifRange,
-    highlightLabel: motifRange ? "ACAT" : null,
     initialSequence: "ACAT",
     readDirection,
     compact: true

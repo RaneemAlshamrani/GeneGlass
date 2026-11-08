@@ -46,7 +46,6 @@
   font-size: 22px;
 }
 
-.target-motif-chip,
 .evidence-badge,
 .research-match-badge {
   display: inline-flex;
@@ -741,24 +740,6 @@
   color: #71858a !important;
 }
 
-.gg-target-banner {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 8px 12px;
-  border: 1px solid #f0d99c;
-  border-radius: 10px;
-  background: #fff9e9;
-  color: #785d15;
-  font-size: 12px;
-}
-
-.gg-target-banner small {
-  padding-left: 9px;
-  border-left: 1px solid #ead38f;
-  color: #90772d;
-}
-
 .chromatogram-card-pro .gg-viewer-v2 {
   margin-top: 0;
 }
@@ -896,7 +877,6 @@
     flex-direction: column;
   }
 
-  .target-motif-chip,
   .evidence-badge {
     width: fit-content;
   }

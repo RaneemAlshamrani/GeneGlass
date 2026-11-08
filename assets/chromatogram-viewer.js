@@ -151,14 +151,12 @@ window.GeneGlassChromatogram = {
       n
     );
     const requestedTarget = Number(options.targetBase);
-    let activeTarget = requestedTarget;
     let selected = Number.isInteger(requestedTarget) &&
       requestedTarget >= 1 && requestedTarget <= n
       ? requestedTarget - 1
       : null;
     let highlightStart = Number(options.highlightRange?.startBase) - 1;
     let highlightEnd = Number(options.highlightRange?.endBase) - 1;
-    let highlightLabel = options.highlightLabel || "Target region";
     let hasHighlight = Number.isInteger(highlightStart) &&
       Number.isInteger(highlightEnd) && highlightStart >= 0 &&
       highlightEnd >= highlightStart && highlightEnd < n;
@@ -176,12 +174,6 @@ window.GeneGlassChromatogram = {
       ? null
       : document.createElement("h2");
     if (title) title.textContent = "Chromatogram Viewer";
-
-    const targetBanner = document.createElement("div");
-    targetBanner.className = "gg-target-banner";
-    targetBanner.innerHTML = hasHighlight
-      ? `<span><strong>${highlightLabel}</strong> motif</span><small>${rawDirection} bases ${highlightStart + 1}–${highlightEnd + 1}</small>`
-      : `<span><strong>V617F</strong> target</span><small>${rawDirection} base ${requestedTarget || "N/A"}</small>`;
 
     const toolbar = document.createElement("div");
     toolbar.className = "gg-viewer-toolbar";
@@ -214,8 +206,6 @@ window.GeneGlassChromatogram = {
         <span>Display orientation</span>
         <button class="gg-toggle-direction" type="button"></button>
       </div>
-      <button class="gg-reset-signal" type="button">Original signal</button>
-      <span class="gg-mouse-hint">Drag · scroll to zoom</span>
     `;
 
     const chartWrapper = document.createElement("div");
@@ -254,7 +244,6 @@ window.GeneGlassChromatogram = {
     section.append(
       ...[
         title,
-        targetBanner,
         toolbar,
         legend,
         chartWrapper,
@@ -277,12 +266,6 @@ window.GeneGlassChromatogram = {
 
     function clampFirst(value) {
       return Math.max(0, Math.min(n - count, Math.round(value)));
-    }
-
-    function updateTargetBanner() {
-      if (hasHighlight) {
-        targetBanner.innerHTML = `<span><strong>${highlightLabel}</strong> match</span><small>${displayDirection} bases ${highlightStart + 1}–${highlightEnd + 1}</small>`;
-      }
     }
 
     function updateDirectionButton() {
@@ -325,7 +308,6 @@ window.GeneGlassChromatogram = {
       const match = sequenceMatches[sequenceMatchIndex];
       highlightStart = match.start;
       highlightEnd = match.end;
-      highlightLabel = query;
       hasHighlight = true;
       selected = match.start;
       const matchLength = match.end - match.start + 1;
@@ -333,7 +315,6 @@ window.GeneGlassChromatogram = {
       first = clampFirst((match.start + match.end) / 2 - Math.floor(count / 2));
       sequenceStatus.textContent = `Match ${sequenceMatchIndex + 1} of ${sequenceMatches.length} · ${match.orientation}`;
       sequenceStatus.dataset.state = "found";
-      updateTargetBanner();
       draw();
     }
 
@@ -460,7 +441,7 @@ window.GeneGlassChromatogram = {
       }
 
       detail.textContent = options.compact
-        ? `${displayDirection} · AB1 ${first + 1}–${last + 1} · ${signalMode.value === "original" ? "original signal" : `${signalMode.value} visual smoothing`}`
+        ? `${displayDirection} · bases ${first + 1}–${last + 1}`
         : `Showing AB1 bases ${first + 1}–${last + 1} of ${n}. QC uses the original signal.`;
 
       horizontalSlider.value = String(count);
@@ -471,7 +452,7 @@ window.GeneGlassChromatogram = {
       } else {
         const q = quality[selected];
         selectedInfo.textContent =
-          `${selected + 1 === activeTarget ? "V617F target" : "Selected"} · ${displayDirection} base ${selected + 1} · ${sequence[selected]} · Q${q ?? "N/A"}`;
+          `Base ${selected + 1} · ${sequence[selected]} · Q${q ?? "N/A"} · ${displayDirection}`;
       }
     }
 
@@ -495,10 +476,6 @@ window.GeneGlassChromatogram = {
     };
 
     sequenceInput.value = options.initialSequence || "";
-    if (sequenceInput.value && hasHighlight) {
-      sequenceStatus.textContent = `Default target · ${highlightLabel}`;
-      sequenceStatus.dataset.state = "found";
-    }
     findSequenceButton.onclick = runSequenceSearch;
     sequenceInput.onkeydown = event => {
       if (event.key === "Enter") {
@@ -534,16 +511,11 @@ window.GeneGlassChromatogram = {
       displayDirection = showingFlipped
         ? (rawDirection === "Forward" ? "Reverse" : "Forward")
         : rawDirection;
-      activeTarget = Number.isInteger(requestedTarget) ? n - requestedTarget + 1 : requestedTarget;
-      if (!showingFlipped) activeTarget = requestedTarget;
       selected = selected === null ? null : n - 1 - selected;
       if (hasHighlight) {
         const previousStart = highlightStart;
         highlightStart = n - 1 - highlightEnd;
         highlightEnd = n - 1 - previousStart;
-        if ([...highlightLabel].every((base) => DNA_IUPAC[base])) {
-          highlightLabel = reverseComplement(highlightLabel);
-        }
       }
       const normalizedSearch = normalizeDnaQuery(sequenceInput.value);
       if (normalizedSearch && [...normalizedSearch].every((base) => DNA_IUPAC[base])) {
@@ -553,16 +525,10 @@ window.GeneGlassChromatogram = {
       lastSequenceQuery = "";
       sequenceMatches = [];
       sequenceMatchIndex = -1;
-      sequenceStatus.textContent = `Viewing ${displayDirection} orientation`;
-      sequenceStatus.dataset.state = "found";
+      sequenceStatus.textContent = "";
+      sequenceStatus.dataset.state = "";
       refreshSmoothedChannels();
       updateDirectionButton();
-      updateTargetBanner();
-      draw();
-    };
-
-    toolbar.querySelector(".gg-reset-signal").onclick = () => {
-      signalMode.value = "original";
       draw();
     };
 
