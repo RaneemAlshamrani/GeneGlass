@@ -747,3 +747,51 @@ def get_jak2_target_analysis(
         "analysis_type": "preliminary",
         "result": result,
     }
+
+@analyses_router.get("/{analysis_id}/ai-prediction")
+def get_ai_prediction(
+    analysis_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_db)],
+) -> dict:
+    """Return a research-only AI prediction for an existing AB1 analysis."""
+
+    from app.services.ai_predictor import predict_ab1
+
+    analysis = session.scalar(
+        select(Analysis).where(
+            Analysis.id == analysis_id,
+            Analysis.user_id == current_user.id,
+        )
+    )
+
+    if analysis is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Analysis not found",
+        )
+
+    if analysis.gene != "JAK2" or analysis.target_variant != "V617F":
+        raise HTTPException(
+            status_code=400,
+            detail="AI prediction supports JAK2 V617F only",
+        )
+
+    if not analysis.stored_file_path:
+        return {
+            "analysis_id": analysis.id,
+            "status": "Needs Review",
+            "prediction": None,
+            "reason": "AB1 file path unavailable",
+            "research_use_only": True,
+        }
+
+    result = predict_ab1(
+        analysis.stored_file_path,
+        qc_passed=(analysis.qc_status == QCStatus.PASSED),
+    )
+
+    return {
+        "analysis_id": analysis.id,
+        **result,
+    }

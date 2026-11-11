@@ -1,0 +1,29 @@
+{
+    "model_name": "GeneGlass Random Forest",
+    "target": "JAK2 V617F",
+    "reference_genome": "GRCh38",
+    "reference_region": "chr9:5073470-5074070",
+    "mutation_position": 5073770,
+    "features": [
+        "alignment_score",
+        "reference_peak",
+        "alternative_peak",
+        "alternative_ratio",
+        "phred_quality",
+        "peak_overlap_score",
+        "local_noise_ratio"
+    ],
+    "classes": {
+        "0": "negative",
+        "1": "hetero"
+    },
+    "training_samples": 101,
+    "test_samples": 20,
+    "test_accuracy": 1.0,
+    "limitations": [
+        "Research decision-support only",
+        "Not clinically validated",
+        "Homo and noise classes not included",
+        "Small independent test set"
+    ]
+}
