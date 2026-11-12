@@ -9,7 +9,7 @@
 
   <link rel="stylesheet" href="../DashboardPage/dashboard.css">
 <link rel="stylesheet" href="../AnalysisPage/analysis.css?v=20261108-7">
-<link rel="stylesheet" href="details.css?v=20261112-1">
+<link rel="stylesheet" href="details.css?v=20261112-3">
 
   <link rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -18,7 +18,7 @@
 <script src="../assets/config.js" defer></script>
 <script src="../assets/auth.js" defer></script>
 <script src="../assets/chromatogram-viewer.js?v=20261108-5" defer></script>
-<script src="details.js?v=20261112-2" defer></script>
+<script src="details.js?v=20261112-3" defer></script>
 
 </head>
 
@@ -206,6 +206,62 @@
           <summary><span>Previous reviews</span><span id="reviewHistoryCount">0</span></summary>
           <div id="reviewHistory" class="review-history"></div>
         </details>
+      </section>
+
+      <section class="dashboard-card details-card report-card">
+        <div class="report-heading">
+          <div>
+            <span class="section-kicker">Final specialist decision</span>
+            <h2>Molecular Report</h2>
+            <p>Enter patient details, attach this case's normal control, and generate the final PDF.</p>
+          </div>
+          <span id="reportBadge" class="review-badge">Not created</span>
+        </div>
+
+        <form id="reportForm" class="report-form">
+          <div class="report-fields-grid">
+            <label><span>Patient name</span><input name="patient_name" required autocomplete="off"></label>
+            <label><span>Medical record number</span><input name="medical_record_number" required autocomplete="off"></label>
+            <label><span>Gender</span><select name="gender" required><option value="">Select</option><option>Female</option><option>Male</option><option>Other</option></select></label>
+            <label><span>Date of birth</span><input name="date_of_birth" type="date" required></label>
+            <label><span>Physician</span><input name="physician_name" required autocomplete="off"></label>
+            <label><span>Report number</span><input name="report_number" required autocomplete="off"></label>
+            <label><span>Received</span><input name="received_date" type="date" required></label>
+            <label><span>Submitted</span><input name="submitted_date" type="date" required></label>
+            <label><span>Specimen type</span><input name="specimen_type" value="Peripheral Blood" required></label>
+          </div>
+
+          <label class="report-wide-field">
+            <span>Clinical history</span>
+            <textarea name="clinical_history" rows="2" placeholder="Short clinical history (optional)"></textarea>
+          </label>
+
+          <div class="control-upload-row">
+            <label class="control-upload-label">
+              <span><i class="fa-solid fa-vial"></i> Normal Control AB1</span>
+              <input id="normalControlFile" name="normal_control" type="file" accept=".ab1,application/octet-stream">
+            </label>
+            <span id="normalControlState">Upload the control used for this case.</span>
+          </div>
+
+          <fieldset class="report-decision-fieldset">
+            <legend>Doctor's final decision</legend>
+            <div class="report-decision-options">
+              <label class="report-decision positive"><input type="radio" name="final_decision" value="positive" required><span><i class="fa-solid fa-plus"></i> Positive</span></label>
+              <label class="report-decision negative"><input type="radio" name="final_decision" value="negative" required><span><i class="fa-solid fa-minus"></i> Negative</span></label>
+            </div>
+          </fieldset>
+
+          <label class="report-wide-field">
+            <span>Interpretation <small>Editable</small></span>
+            <textarea id="reportInterpretation" name="interpretation" rows="3" required placeholder="Choose Positive or Negative to insert a ready note."></textarea>
+          </label>
+
+          <div class="report-actions">
+            <p id="reportStatus" role="status"></p>
+            <button id="generateReportButton" type="submit"><i class="fa-solid fa-file-pdf"></i> Generate PDF</button>
+          </div>
+        </form>
       </section>
 
       <section class="dashboard-card details-card audit-card">

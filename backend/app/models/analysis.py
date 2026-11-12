@@ -20,6 +20,7 @@ from app.db.base import Base, TimestampMixin
 if TYPE_CHECKING:
     from app.models.audit import AuditEvent
     from app.models.model_prediction import ModelPrediction
+    from app.models.molecular_report import MolecularReport
     from app.models.research_variant import CandidateVariant
     from app.models.review import Review
     from app.models.user import User
@@ -159,4 +160,10 @@ class Analysis(TimestampMixin, Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
         order_by="ModelPrediction.id.desc()",
+    )
+    molecular_reports: Mapped[list["MolecularReport"]] = relationship(
+        back_populates="analysis",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="MolecularReport.version.desc()",
     )

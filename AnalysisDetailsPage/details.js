@@ -25,6 +25,13 @@
   const auditCount = document.getElementById("auditCount");
   const auditStatus = document.getElementById("auditStatus");
   const auditTimeline = document.getElementById("auditTimeline");
+  const reportForm = document.getElementById("reportForm");
+  const reportBadge = document.getElementById("reportBadge");
+  const reportStatus = document.getElementById("reportStatus");
+  const generateReportButton = document.getElementById("generateReportButton");
+  const normalControlFile = document.getElementById("normalControlFile");
+  const normalControlState = document.getElementById("normalControlState");
+  const reportInterpretation = document.getElementById("reportInterpretation");
 
   const apiBaseUrl = window.GeneGlassConfig.apiBaseUrl;
 
@@ -222,6 +229,129 @@
     } catch (error) {
       console.error("AI prediction error:", error);
       renderAiPredictionError(error.message);
+    }
+  }
+
+  const reportInterpretationTemplates = {
+    positive: "JAK2 c.1849G>T (p.V617F) was detected in the submitted specimen. Correlate with the clinical and laboratory findings.",
+    negative: "JAK2 c.1849G>T (p.V617F) was not detected in the submitted specimen. Correlate with the clinical and laboratory findings.",
+  };
+
+  function setReportFormValue(name, value) {
+    const field = reportForm.elements.namedItem(name);
+    if (field && value != null) field.value = value;
+  }
+
+  function renderSavedReport(report) {
+    if (!report) {
+      reportBadge.textContent = "Not created";
+      reportBadge.dataset.decision = "pending";
+      normalControlState.textContent = "Upload the control used for this case.";
+      return;
+    }
+    [
+      "patient_name",
+      "medical_record_number",
+      "gender",
+      "date_of_birth",
+      "physician_name",
+      "report_number",
+      "received_date",
+      "submitted_date",
+      "clinical_history",
+      "specimen_type",
+      "interpretation",
+    ].forEach((name) => setReportFormValue(name, report[name]));
+    const decision = reportForm.querySelector(
+      `input[name="final_decision"][value="${report.final_decision || ""}"]`
+    );
+    if (decision) decision.checked = true;
+    normalControlState.textContent = report.normal_control_uploaded
+      ? "Normal control attached. Choose a new file only to replace it."
+      : "Upload the control used for this case.";
+    reportBadge.textContent = report.status === "finalized"
+      ? `Final · v${report.version}`
+      : `Draft · v${report.version}`;
+    reportBadge.dataset.decision = report.final_decision || "pending";
+    generateReportButton.innerHTML = report.status === "finalized"
+      ? '<i class="fa-solid fa-file-pen"></i> Generate updated PDF'
+      : '<i class="fa-solid fa-file-pdf"></i> Generate PDF';
+  }
+
+  async function loadMolecularReport(token) {
+    try {
+      const response = await fetch(`${apiBaseUrl}/analyses/${analysisId}/report`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || "Report could not be loaded.");
+      renderSavedReport(data.report);
+    } catch (error) {
+      reportStatus.textContent = error.message;
+    }
+  }
+
+  async function submitMolecularReport(event) {
+    event.preventDefault();
+    const token = window.GeneGlassAuth?.token;
+    if (!token) return;
+    if (!reportForm.reportValidity()) return;
+    const previewWindow = window.open("", "_blank");
+    generateReportButton.disabled = true;
+    generateReportButton.textContent = "Generating...";
+    reportStatus.textContent = "Saving the report and rendering both chromatograms...";
+    try {
+      const formData = new FormData(reportForm);
+      if (!normalControlFile.files.length) formData.delete("normal_control");
+      const saveResponse = await fetch(`${apiBaseUrl}/analyses/${analysisId}/report`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const saved = await saveResponse.json();
+      if (!saveResponse.ok) throw new Error(saved.detail || "Report draft could not be saved.");
+
+      const finalizeResponse = await fetch(
+        `${apiBaseUrl}/analyses/${analysisId}/report/finalize`,
+        { method: "POST", headers: { Authorization: `Bearer ${token}` } }
+      );
+      const finalized = await finalizeResponse.json();
+      if (!finalizeResponse.ok) {
+        throw new Error(finalized.detail || "Report could not be finalized.");
+      }
+
+      const version = finalized.report.version;
+      const pdfResponse = await fetch(
+        `${apiBaseUrl}/analyses/${analysisId}/report.pdf?version=${version}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!pdfResponse.ok) {
+        const errorData = await pdfResponse.json();
+        throw new Error(errorData.detail || "PDF could not be generated.");
+      }
+      const pdfBlob = await pdfResponse.blob();
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      if (previewWindow) {
+        previewWindow.opener = null;
+        previewWindow.location.href = pdfUrl;
+      } else {
+        throw new Error("Allow pop-ups for GeneGlass to open the generated PDF.");
+      }
+      window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
+      normalControlFile.value = "";
+      renderSavedReport(finalized.report);
+      reportStatus.textContent = "Final PDF generated. The model result was not included.";
+      await loadAuditTrail(token);
+    } catch (error) {
+      if (previewWindow && previewWindow.location.href === "about:blank") {
+        previewWindow.close();
+      }
+      reportStatus.textContent = error.message;
+    } finally {
+      generateReportButton.disabled = false;
+      if (!generateReportButton.querySelector("i")) {
+        generateReportButton.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Generate PDF';
+      }
     }
   }
 
@@ -697,6 +827,7 @@ try {
       message.textContent = "";
       await Promise.all([
         loadAiPrediction(token),
+        loadMolecularReport(token),
         loadSavedResearchResults(token),
         loadReviewHistory(token),
         loadAuditTrail(token),
@@ -715,6 +846,16 @@ try {
     }
   });
   reviewComment.addEventListener("input", syncQuickNoteSelection);
+  reportForm.addEventListener("submit", submitMolecularReport);
+  reportForm.addEventListener("change", (event) => {
+    if (event.target.matches('input[name="final_decision"]')) {
+      const template = reportInterpretationTemplates[event.target.value];
+      if (!reportInterpretation.value.trim() || Object.values(reportInterpretationTemplates).includes(reportInterpretation.value.trim())) {
+        reportInterpretation.value = template;
+      }
+      reportBadge.dataset.decision = event.target.value;
+    }
+  });
   renderQuickNotes(
     reviewForm.querySelector('input[name="reviewDecision"]:checked')?.value || ""
   );

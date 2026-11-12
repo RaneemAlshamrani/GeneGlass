@@ -16,6 +16,8 @@ class AuditAction(StrEnum):
     ANALYSIS_UPLOADED = "analysis.uploaded"
     ANALYSIS_RECALCULATED = "analysis.preliminary_evidence_recalculated"
     AI_PREDICTION_CREATED = "analysis.ai_prediction_created"
+    REPORT_DRAFT_SAVED = "analysis.report_draft_saved"
+    REPORT_FINALIZED = "analysis.report_finalized"
     REVIEW_CREATED = "analysis.review_created"
     CLINVAR_REFRESHED = "analysis.clinvar_refreshed"
 

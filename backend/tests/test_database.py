@@ -16,6 +16,7 @@ from app.models import (
     CandidateVariant,
     ExternalAnnotation,
     ModelPrediction,
+    MolecularReport,
     Review,
     User,
 )
@@ -33,6 +34,7 @@ def test_database_schema_and_foreign_keys(tmp_path: Path) -> None:
         "candidate_variants",
         "external_annotations",
         "model_predictions",
+        "molecular_reports",
         "reviews",
         "users",
     ]
@@ -44,12 +46,13 @@ def test_database_schema_and_foreign_keys(tmp_path: Path) -> None:
         "candidate_variants",
         "external_annotations",
         "model_predictions",
+        "molecular_reports",
         "reviews",
     }
     with test_engine.connect() as connection:
         assert connection.execute(text("PRAGMA foreign_keys")).scalar_one() == 1
         assert MigrationContext.configure(connection).get_current_revision() == (
-            "20261112_0005"
+            "20261112_0006"
         )
 
     command.check(build_alembic_config(test_engine))
@@ -75,7 +78,7 @@ def test_existing_current_schema_is_stamped_without_data_loss(
         assert user.full_name == "Legacy User"
     with test_engine.connect() as connection:
         assert MigrationContext.configure(connection).get_current_revision() == (
-            "20261112_0005"
+            "20261112_0006"
         )
 
     test_engine.dispose()
@@ -133,6 +136,12 @@ def test_user_analysis_review_relationships(tmp_path: Path) -> None:
             comment="Database relationship test",
         )
         session.add(review)
+        session.add(MolecularReport(
+            analysis_id=analysis.id,
+            author_id=user.id,
+            version=1,
+            patient_name="Test Patient",
+        ))
         session.add(AuditEvent(
             actor_id=user.id,
             analysis_id=analysis.id,
@@ -166,6 +175,7 @@ def test_user_analysis_review_relationships(tmp_path: Path) -> None:
         stored_analysis = session.scalar(select(Analysis))
         stored_review = session.scalar(select(Review))
         stored_audit_event = session.scalar(select(AuditEvent))
+        stored_report = session.scalar(select(MolecularReport))
 
         assert stored_analysis is not None
         assert stored_analysis.owner.email == "specialist@example.com"
@@ -176,6 +186,9 @@ def test_user_analysis_review_relationships(tmp_path: Path) -> None:
         assert stored_audit_event is not None
         assert stored_audit_event.actor.email == "specialist@example.com"
         assert stored_audit_event.analysis_id == stored_analysis.id
+        assert stored_report is not None
+        assert stored_report.analysis_id == stored_analysis.id
+        assert stored_report.author.email == "specialist@example.com"
         assert stored_analysis.candidate_variants[0].hgvs == "NM_004972.4:c.1849G>T"
         assert stored_analysis.candidate_variants[0].external_annotations[0].source_record_id == "14662"
 

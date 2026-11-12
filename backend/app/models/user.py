@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from app.models.analysis import Analysis
     from app.models.audit import AuditEvent
     from app.models.review import Review
+    from app.models.molecular_report import MolecularReport
 
 
 class UserRole(str, Enum):
@@ -55,4 +56,8 @@ class User(TimestampMixin, Base):
     audit_events: Mapped[list["AuditEvent"]] = relationship(
         back_populates="actor",
         foreign_keys="AuditEvent.actor_id",
+    )
+    molecular_reports: Mapped[list["MolecularReport"]] = relationship(
+        back_populates="author",
+        foreign_keys="MolecularReport.author_id",
     )

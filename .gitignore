@@ -17,6 +17,8 @@ venv/
 backend/uploads/
 backend/validation/private/
 backend/validation/reports/
+output/pdf/
+tmp/
 
 # Editors and operating systems
 .idea/
