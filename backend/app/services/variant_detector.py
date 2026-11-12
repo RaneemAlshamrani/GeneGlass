@@ -7,6 +7,9 @@ from Bio import SeqIO
 from Bio.Align import PairwiseAligner
 from Bio.Seq import Seq
 
+from app.services.noise_assessment import assess_target_noise
+from app.services.unsupported_target_pattern import assess_unsupported_target_pattern
+
 REFERENCE_PATH = (
     Path(__file__).resolve().parents[2]
     / "references"
@@ -603,6 +606,16 @@ def analyze_jak2_chromatogram(data: dict) -> dict:
         data["channels"],
     )
 
+    noise_assessment = assess_target_noise(
+        base_index=result["ab1_base_index"],
+        sequence=data["sequence"],
+        quality_scores=data["quality_scores"],
+        base_positions=data["base_positions"],
+        channels=data["channels"],
+    )
+
+    unsupported_pattern = assess_unsupported_target_pattern(target=result, peaks=peaks)
+
     review_reasons = []
     identity = result.get("alignment_identity_percentage", 0.0)
     coverage = result.get("alignment_coverage_percentage", 0.0)
@@ -625,6 +638,8 @@ def analyze_jak2_chromatogram(data: dict) -> dict:
         "reference_evidence": JAK2_V617F_REFERENCE_EVIDENCE,
         "peak_analysis": peaks,
         "target_region": region,
+        "noise_assessment": noise_assessment,
+        "unsupported_target_pattern": unsupported_pattern,
         "review_reasons": review_reasons,
         # Phred is shown for context, not used alone to flag the target.
         "needs_review": bool(review_reasons),

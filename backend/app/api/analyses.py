@@ -825,6 +825,41 @@ def get_jak2_target_analysis(
             detail="JAK2 target analysis unavailable.",
         ) from exc
 
+    # NOISE_NOTICE_V1: read-only, descriptive measurements for pre-existing analyses.
+    # These values DO NOT alter AI predictions, review status, or saved QC.
+    if isinstance(result, dict) and result.get("found") and "noise_assessment" not in result:
+        try:
+            trace_for_noise = read_chromatogram(analysis.stored_file_path)
+            from app.services.noise_assessment import assess_target_noise
+            result = {**result, "noise_assessment": assess_target_noise(
+                base_index=int(result["ab1_base_index"]),
+                sequence=trace_for_noise["sequence"],
+                quality_scores=trace_for_noise["quality_scores"],
+                base_positions=trace_for_noise["base_positions"],
+                channels=trace_for_noise["channels"],
+            )}
+        except (KeyError, ValueError, IndexError, TypeError, OSError):
+            result = {**result, "noise_assessment": {
+                "available": False,
+                "reason": "Signal measurements could not be calculated for this saved analysis.",
+            }}
+
+    # UNSUPPORTED_SAVED_ADVISORY_V1: add display-only evidence to cached analyses.
+    # The pipeline version is unchanged: do NOT rewrite stored evidence or QC state.
+    if isinstance(result, dict) and result.get("found") and "unsupported_target_pattern" not in result:
+        from app.services.unsupported_target_pattern import assess_unsupported_target_pattern
+        try:
+            result = {**result, "unsupported_target_pattern": assess_unsupported_target_pattern(
+                target=result, peaks=result.get("peak_analysis") or {},
+            )}
+        except (KeyError, TypeError, ValueError, OverflowError):
+            result = {**result, "unsupported_target_pattern": {
+                "available": False,
+                "review_recommended": False,
+                "status": "Unassessed",
+                "reason": "Saved target peak evidence is insufficient for this advisory.",
+            }}
+
     return {
         "analysis_id": analysis.id,
         "gene": analysis.gene,

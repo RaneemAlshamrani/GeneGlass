@@ -1,5 +1,3 @@
-
-
 /* GeneGlass - Saved Analysis Details */
 
 (() => {
@@ -80,6 +78,69 @@
       index = normalized.indexOf(motif, index + 1);
     }
     return best ? { startBase: best.start + 1, endBase: best.start + motif.length } : null;
+  }
+
+  function makeGeneGlassNoiseNotice(noise) {
+    const node = document.createElement("section");
+    node.id = "geneglassNoiseDetails";
+    node.className = "geneglass-noise-notice";
+    node.setAttribute("role", "status");
+    node.style.cssText = "border:1px solid #e7c887;border-left:5px solid #c98b25;border-radius:12px;padding:15px 18px;margin:12px 0 18px;background:#fff9eb;color:#493b22;";
+
+    const heading = document.createElement("strong");
+    const text = document.createElement("p");
+    text.style.margin = "9px 0 0";
+
+    const available = noise?.available === true;
+    const quality = available && noise.min_flank_phred != null
+      ? Number(noise.min_flank_phred) : NaN;
+    const lowQ = Number.isFinite(quality) && quality < 20;
+
+    if (!available || !Number.isFinite(quality)) {
+      heading.textContent = "Signal Quality — Specialist Review Required";
+      text.textContent = "Local signal quality could not be assessed. Inspect the original chromatogram before accepting the AI evidence. The model prediction and stored QC status are unchanged.";
+    } else {
+      const ratioValue = noise.mean_flank_secondary_ratio;
+      const ratio = ratioValue == null || !Number.isFinite(Number(ratioValue))
+        ? "N/A" : Number(ratioValue).toFixed(3);
+      const windowText = `Bases ${noise.window_start_ab1_base_number}–${noise.window_end_ab1_base_number}`;
+      heading.textContent = lowQ
+        ? "Signal Quality — Specialist Review Required"
+        : "Signal Quality — Measurements for Specialist Inspection";
+      text.textContent = `${windowText}: lowest neighboring Phred Q${quality}; mean secondary/primary peak ratio ${ratio}. `
+        + (lowQ
+          ? "One or more neighboring base calls fall below the provisional Q20 threshold. Inspect the original peaks before accepting the AI evidence."
+          : "These measurements alone do not establish that the signal is clean or noisy. Inspect the original chromatogram when reviewing the AI evidence.")
+        + " The AI prediction and existing QC status are unchanged; this is a separate, preliminary quality advisory.";
+    }
+
+    node.append(heading, text);
+    return node;
+  }
+
+  function showUnsupportedTargetAdvisory(pattern) {
+    document.getElementById("geneglassUnsupportedNotice")?.remove();
+    if (!pattern?.review_recommended) return;
+    const box = document.createElement("section");
+    box.id = "geneglassUnsupportedNotice";
+    box.setAttribute("role", "alert");
+    box.style.cssText = "border:1px solid #dfa74c;border-left:5px solid #bd7916;border-radius:12px;padding:15px 18px;margin:12px 0;background:#fff7e7;color:#443218;";
+    const title = document.createElement("strong");
+    title.textContent = "Possible Unsupported Target Pattern — Specialist Review Required";
+    const explanation = document.createElement("p");
+    explanation.style.margin = "8px 0 0";
+    explanation.textContent = "Predominantly alternative signal at JAK2 V617F (raw "
+      + pattern.raw_alternative_channel + " vs " + pattern.raw_reference_channel
+      + "; other/alternative ratio " + Number(pattern.max_other_to_alternative_ratio).toFixed(3)
+      + "). The binary AI model cannot establish a homozygous genotype. "
+      + "Do not accept the Negative/Hetero prediction without specialist verification. Research advisory only.";
+    box.append(title, explanation);
+    const noise = document.getElementById("geneglassNoiseDetails");
+    if (noise) noise.insertAdjacentElement("afterend", box);
+    else aiPrediction.insertAdjacentElement("afterend", box);
+    // This is a visual review recommendation, NOT a stored QC or review decision.
+    evidenceBadge.textContent = "Specialist review recommended";
+    evidenceBadge.dataset.status = "review";
   }
 
   function renderEvidenceSummary(result) {
@@ -760,6 +821,11 @@ try {
     targetBase = Number(result.ab1_base_number);
     readDirection = result.direction || "Forward";
     renderEvidenceSummary(result);
+    // Display quality advice immediately after the AI card, outside collapsed technical details.
+    document.getElementById("geneglassNoiseDetails")?.remove();
+    const signalNotice = makeGeneGlassNoiseNotice(result.noise_assessment);
+    aiPrediction.insertAdjacentElement("afterend", signalNotice);
+    showUnsupportedTargetAdvisory(result.unsupported_target_pattern);
     showCards(jak2Details, [
       ["AB1 Position", result.ab1_base_number],
       ["Genomic Coordinate", result.genomic_position

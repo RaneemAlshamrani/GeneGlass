@@ -13,6 +13,30 @@
     message.textContent = "";
   });
 
+  function makeGeneGlassNoiseNotice(noise) {
+    const node = document.createElement("section");
+    node.className = "geneglass-noise-notice";
+    node.style.cssText = "border:1px solid #b8dfe2;border-radius:12px;padding:15px 18px;margin:14px 0;background:#f6fbfc;color:#183e43;";
+    const heading = document.createElement("strong");
+    heading.textContent = "Signal Quality — Target Region (Research Only)";
+    node.append(heading);
+    const text = document.createElement("p");
+    text.style.margin = "9px 0 0";
+    if (!noise || noise.available !== true) {
+      text.textContent = "Local signal measurements unavailable. Specialist should inspect the original chromatogram.";
+    } else {
+      const lowQ = Number.isFinite(Number(noise.min_flank_phred)) && Number(noise.min_flank_phred) < 20;
+      const ratio = noise.mean_flank_secondary_ratio == null
+        ? "N/A" : Number(noise.mean_flank_secondary_ratio).toFixed(3);
+      const q = noise.min_flank_phred == null ? "N/A" : String(noise.min_flank_phred);
+      text.textContent = `Bases ${noise.window_start_ab1_base_number}–${noise.window_end_ab1_base_number}: lowest neighboring Phred Q${q}; mean neighboring secondary/primary peak ratio ${ratio}. `
+        + (lowQ ? "Some neighboring base calls are below the provisional Q20 quality threshold. Inspect the original peaks." : "Measurements shown for specialist inspection; these numbers alone do not confirm clean or noisy signal.")
+        + " AI classification and existing QC status are unchanged.";
+    }
+    node.append(text);
+    return node;
+  }
+
   function showTarget(data) {
     document.getElementById("jak2ResultsPanel")?.remove();
     const result = data.result || {};
@@ -39,6 +63,7 @@
     status.style.color = requiresReview ? "#9a5b14" : "#167b72";
     status.textContent = requiresReview ? "Review Status: Needs Review" : "Review Status: No QC Review Flag";
     panel.append(status);
+    panel.append(makeGeneGlassNoiseNotice(result.noise_assessment));
 
     if (requiresReview) {
       const explanation = document.createElement("p");
@@ -66,6 +91,71 @@
     section.after(panel);
   }
 
+  function renderAiResult(data) {
+    document.getElementById("analysisAiResult")?.remove();
+    const panel = document.createElement("section");
+    panel.id = "analysisAiResult";
+    panel.className = "dashboard-card analysis-ai-result";
+    panel.setAttribute("aria-live", "polite");
+    const title = document.createElement("h3");
+    title.textContent = "AI Prediction — JAK2 V617F";
+    panel.append(title);
+    const status = String(data?.status || "Needs Review");
+    const needsReview = status.toLowerCase() === "needs review";
+    const state = document.createElement("strong");
+    state.className = `analysis-ai-status ${needsReview ? "review" : status.toLowerCase() === "hetero" ? "hetero" : "negative"}`;
+    state.textContent = needsReview ? "Needs Review" : status;
+    panel.append(state);
+    const summary = document.createElement("p");
+    summary.textContent = needsReview
+      ? "This analysis needs specialist review; a definitive classification is not provided."
+      : status.toLowerCase() === "hetero"
+        ? "The binary research model favors a heterozygous pattern."
+        : "The binary research model favors a negative pattern.";
+    panel.append(summary);
+    if (data?.reason) {
+      const reason = document.createElement("p");
+      reason.className = "analysis-ai-reason";
+      reason.textContent = `Review reason: ${data.reason}`;
+      panel.append(reason);
+    }
+    const probs = data?.probabilities;
+    if (probs && Number.isFinite(Number(probs.negative)) && Number.isFinite(Number(probs.hetero))) {
+      const metrics = document.createElement("div");
+      metrics.className = "analysis-ai-metrics";
+      for (const [key, name] of [["negative", "Negative"], ["hetero", "Heterozygous"]]) {
+        const value = Math.max(0, Math.min(1, Number(probs[key])));
+        const metric = document.createElement("div");
+        const heading = document.createElement("div");
+        heading.className = "analysis-ai-metric-label";
+        const nameNode = document.createElement("span");
+        nameNode.textContent = name;
+        const valueNode = document.createElement("strong");
+        valueNode.textContent = `${(value * 100).toFixed(1)}%`;
+        heading.append(nameNode, valueNode);
+        const bar = document.createElement("div");
+        bar.className = "analysis-ai-meter";
+        const fill = document.createElement("div");
+        fill.className = `analysis-ai-fill ${key}`;
+        fill.style.width = `${value * 100}%`;
+        bar.append(fill);
+        metric.append(heading, bar);
+        metrics.append(metric);
+      }
+      panel.append(metrics);
+    }
+    const meta = document.createElement("p");
+    meta.className = "analysis-ai-metadata";
+    meta.textContent = `Model: ${data?.model_name || "GeneGlass"} · Version: ${data?.model_version || "Unavailable"} · Orientation: ${data?.orientation || "Unavailable"}`;
+    panel.append(meta);
+    const notice = document.createElement("p");
+    notice.className = "analysis-ai-disclaimer";
+    notice.textContent = "Research use only; not a clinical diagnosis. The model was trained on Negative and Hetero, not Homo or Noise. These scores are not clinical certainty.";
+    panel.append(notice);
+    // The chromatogram already marks the mapped target with targetBase.
+    section.insertAdjacentElement("afterend", panel);
+  }
+
   button.addEventListener("click", async () => {
     const file = fileInput.files?.[0];
     if (!file) return;
@@ -80,6 +170,7 @@
     section.hidden = true;
     document.getElementById("jak2ResultsPanel")?.remove();
     document.getElementById("jak2TargetError")?.remove();
+    document.getElementById("analysisAiResult")?.remove();
     const headers = { Authorization: `Bearer ${token}` };
     try {
       const form = new FormData();
@@ -107,6 +198,17 @@
         note.id = "jak2TargetError";
         note.textContent = "JAK2 target analysis unavailable. No mutation conclusion can be made.";
         section.after(note);
+      }
+      try {
+        let prediction = data.ai_prediction;
+        if (!prediction) {
+          const response = await fetch(`${base}/analyses/${data.id}/ai-prediction`, { headers });
+          if (!response.ok) throw new Error("AI prediction is unavailable.");
+          prediction = await response.json();
+        }
+        renderAiResult(prediction);
+      } catch (error) {
+        renderAiResult({ status: "Needs Review", reason: `AI result unavailable: ${error.message || "Unknown error"}` });
       }
     } catch (error) {
       message.textContent = error.message || "Analysis failed.";
