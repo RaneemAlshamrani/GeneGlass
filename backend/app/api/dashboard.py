@@ -16,6 +16,7 @@ from app.models.analysis import (
     QCStatus,
 )
 from app.models.user import User
+from app.services.model_predictions import latest_prediction_map
 
 dashboard_router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -33,30 +34,29 @@ def get_dashboard_summary(
         select(func.count(Analysis.id)).where(user_filter)
     ) or 0
 
-    completed_filter = (
-        user_filter,
-        Analysis.status == AnalysisStatus.COMPLETED,
+    owned_analyses = session.scalars(
+        select(Analysis).where(user_filter)
+    ).all()
+    prediction_by_analysis = latest_prediction_map(
+        session, (analysis.id for analysis in owned_analyses)
     )
-
-    completed_analyses = session.scalar(
-        select(func.count(Analysis.id)).where(*completed_filter)
-    ) or 0
-
-    positive = session.scalar(
-        select(func.count(Analysis.id)).where(
-            user_filter,
-            Analysis.status == AnalysisStatus.COMPLETED,
-            Analysis.v617f_detected.is_(True),
-        )
-    ) or 0
-
-    negative = session.scalar(
-        select(func.count(Analysis.id)).where(
-            user_filter,
-            Analysis.status == AnalysisStatus.COMPLETED,
-            Analysis.v617f_detected.is_(False),
-        )
-    ) or 0
+    completed_analyses = sum(
+        analysis.status == AnalysisStatus.COMPLETED
+        for analysis in owned_analyses
+    )
+    positive = sum(
+        prediction.prediction == "hetero"
+        for prediction in prediction_by_analysis.values()
+    )
+    negative = sum(
+        prediction.prediction == "negative"
+        for prediction in prediction_by_analysis.values()
+    )
+    needs_review = sum(
+        prediction.status == "Needs Review"
+        for prediction in prediction_by_analysis.values()
+    )
+    awaiting_prediction = total_analyses - len(prediction_by_analysis)
 
     qc_passed = session.scalar(
         select(func.count(Analysis.id)).where(
@@ -111,28 +111,48 @@ def get_dashboard_summary(
         .limit(5)
     ).all()
 
-    recent_analyses = [
-        {
+    recent_prediction_by_analysis = latest_prediction_map(
+        session, (analysis.id for analysis in recent_rows)
+    )
+    recent_analyses = []
+    for analysis in recent_rows:
+        prediction = recent_prediction_by_analysis.get(analysis.id)
+        recent_analyses.append({
             "id": analysis.id,
             "file_name": analysis.original_file_name,
             "gene": analysis.gene,
+            "target_variant": analysis.target_variant,
             "status": analysis.status.value,
             "qc_status": analysis.qc_status.value,
             "v617f_detected": analysis.v617f_detected,
+            "ai_prediction": (
+                {
+                    "status": prediction.status,
+                    "prediction": prediction.prediction,
+                    "negative_probability": prediction.negative_probability,
+                    "hetero_probability": prediction.hetero_probability,
+                    "model_name": prediction.model_name,
+                    "model_version": prediction.model_version,
+                    "created_at": prediction.created_at.isoformat(),
+                    "research_use_only": prediction.research_use_only,
+                }
+                if prediction
+                else None
+            ),
             "created_at": (
                 analysis.created_at.isoformat()
                 if analysis.created_at
                 else None
             ),
-        }
-        for analysis in recent_rows
-    ]
+        })
 
     return {
         "total_analyses": total_analyses,
         "completed_analyses": completed_analyses,
         "positive": positive,
         "negative": negative,
+        "needs_review": needs_review,
+        "awaiting_prediction": awaiting_prediction,
         "qc_success_rate": qc_success_rate,
         "activity_last_7_days": activity_last_7_days,
         "gene_distribution": gene_distribution,

@@ -62,6 +62,19 @@
   }
 
   function getResultLabel(analysis) {
+    const modelResult = analysis.ai_prediction;
+    if (modelResult?.prediction === "hetero") {
+      return "Heterozygous Pattern";
+    }
+
+    if (modelResult?.prediction === "negative") {
+      return "No Heterozygous Pattern";
+    }
+
+    if (modelResult?.status === "Needs Review") {
+      return "Needs Review";
+    }
+
     if (analysis.qc_status === "needs_review") {
       return "Needs Review";
     }
@@ -71,23 +84,7 @@
       analysis.status === "processing" ||
       analysis.qc_status === "pending"
     ) {
-      return "Pending";
-    }
-
-    if (
-      analysis.status === "completed" &&
-      analysis.gene === "JAK2" &&
-      analysis.v617f_detected === true
-    ) {
-      return "Mutation Detected";
-    }
-
-    if (
-      analysis.status === "completed" &&
-      analysis.gene === "JAK2" &&
-      analysis.v617f_detected === false
-    ) {
-      return "Normal";
+      return "Model Pending";
     }
 
     return "Not available";

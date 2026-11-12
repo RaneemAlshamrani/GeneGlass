@@ -149,7 +149,9 @@
     const title = document.createElement("strong");
     const model = document.createElement("small");
     title.textContent = "AI Prediction";
-    model.textContent = data.model_name || "GeneGlass research model";
+    model.textContent = data.model_version
+      ? `${data.model_name || "GeneGlass research model"} · v${data.model_version}`
+      : data.model_name || "GeneGlass research model";
     titleText.append(title, model);
     titleGroup.append(icon, titleText);
 

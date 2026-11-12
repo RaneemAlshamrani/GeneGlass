@@ -24,6 +24,7 @@ from app.api.dependencies import get_current_user
 from app.db.session import get_db
 from app.core.config import get_settings
 from app.models.analysis import Analysis, AnalysisStatus, QCStatus
+from app.models.model_prediction import ModelPrediction
 from app.models.research_variant import CandidateVariant, ExternalAnnotation
 from app.models.user import User
 from app.schemas.analysis import AnalysisListItem, AnalysisListResponse
@@ -33,6 +34,12 @@ from app.services.audit import AuditAction, add_audit_event
 from app.services.sequence_cleaner import clean_sequence
 from app.services.storage.ab1_storage import save_ab1_file
 from app.services.clinvar import CLINVAR_SOURCE, ClinVarClient, ClinVarServiceError
+from app.services.model_predictions import (
+    get_or_record_current_prediction,
+    latest_prediction_map,
+    record_prediction,
+    serialize_prediction,
+)
 from app.services.variant_detector import (
     JAK2_PIPELINE_VERSION,
     analyze_jak2_chromatogram,
@@ -41,6 +48,40 @@ from app.services.variant_detector import (
 
 analyses_router = APIRouter(prefix="/analyses", tags=["analyses"])
 MAX_CLINVAR_LOOKUPS_PER_ANALYSIS = 20
+
+
+def _prediction_summary(record: ModelPrediction | None) -> dict | None:
+    if record is None:
+        return None
+    return {
+        "status": record.status,
+        "prediction": record.prediction,
+        "negative_probability": record.negative_probability,
+        "hetero_probability": record.hetero_probability,
+        "model_name": record.model_name,
+        "model_version": record.model_version,
+        "created_at": record.created_at,
+        "research_use_only": record.research_use_only,
+    }
+
+
+def _analysis_list_item(
+    analysis: Analysis,
+    prediction: ModelPrediction | None,
+) -> AnalysisListItem:
+    return AnalysisListItem.model_validate(
+        {
+            "id": analysis.id,
+            "original_file_name": analysis.original_file_name,
+            "gene": analysis.gene,
+            "target_variant": analysis.target_variant,
+            "status": analysis.status.value,
+            "qc_status": analysis.qc_status.value,
+            "v617f_detected": analysis.v617f_detected,
+            "ai_prediction": _prediction_summary(prediction),
+            "created_at": analysis.created_at,
+        }
+    )
 
 
 def _serialize_external_annotation(annotation: ExternalAnnotation) -> dict:
@@ -276,7 +317,7 @@ async def upload_analysis(
         file_sha256=file_sha256,
         gene="JAK2",
         target_variant="V617F",
-        status=AnalysisStatus.PENDING,
+        status=AnalysisStatus.PROCESSING,
         qc_status=qc_status,
         sequence_length=quality_result["original_length"],
         cleaned_sequence_length=quality_result["cleaned_length"],
@@ -312,6 +353,22 @@ async def upload_analysis(
                 "qc_status": analysis.qc_status.value,
             },
         )
+        prediction_record = record_prediction(session, analysis)
+        analysis.status = AnalysisStatus.COMPLETED
+        analysis.completed_at = datetime.now(UTC)
+        add_audit_event(
+            session,
+            actor_id=current_user.id,
+            analysis_id=analysis.id,
+            action=AuditAction.AI_PREDICTION_CREATED,
+            details={
+                "prediction_id": prediction_record.id,
+                "status": prediction_record.status,
+                "prediction": prediction_record.prediction,
+                "model_version": prediction_record.model_version,
+                "research_use_only": True,
+            },
+        )
         session.commit()
         session.refresh(analysis)
 
@@ -344,9 +401,10 @@ async def upload_analysis(
             "quality_assessment": analysis.quality_assessment,
         },
         "preliminary_target_analysis": preliminary_result,
+        "ai_prediction": serialize_prediction(prediction_record),
         "message": (
-            "File uploaded and preliminary evidence generated. Mutation "
-            "classification remains pending validation."
+            "File uploaded, technical evidence generated, and a "
+            "research-only model prediction recorded."
         ),
     }
 
@@ -377,24 +435,41 @@ def get_analyses(
             )
         )
 
+    latest_prediction_ids = (
+        select(func.max(ModelPrediction.id))
+        .group_by(ModelPrediction.analysis_id)
+    )
+    latest_predictions = select(ModelPrediction.analysis_id).where(
+        ModelPrediction.id.in_(latest_prediction_ids)
+    )
+
     if result == "mutation":
-        filters.extend(
-            [
-                Analysis.gene == "JAK2",
-                Analysis.status == AnalysisStatus.COMPLETED,
-                Analysis.v617f_detected.is_(True),
-            ]
+        filters.append(
+            Analysis.id.in_(
+                latest_predictions.where(
+                    ModelPrediction.prediction == "hetero"
+                )
+            )
         )
     elif result == "normal":
-        filters.extend(
-            [
-                Analysis.gene == "JAK2",
-                Analysis.status == AnalysisStatus.COMPLETED,
-                Analysis.v617f_detected.is_(False),
-            ]
+        filters.append(
+            Analysis.id.in_(
+                latest_predictions.where(
+                    ModelPrediction.prediction == "negative"
+                )
+            )
         )
     elif result == "review":
-        filters.append(Analysis.qc_status == QCStatus.NEEDS_REVIEW)
+        filters.append(
+            or_(
+                Analysis.qc_status == QCStatus.NEEDS_REVIEW,
+                Analysis.id.in_(
+                    latest_predictions.where(
+                        ModelPrediction.status == "Needs Review"
+                    )
+                ),
+            )
+        )
     elif result == "pending":
         filters.append(
             or_(
@@ -402,6 +477,7 @@ def get_analyses(
                     [AnalysisStatus.PENDING, AnalysisStatus.PROCESSING]
                 ),
                 Analysis.qc_status == QCStatus.PENDING,
+                Analysis.id.not_in(latest_predictions),
             )
         )
 
@@ -427,8 +503,14 @@ def get_analyses(
         .limit(page_size)
     ).all()
 
+    prediction_by_analysis = latest_prediction_map(
+        session, (analysis.id for analysis in analyses)
+    )
     items = [
-        AnalysisListItem.model_validate(analysis)
+        _analysis_list_item(
+            analysis,
+            prediction_by_analysis.get(analysis.id),
+        )
         for analysis in analyses
     ]
 
@@ -481,6 +563,9 @@ def get_analysis_details(
             "quality_assessment": analysis.quality_assessment,
         },
         "v617f_detected": analysis.v617f_detected,
+        "ai_prediction": _prediction_summary(
+            latest_prediction_map(session, [analysis.id]).get(analysis.id)
+        ),
         "result_summary": analysis.result_summary,
         "error_message": analysis.error_message,
         "created_at": analysis.created_at.isoformat(),
@@ -756,8 +841,6 @@ def get_ai_prediction(
 ) -> dict:
     """Return a research-only AI prediction for an existing AB1 analysis."""
 
-    from app.services.ai_predictor import predict_ab1
-
     analysis = session.scalar(
         select(Analysis).where(
             Analysis.id == analysis_id,
@@ -778,20 +861,67 @@ def get_ai_prediction(
         )
 
     if not analysis.stored_file_path:
-        return {
-            "analysis_id": analysis.id,
-            "status": "Needs Review",
-            "prediction": None,
-            "reason": "AB1 file path unavailable",
-            "research_use_only": True,
-        }
+        raise HTTPException(status_code=422, detail="AB1 file path unavailable")
 
-    result = predict_ab1(
-        analysis.stored_file_path,
-        qc_passed=(analysis.qc_status == QCStatus.PASSED),
+    record, created = get_or_record_current_prediction(session, analysis)
+    if created:
+        add_audit_event(
+            session,
+            actor_id=current_user.id,
+            analysis_id=analysis.id,
+            action=AuditAction.AI_PREDICTION_CREATED,
+            details={
+                "prediction_id": record.id,
+                "status": record.status,
+                "prediction": record.prediction,
+                "model_version": record.model_version,
+                "research_use_only": True,
+            },
+        )
+        session.commit()
+        session.refresh(record)
+    return serialize_prediction(record)
+
+
+@analyses_router.post("/{analysis_id}/ai-prediction/refresh")
+def refresh_ai_prediction(
+    analysis_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_db)],
+) -> dict:
+    """Append a new research-only model run without replacing history."""
+
+    analysis = session.scalar(
+        select(Analysis).where(
+            Analysis.id == analysis_id,
+            Analysis.user_id == current_user.id,
+        )
     )
+    if analysis is None:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    if analysis.gene != "JAK2" or analysis.target_variant != "V617F":
+        raise HTTPException(
+            status_code=400,
+            detail="AI prediction supports JAK2 V617F only",
+        )
+    if not analysis.stored_file_path:
+        raise HTTPException(status_code=422, detail="AB1 file path unavailable")
 
-    return {
-        "analysis_id": analysis.id,
-        **result,
-    }
+    record = record_prediction(session, analysis)
+    add_audit_event(
+        session,
+        actor_id=current_user.id,
+        analysis_id=analysis.id,
+        action=AuditAction.AI_PREDICTION_CREATED,
+        details={
+            "prediction_id": record.id,
+            "status": record.status,
+            "prediction": record.prediction,
+            "model_version": record.model_version,
+            "research_use_only": True,
+            "refresh": True,
+        },
+    )
+    session.commit()
+    session.refresh(record)
+    return serialize_prediction(record)

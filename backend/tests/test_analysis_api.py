@@ -144,7 +144,8 @@ def test_duplicate_ab1_upload_is_rejected(
         assert "v617f_detected" not in first_data
         assert first_data["preliminary_target_analysis"]["found"] is True
         assert first_data["preliminary_target_analysis"]["reference_evidence"]["variation_id"] == 14662
-        assert "classification remains pending" in first_data["message"]
+        assert "research-only model prediction recorded" in first_data["message"]
+        assert first_data["ai_prediction"]["research_use_only"] is True
         assert duplicate_response.status_code == 409
         assert "already uploaded" in duplicate_response.json()["detail"]
         assert recalculated_response.status_code == 200

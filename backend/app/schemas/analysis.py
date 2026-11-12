@@ -6,6 +6,17 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 
+class ModelPredictionSummary(BaseModel):
+    status: str
+    prediction: str | None
+    negative_probability: float | None
+    hetero_probability: float | None
+    model_name: str
+    model_version: str
+    created_at: datetime
+    research_use_only: bool = True
+
+
 class AnalysisListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -16,6 +27,7 @@ class AnalysisListItem(BaseModel):
     status: str
     qc_status: str
     v617f_detected: bool | None
+    ai_prediction: ModelPredictionSummary | None = None
     created_at: datetime
 
 

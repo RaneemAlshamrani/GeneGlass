@@ -274,21 +274,24 @@ function updateRecentAnalyses(analyses) {
 
     resultBadge.className = "result";
 
-    if (analysis.v617f_detected === true) {
+    const modelResult = analysis.ai_prediction;
+    if (modelResult?.prediction === "hetero") {
       resultBadge.classList.add("mutation-result");
-      resultBadge.textContent = "Mutation Detected";
-    } else if (
-      analysis.v617f_detected === false &&
-      (analysis.gene || "").toUpperCase() === "JAK2"
-    ) {
+      resultBadge.textContent = "Heterozygous Pattern";
+      resultBadge.title = "Research model output — not a clinical diagnosis";
+    } else if (modelResult?.prediction === "negative") {
       resultBadge.classList.add("normal-result");
-      resultBadge.textContent = "Normal Sequence";
+      resultBadge.textContent = "No Heterozygous Pattern";
+      resultBadge.title = "Research model output — not a clinical diagnosis";
+    } else if (modelResult?.status === "Needs Review") {
+      resultBadge.classList.add("review-result");
+      resultBadge.textContent = "Needs Review";
     } else if (analysis.status === "failed") {
       resultBadge.classList.add("review-result");
       resultBadge.textContent = "Analysis Failed";
     } else {
       resultBadge.classList.add("review-result");
-      resultBadge.textContent = "Result Pending";
+      resultBadge.textContent = "Model Pending";
     }
 
     resultCell.appendChild(resultBadge);

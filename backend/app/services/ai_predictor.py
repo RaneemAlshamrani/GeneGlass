@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
 import math
 from functools import lru_cache
@@ -13,6 +14,36 @@ import numpy as np
 import pandas as pd
 
 ASSETS = Path(__file__).resolve().parents[2] / "ai_assets"
+MODEL_PATH = ASSETS / "geneglass_random_forest.joblib"
+LIMITATIONS = (
+    "Binary research model; not validated for homo/noise or clinical "
+    "diagnosis. Probabilities are not clinical confidence."
+)
+
+
+@lru_cache(maxsize=1)
+def get_model_identity() -> dict[str, str]:
+    """Return reproducible identities for the model and inference bundle."""
+
+    artifact_digest = hashlib.sha256(MODEL_PATH.read_bytes()).hexdigest()
+    bundle_digest = hashlib.sha256()
+    for asset_name in (
+        "geneglass_random_forest.joblib",
+        "ab1_processing.py",
+        "model_metadata.json",
+        "jak2_reference.txt",
+    ):
+        asset = ASSETS / asset_name
+        bundle_digest.update(asset_name.encode("utf-8"))
+        bundle_digest.update(asset.read_bytes())
+    metadata = json.loads(
+        (ASSETS / "model_metadata.json").read_text(encoding="utf-8")
+    )
+    return {
+        "model_name": metadata["model_name"],
+        "model_version": bundle_digest.hexdigest()[:12],
+        "model_artifact_sha256": artifact_digest,
+    }
 
 
 @lru_cache(maxsize=1)
@@ -24,7 +55,7 @@ def _load_assets():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     # Only load trusted model artifacts supplied by the project team.
-    model = joblib.load(ASSETS / "geneglass_random_forest.joblib")
+    model = joblib.load(MODEL_PATH)
     features = metadata["features"]
     if list(getattr(model, "feature_names_in_", features)) != features:
         raise ValueError("Model feature order differs from metadata")
@@ -38,9 +69,19 @@ def predict_ab1(file_path: str | Path, *, qc_passed: bool = True,
     minimum_class_probability is an OPTIONAL, *unvalidated* review policy.
     Leave it None until a threshold has been chosen on separate validation data.
     """
+    identity = get_model_identity()
     if not qc_passed:
-        return {"status": "Needs Review", "reason": "Existing QC requires review",
-                "prediction": None, "probabilities": None, "research_use_only": True}
+        return {
+            "status": "Needs Review",
+            "reason": "Existing QC requires review",
+            "prediction": None,
+            "probabilities": None,
+            "orientation": None,
+            "features": None,
+            **identity,
+            "research_use_only": True,
+            "limitations": LIMITATIONS,
+        }
     if minimum_class_probability is not None and not (0.5 <= minimum_class_probability <= 1.0):
         raise ValueError("minimum_class_probability must be between 0.5 and 1.0")
     try:
@@ -62,10 +103,19 @@ def predict_ab1(file_path: str | Path, *, qc_passed: bool = True,
             "reason": "Prediction below provisional review threshold" if review else None,
             "orientation": features["orientation"],
             "features": {k: None if not math.isfinite(float(features[k])) else float(features[k]) for k in metadata["features"]},
-            "model_name": metadata["model_name"],
+            **identity,
             "research_use_only": True,
-            "limitations": "Binary research model; not validated for homo/noise or clinical diagnosis. Probabilities are not clinical confidence.",
+            "limitations": LIMITATIONS,
         }
     except (ValueError, KeyError, IndexError, OSError, UnicodeError, RuntimeError, FloatingPointError) as exc:
-        return {"status": "Needs Review", "prediction": None, "probabilities": None,
-                "reason": f"AI processing unavailable: {type(exc).__name__}", "research_use_only": True}
+        return {
+            "status": "Needs Review",
+            "prediction": None,
+            "probabilities": None,
+            "reason": f"AI processing unavailable: {type(exc).__name__}",
+            "orientation": None,
+            "features": None,
+            **identity,
+            "research_use_only": True,
+            "limitations": LIMITATIONS,
+        }

@@ -162,6 +162,7 @@ python -m alembic upgrade head
 - `audit_events`: سجل غير قابل للتعديل عبر الـAPI للعمليات المهمة والمستخدم المنفذ والتحليل المرتبط إن وجد.
 - `candidate_variants`: اختلافات JAK2 البحثية المرشحة.
 - `external_annotations`: نتائج ClinVar المخزنة مؤقتًا.
+- `model_predictions`: سجل append-only لكل تشغيل للمودل، مع الاحتمالات وبصمة ملف المودل وإصدار مشتق من حزمة المودل والمعالجة وحالة QC وقت التشغيل.
 
 لا توجد بيانات Seed افتراضية؛ لذلك تبدأ الجداول فارغة.
 
@@ -174,6 +175,8 @@ python -m alembic upgrade head
 - `GET /api/analyses/{id}`: معلومات التحليل المحفوظ.
 - `GET /api/analyses/{id}/chromatogram`: الإشارات الأصلية A/C/G/T.
 - `GET /api/analyses/{id}/jak2-target`: محاذاة JAK2 وموضع الهدف والقِمم وأسباب المراجعة.
+- `GET /api/analyses/{id}/ai-prediction`: آخر نتيجة محفوظة للمودل الحالي، ويُنشئ سجلًا عند عدم وجود نتيجة متوافقة مع إصدار المودل وحالة QC.
+- `POST /api/analyses/{id}/ai-prediction/refresh`: تشغيل المودل من جديد وإضافة سجل جديد من دون حذف النتائج السابقة.
 - `GET /api/analyses/{id}/reviews`: سجل قرارات المراجعة الكامل، الأحدث أولًا.
 - `POST /api/analyses/{id}/reviews`: إضافة قرار مراجعة جديد مع تعليق، من دون استبدال السجل السابق أو تغيير نتيجة V617F.
 - `GET /api/analyses/{id}/audit-events`: سجل التدقيق المقيد بمالك التحليل.
@@ -182,7 +185,15 @@ python -m alembic upgrade head
 - `POST /api/analyses/{id}/research-variants/refresh`: استخراج SNV candidates من الجزء المغطى والبحث الاختياري في ClinVar.
 - `GET /api/dashboard/summary`: إحصاءات المستخدم من قاعدة البيانات.
 
-التحليل الحالي **مبدئي وغير تشخيصي**. يحدد موضع `NM_004972.4:c.1849G>T` ويعرض جودة الإشارة، لكنه لا يصنف الطفرة قبل اعتماد قواعد قرار واختبارها بملفات مرجعية معلومة النتيجة.
+التحليل والمودل الحاليان **للبحث ودعم المراجعة فقط وليسا للتشخيص**. نتيجة المودل الثنائية `negative/hetero` لا تدعم `homo` أو `noise` كفئات مستقلة، والاحتمالات المعروضة ليست ثقة سريرية. تعرض History وDashboard أحدث نتيجة محفوظة فقط، بينما تبقى كل عمليات التشغيل السابقة في `model_predictions` وسجل التدقيق.
+
+بعد إضافة ميزة الحفظ إلى قاعدة بيانات تحتوي تحليلات سابقة، شغّل مرة واحدة:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.cli.backfill_model_predictions
+```
+
+الأمر لا يستبدل نتيجة سابقة متوافقة مع نفس بصمة المودل وحالة QC.
 
 ## Reference Dataset and Pipeline Validation
 

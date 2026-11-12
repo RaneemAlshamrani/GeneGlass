@@ -15,6 +15,7 @@ class AuditAction(StrEnum):
     PASSWORD_CHANGED = "auth.password_changed"
     ANALYSIS_UPLOADED = "analysis.uploaded"
     ANALYSIS_RECALCULATED = "analysis.preliminary_evidence_recalculated"
+    AI_PREDICTION_CREATED = "analysis.ai_prediction_created"
     REVIEW_CREATED = "analysis.review_created"
     CLINVAR_REFRESHED = "analysis.clinvar_refreshed"
 

@@ -2,6 +2,7 @@
 
 from app.models.analysis import Analysis, AnalysisStatus, QCStatus
 from app.models.audit import AuditEvent
+from app.models.model_prediction import ModelPrediction
 from app.models.research_variant import CandidateVariant, ExternalAnnotation
 from app.models.review import Review, ReviewDecision
 from app.models.user import User, UserRole
@@ -12,6 +13,7 @@ __all__ = [
     "AuditEvent",
     "CandidateVariant",
     "ExternalAnnotation",
+    "ModelPrediction",
     "QCStatus",
     "Review",
     "ReviewDecision",
