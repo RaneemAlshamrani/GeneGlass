@@ -8,6 +8,7 @@
   const jak2Details = document.getElementById("jak2Details");
   const jak2Summary = document.getElementById("jak2Summary");
   const evidenceBadge = document.getElementById("evidenceBadge");
+  const aiPrediction = document.getElementById("aiPrediction");
   const message = document.getElementById("detailsMessage");
   const researchButton = document.getElementById("researchLookupButton");
   const researchStatus = document.getElementById("researchStatus");
@@ -95,10 +96,131 @@
       item.append(name, content);
       jak2Summary.appendChild(item);
     });
-    const pending = document.createElement("div");
-    pending.className = "classification-pending";
-    pending.innerHTML = '<i class="fa-solid fa-flask"></i><span><strong>Classification pending</strong><small>No predictive model is applied at this stage.</small></span>';
-    jak2Summary.appendChild(pending);
+  }
+
+  function probabilityLabel(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? `${(number * 100).toFixed(1)}%` : "N/A";
+  }
+
+  function createPredictionMetric(label, value, tone) {
+    const metric = document.createElement("div");
+    metric.className = "prediction-metric";
+
+    const heading = document.createElement("div");
+    const name = document.createElement("span");
+    const amount = document.createElement("strong");
+    name.textContent = label;
+    amount.textContent = probabilityLabel(value);
+    heading.append(name, amount);
+
+    const track = document.createElement("div");
+    track.className = "prediction-meter";
+    const fill = document.createElement("span");
+    fill.className = `prediction-meter-fill ${tone}`;
+    fill.style.width = `${Math.max(0, Math.min(100, Number(value) * 100 || 0))}%`;
+    track.appendChild(fill);
+    metric.append(heading, track);
+    return metric;
+  }
+
+  function renderAiPrediction(data) {
+    aiPrediction.replaceChildren();
+    aiPrediction.setAttribute("aria-busy", "false");
+
+    const status = String(data.status || "Needs Review");
+    const normalized = status.toLowerCase().replaceAll(" ", "-");
+    const isHetero = data.prediction === "hetero";
+    const isNegative = data.prediction === "negative";
+    const displayStatus = isHetero
+      ? "Heterozygous pattern"
+      : isNegative
+        ? "No heterozygous pattern detected"
+        : "Model result needs review";
+
+    const header = document.createElement("div");
+    header.className = "ai-prediction-header";
+    const titleGroup = document.createElement("div");
+    titleGroup.className = "ai-prediction-title";
+    const icon = document.createElement("span");
+    icon.className = "ai-model-icon";
+    icon.innerHTML = '<i class="fa-solid fa-microchip" aria-hidden="true"></i>';
+    const titleText = document.createElement("div");
+    const title = document.createElement("strong");
+    const model = document.createElement("small");
+    title.textContent = "AI Prediction";
+    model.textContent = data.model_name || "GeneGlass research model";
+    titleText.append(title, model);
+    titleGroup.append(icon, titleText);
+
+    const badge = document.createElement("span");
+    badge.className = "ai-status-badge";
+    badge.dataset.status = normalized;
+    badge.textContent = displayStatus;
+    header.append(titleGroup, badge);
+
+    const body = document.createElement("div");
+    body.className = "ai-prediction-body";
+    const summary = document.createElement("div");
+    summary.className = "ai-result-summary";
+    const resultLabel = document.createElement("span");
+    resultLabel.textContent = "Model output";
+    const resultValue = document.createElement("strong");
+    resultValue.textContent = displayStatus;
+    const orientation = document.createElement("small");
+    orientation.textContent = data.orientation
+      ? `Read orientation: ${data.orientation}`
+      : "Read orientation unavailable";
+    summary.append(resultLabel, resultValue, orientation);
+
+    if (data.reason) {
+      const reason = document.createElement("p");
+      reason.className = "ai-review-reason";
+      reason.textContent = data.reason;
+      summary.appendChild(reason);
+    }
+    body.appendChild(summary);
+
+    if (data.probabilities) {
+      const metrics = document.createElement("div");
+      metrics.className = "prediction-metrics";
+      metrics.append(
+        createPredictionMetric("Heterozygous", data.probabilities.hetero, "hetero"),
+        createPredictionMetric("Negative", data.probabilities.negative, "negative")
+      );
+      body.appendChild(metrics);
+    }
+
+    const notice = document.createElement("div");
+    notice.className = "ai-research-notice";
+    notice.innerHTML = '<i class="fa-solid fa-flask" aria-hidden="true"></i><span><strong>Research use only</strong><small>This model output supports specialist review and is not a clinical diagnosis.</small></span>';
+
+    aiPrediction.append(header, body, notice);
+  }
+
+  function renderAiPredictionError(messageText) {
+    renderAiPrediction({
+      status: "Needs Review",
+      prediction: null,
+      reason: messageText || "Model prediction is currently unavailable.",
+      research_use_only: true,
+    });
+  }
+
+  async function loadAiPrediction(token) {
+    try {
+      const response = await fetch(`${apiBaseUrl}/analyses/${analysisId}/ai-prediction`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || "Model prediction is currently unavailable.");
+      }
+      renderAiPrediction(data);
+    } catch (error) {
+      console.error("AI prediction error:", error);
+      renderAiPredictionError(error.message);
+    }
   }
 
   function appendResearchField(container, label, value) {
@@ -572,6 +694,7 @@ try {
 
       message.textContent = "";
       await Promise.all([
+        loadAiPrediction(token),
         loadSavedResearchResults(token),
         loadReviewHistory(token),
         loadAuditTrail(token),

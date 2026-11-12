@@ -9,7 +9,7 @@
 
   <link rel="stylesheet" href="../DashboardPage/dashboard.css">
 <link rel="stylesheet" href="../AnalysisPage/analysis.css?v=20261108-7">
-<link rel="stylesheet" href="details.css?v=20261108-8">
+<link rel="stylesheet" href="details.css?v=20261112-1">
 
   <link rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -18,7 +18,7 @@
 <script src="../assets/config.js" defer></script>
 <script src="../assets/auth.js" defer></script>
 <script src="../assets/chromatogram-viewer.js?v=20261108-5" defer></script>
-<script src="details.js?v=20261108-8" defer></script>
+<script src="details.js?v=20261112-1" defer></script>
 
 </head>
 
@@ -133,6 +133,12 @@
         <div id="jak2Summary" class="evidence-summary">
           <p>Loading target evidence...</p>
         </div>
+        <section id="aiPrediction" class="ai-prediction" aria-live="polite" aria-busy="true">
+          <div class="ai-prediction-loading">
+            <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+            <span>Loading model prediction...</span>
+          </div>
+        </section>
         <details class="evidence-disclosure">
           <summary>Technical details</summary>
           <div id="jak2Details" class="details-grid technical-grid"></div>
