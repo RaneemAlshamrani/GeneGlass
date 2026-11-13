@@ -12,27 +12,18 @@
   const researchStatus = document.getElementById("researchStatus");
   const researchResults = document.getElementById("researchResults");
   const researchMatchBadge = document.getElementById("researchMatchBadge");
-  const reviewForm = document.getElementById("reviewForm");
-  const reviewComment = document.getElementById("reviewComment");
-  const reviewQuickNotes = document.getElementById("reviewQuickNotes");
-  const reviewSubmitButton = document.getElementById("reviewSubmitButton");
-  const reviewStatus = document.getElementById("reviewStatus");
   const reviewHistory = document.getElementById("reviewHistory");
   const reviewHistoryCount = document.getElementById("reviewHistoryCount");
   const latestReviewBadge = document.getElementById("latestReviewBadge");
   const auditCount = document.getElementById("auditCount");
   const auditStatus = document.getElementById("auditStatus");
   const auditTimeline = document.getElementById("auditTimeline");
-  const reportForm = document.getElementById("reportForm");
   const reportBadge = document.getElementById("reportBadge");
-  const reportStatus = document.getElementById("reportStatus");
-  const generateReportButton = document.getElementById("generateReportButton");
-  const normalControlFile = document.getElementById("normalControlFile");
-  const normalControlState = document.getElementById("normalControlState");
-  const reportInterpretation = document.getElementById("reportInterpretation");
-  const reportDecisionSummary = document.getElementById("reportDecisionSummary");
-
-  let latestReviewDecision = null;
+  const reportArchiveTitle = document.getElementById("reportArchiveTitle");
+  const reportArchiveMessage = document.getElementById("reportArchiveMessage");
+  const downloadReportButton = document.getElementById("downloadReportButton");
+  const continueReportLink = document.getElementById("continueReportLink");
+  let savedReport = null;
 
   const apiBaseUrl = window.GeneGlassConfig.apiBaseUrl;
 
@@ -296,152 +287,54 @@
     }
   }
 
-  const reportInterpretationTemplates = {
-    positive: "JAK2 c.1849G>T (p.V617F) was detected in the submitted specimen. Correlate with the clinical and laboratory findings.",
-    negative: "JAK2 c.1849G>T (p.V617F) was not detected in the submitted specimen. Correlate with the clinical and laboratory findings.",
-  };
-
-  function setReportFormValue(name, value) {
-    const field = reportForm.elements.namedItem(name);
-    if (field && value != null) field.value = value;
-  }
-
-  function syncReportAvailability() {
-    const available = ["positive", "negative"].includes(latestReviewDecision);
-    reportForm.querySelectorAll("input, select, textarea, button").forEach((control) => {
-      control.disabled = !available;
-    });
-    reportForm.classList.toggle("is-locked", !available);
-    reportDecisionSummary.className = `report-review-decision ${available ? latestReviewDecision : "locked"}`;
-
-    if (!available) {
-      reportDecisionSummary.innerHTML = '<i class="fa-solid fa-lock"></i><span>Save a Positive or Negative decision in Specialist Review first.</span>';
-      reportStatus.textContent = "The report is locked until the specialist records a final decision.";
-      return;
-    }
-
-    const label = latestReviewDecision === "positive" ? "Positive" : "Negative";
-    const icon = latestReviewDecision === "positive" ? "fa-plus" : "fa-minus";
-    reportDecisionSummary.innerHTML = `<i class="fa-solid ${icon}"></i><span>Specialist Review decision: <strong>${label}</strong></span>`;
-    const currentInterpretation = reportInterpretation.value.trim();
-    if (!currentInterpretation || Object.values(reportInterpretationTemplates).includes(currentInterpretation)) {
-      reportInterpretation.value = reportInterpretationTemplates[latestReviewDecision];
-    }
-    if (reportStatus.textContent.includes("locked")) reportStatus.textContent = "";
-  }
-
   function renderSavedReport(report) {
-    if (!report) {
+    savedReport = report;
+    continueReportLink.href = `../AnalysisPage/analysis.html?id=${analysisId}`;
+    if (!report || report.status !== "finalized") {
       reportBadge.textContent = "Not created";
       reportBadge.dataset.decision = "pending";
-      normalControlState.textContent = "Upload the control used for this case.";
-      syncReportAvailability();
+      reportArchiveTitle.textContent = "No finalized report";
+      reportArchiveMessage.textContent = "Open this analysis in New Analysis to complete the specialist decision and report.";
+      downloadReportButton.hidden = true;
+      continueReportLink.hidden = false;
       return;
     }
-    [
-      "patient_name",
-      "medical_record_number",
-      "gender",
-      "date_of_birth",
-      "physician_name",
-      "report_number",
-      "received_date",
-      "submitted_date",
-      "clinical_history",
-      "specimen_type",
-      "interpretation",
-    ].forEach((name) => setReportFormValue(name, report[name]));
-    normalControlState.textContent = report.normal_control_uploaded
-      ? "Normal control attached. Choose a new file only to replace it."
-      : "Upload the control used for this case.";
-    reportBadge.textContent = report.status === "finalized"
-      ? `Final · v${report.version}`
-      : `Draft · v${report.version}`;
-    reportBadge.dataset.decision = report.final_decision || "pending";
-    generateReportButton.innerHTML = report.status === "finalized"
-      ? '<i class="fa-solid fa-file-pen"></i> Generate updated PDF'
-      : '<i class="fa-solid fa-file-pdf"></i> Generate PDF';
-    syncReportAvailability();
+    const storedDecision = report.final_decision || report.decision;
+    const decision = storedDecision === "positive" ? "Positive" : "Negative";
+    reportBadge.textContent = `Final · v${report.version}`;
+    reportBadge.dataset.decision = storedDecision || "pending";
+    reportArchiveTitle.textContent = `Final report · ${decision}`;
+    reportArchiveMessage.textContent = "The finalized PDF is stored and ready to download.";
+    downloadReportButton.hidden = false;
+    continueReportLink.hidden = true;
   }
 
-  async function loadMolecularReport(token) {
-    try {
-      const response = await fetch(`${apiBaseUrl}/analyses/${analysisId}/report`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || "Report could not be loaded.");
-      renderSavedReport(data.report);
-    } catch (error) {
-      reportStatus.textContent = error.message;
-    }
-  }
-
-  async function submitMolecularReport(event) {
-    event.preventDefault();
+  async function downloadSavedReport() {
     const token = window.GeneGlassAuth?.token;
-    if (!token) return;
-    if (!["positive", "negative"].includes(latestReviewDecision)) {
-      reportStatus.textContent = "Save a Positive or Negative Specialist Review before generating the report.";
-      return;
-    }
-    if (!reportForm.reportValidity()) return;
+    if (!token || !savedReport?.download_url) return;
     const previewWindow = window.open("", "_blank");
-    generateReportButton.disabled = true;
-    generateReportButton.textContent = "Generating...";
-    reportStatus.textContent = "Saving the report and rendering both chromatograms...";
+    downloadReportButton.disabled = true;
+    downloadReportButton.textContent = "Opening...";
     try {
-      const formData = new FormData(reportForm);
-      if (!normalControlFile.files.length) formData.delete("normal_control");
-      const saveResponse = await fetch(`${apiBaseUrl}/analyses/${analysisId}/report`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-      const saved = await saveResponse.json();
-      if (!saveResponse.ok) throw new Error(saved.detail || "Report draft could not be saved.");
-
-      const finalizeResponse = await fetch(
-        `${apiBaseUrl}/analyses/${analysisId}/report/finalize`,
-        { method: "POST", headers: { Authorization: `Bearer ${token}` } }
-      );
-      const finalized = await finalizeResponse.json();
-      if (!finalizeResponse.ok) {
-        throw new Error(finalized.detail || "Report could not be finalized.");
-      }
-
-      const version = finalized.report.version;
-      const pdfResponse = await fetch(
-        `${apiBaseUrl}/analyses/${analysisId}/report.pdf?version=${version}`,
+      const response = await fetch(
+        `${apiBaseUrl}/analyses/${analysisId}/report.pdf?version=${savedReport.version}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (!pdfResponse.ok) {
-        const errorData = await pdfResponse.json();
-        throw new Error(errorData.detail || "PDF could not be generated.");
-      }
-      const pdfBlob = await pdfResponse.blob();
-      const pdfUrl = URL.createObjectURL(pdfBlob);
+      if (!response.ok) throw new Error("The saved report could not be downloaded.");
+      const pdfUrl = URL.createObjectURL(await response.blob());
       if (previewWindow) {
         previewWindow.opener = null;
         previewWindow.location.href = pdfUrl;
-      } else {
-        throw new Error("Allow pop-ups for GeneGlass to open the generated PDF.");
       }
       window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
-      normalControlFile.value = "";
-      renderSavedReport(finalized.report);
-      reportStatus.textContent = "Final PDF generated. The model result was not included.";
-      await loadAuditTrail(token);
     } catch (error) {
       if (previewWindow && previewWindow.location.href === "about:blank") {
         previewWindow.close();
       }
-      reportStatus.textContent = error.message;
+      reportArchiveMessage.textContent = error.message;
     } finally {
-      if (!generateReportButton.querySelector("i")) {
-        generateReportButton.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Generate PDF';
-      }
-      syncReportAvailability();
+      downloadReportButton.disabled = false;
+      downloadReportButton.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Download PDF';
     }
   }
 
@@ -463,63 +356,6 @@
     rejected: "Evidence rejected",
     needs_more_data: "More data requested",
   };
-
-  const reviewNoteTemplates = {
-    positive: [
-      "The chromatogram and supporting technical evidence are consistent with a Positive JAK2 V617F decision.",
-      "The target-region signal supports a Positive JAK2 V617F decision after specialist review.",
-    ],
-    negative: [
-      "The chromatogram and supporting technical evidence are consistent with a Negative JAK2 V617F decision.",
-      "No supporting target-region signal was identified for JAK2 V617F after specialist review.",
-    ],
-    approved: [
-      "Chromatogram peaks are clear and the available QC metrics are acceptable for technical review.",
-      "Target-region coverage and signal quality are sufficient for technical review.",
-      "The technical evidence is consistent across the chromatogram and QC results.",
-    ],
-    needs_more_data: [
-      "Overlapping peaks near the target region require confirmation with a repeat sequencing run.",
-      "Sequence quality around the target region is insufficient; additional data are required.",
-      "The available read does not provide enough evidence for technical review.",
-    ],
-    rejected: [
-      "Chromatogram quality is insufficient for reliable technical interpretation.",
-      "Technical artefacts prevent reliable review of the target region.",
-      "Target-region coverage is inadequate for this analysis.",
-    ],
-  };
-
-  function syncQuickNoteSelection() {
-    reviewQuickNotes.querySelectorAll("button").forEach((button) => {
-      button.classList.toggle("selected", button.dataset.note === reviewComment.value.trim());
-    });
-  }
-
-  function renderQuickNotes(decision) {
-    reviewQuickNotes.replaceChildren();
-    const notes = reviewNoteTemplates[decision] || [];
-    if (!notes.length) {
-      const hint = document.createElement("p");
-      hint.className = "quick-note-hint";
-      hint.textContent = "Choose a decision to see suggested notes.";
-      reviewQuickNotes.appendChild(hint);
-      return;
-    }
-    notes.forEach((note) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "quick-note-button";
-      button.dataset.note = note;
-      button.textContent = note;
-      button.addEventListener("click", () => {
-        reviewComment.value = note;
-        reviewComment.dispatchEvent(new Event("input", { bubbles: true }));
-      });
-      reviewQuickNotes.appendChild(button);
-    });
-    syncQuickNoteSelection();
-  }
 
   const auditLabels = {
     "analysis.uploaded": "Analysis uploaded",
@@ -594,12 +430,10 @@
     const reviews = Array.isArray(data.reviews) ? data.reviews : [];
     reviewHistory.replaceChildren();
     reviewHistoryCount.textContent = String(reviews.length);
-    latestReviewDecision = data.latest_decision || null;
     latestReviewBadge.textContent = data.latest_decision
       ? reviewLabels[data.latest_decision] || data.latest_decision
       : "Not reviewed";
     latestReviewBadge.dataset.decision = data.latest_decision || "none";
-    syncReportAvailability();
 
     if (!reviews.length) {
       const empty = document.createElement("p");
@@ -639,52 +473,6 @@
       throw new Error("Unable to load specialist review history.");
     }
     renderReviewHistory(await response.json());
-  }
-
-  async function submitReview(event) {
-    event.preventDefault();
-    const token = window.GeneGlassAuth?.token;
-    if (!token || !analysisId) return;
-    const selectedDecision = reviewForm.querySelector(
-      'input[name="reviewDecision"]:checked'
-    );
-    if (!selectedDecision) {
-      reviewStatus.textContent = "Choose a review decision before saving.";
-      reviewForm.querySelector('input[name="reviewDecision"]')?.focus();
-      return;
-    }
-
-    reviewSubmitButton.disabled = true;
-    reviewStatus.textContent = "Saving review…";
-    try {
-      const response = await fetch(`${apiBaseUrl}/analyses/${analysisId}/reviews`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          decision: selectedDecision.value,
-          comment: reviewComment.value.trim(),
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        const detail = Array.isArray(data.detail)
-          ? data.detail.map((item) => item.msg).join("; ")
-          : data.detail;
-        throw new Error(detail || "Review could not be saved.");
-      }
-      reviewForm.reset();
-      renderQuickNotes("");
-      reviewStatus.textContent = "Review saved as a new history entry.";
-      await loadReviewHistory(token);
-      await loadAuditTrail(token);
-    } catch (error) {
-      reviewStatus.textContent = error.message;
-    } finally {
-      reviewSubmitButton.disabled = false;
-    }
   }
 
   function renderResearchResults(data) {
@@ -828,6 +616,7 @@
       }
 
       const details = await response.json();
+      renderSavedReport(details.report);
 
       showCards(fileDetails, [
         ["AB1 file", details.original_file_name],
@@ -934,7 +723,6 @@ try {
       message.textContent = "";
       await Promise.all([
         loadAiPrediction(token),
-        loadMolecularReport(token),
         loadSavedResearchResults(token),
         loadReviewHistory(token),
         loadAuditTrail(token),
@@ -946,18 +734,7 @@ try {
 
   document.addEventListener("geneglass:auth-ready", loadDetails);
   researchButton.addEventListener("click", refreshResearchResults);
-  reviewForm.addEventListener("submit", submitReview);
-  reviewForm.addEventListener("change", (event) => {
-    if (event.target.matches('input[name="reviewDecision"]')) {
-      renderQuickNotes(event.target.value);
-    }
-  });
-  reviewComment.addEventListener("input", syncQuickNoteSelection);
-  reportForm.addEventListener("submit", submitMolecularReport);
-  renderQuickNotes(
-    reviewForm.querySelector('input[name="reviewDecision"]:checked')?.value || ""
-  );
-  syncReportAvailability();
+  downloadReportButton.addEventListener("click", downloadSavedReport);
 
   if (window.GeneGlassAuth?.token) {
     loadDetails();

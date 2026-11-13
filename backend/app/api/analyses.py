@@ -25,7 +25,9 @@ from app.db.session import get_db
 from app.core.config import get_settings
 from app.models.analysis import Analysis, AnalysisStatus, QCStatus
 from app.models.model_prediction import ModelPrediction
+from app.models.molecular_report import MolecularReport
 from app.models.research_variant import CandidateVariant, ExternalAnnotation
+from app.models.review import Review, ReviewDecision
 from app.models.user import User
 from app.schemas.analysis import AnalysisListItem, AnalysisListResponse
 from app.services.ab1_reader import read_ab1_file
@@ -68,6 +70,7 @@ def _prediction_summary(record: ModelPrediction | None) -> dict | None:
 def _analysis_list_item(
     analysis: Analysis,
     prediction: ModelPrediction | None,
+    report: dict,
 ) -> AnalysisListItem:
     return AnalysisListItem.model_validate(
         {
@@ -79,9 +82,68 @@ def _analysis_list_item(
             "qc_status": analysis.qc_status.value,
             "v617f_detected": analysis.v617f_detected,
             "ai_prediction": _prediction_summary(prediction),
+            "report": report,
             "created_at": analysis.created_at,
         }
     )
+
+
+def _report_summary_map(
+    session: Session,
+    analysis_ids,
+) -> dict[int, dict]:
+    ids = list(analysis_ids)
+    if not ids:
+        return {}
+
+    latest_decisions: dict[int, ReviewDecision] = {}
+    for review in session.scalars(
+        select(Review)
+        .where(Review.analysis_id.in_(ids))
+        .order_by(Review.analysis_id, Review.created_at.desc(), Review.id.desc())
+    ):
+        latest_decisions.setdefault(review.analysis_id, review.decision)
+
+    finalized_reports: dict[int, MolecularReport] = {}
+    for report in session.scalars(
+        select(MolecularReport)
+        .where(
+            MolecularReport.analysis_id.in_(ids),
+            MolecularReport.status == "finalized",
+        )
+        .order_by(MolecularReport.analysis_id, MolecularReport.version.desc())
+    ):
+        finalized_reports.setdefault(report.analysis_id, report)
+
+    summaries: dict[int, dict] = {}
+    for analysis_id in ids:
+        decision = latest_decisions.get(analysis_id)
+        finalized = finalized_reports.get(analysis_id)
+        if finalized is not None:
+            summaries[analysis_id] = {
+                "status": "finalized",
+                "decision": finalized.final_decision,
+                "version": finalized.version,
+                "download_url": (
+                    f"/api/analyses/{analysis_id}/report.pdf"
+                    f"?version={finalized.version}"
+                ),
+            }
+        elif decision in {ReviewDecision.POSITIVE, ReviewDecision.NEGATIVE}:
+            summaries[analysis_id] = {
+                "status": "ready_to_create",
+                "decision": decision.value,
+                "version": None,
+                "download_url": None,
+            }
+        else:
+            summaries[analysis_id] = {
+                "status": "awaiting_decision",
+                "decision": decision.value if decision else None,
+                "version": None,
+                "download_url": None,
+            }
+    return summaries
 
 
 def _serialize_external_annotation(annotation: ExternalAnnotation) -> dict:
@@ -506,10 +568,14 @@ def get_analyses(
     prediction_by_analysis = latest_prediction_map(
         session, (analysis.id for analysis in analyses)
     )
+    report_by_analysis = _report_summary_map(
+        session, (analysis.id for analysis in analyses)
+    )
     items = [
         _analysis_list_item(
             analysis,
             prediction_by_analysis.get(analysis.id),
+            report_by_analysis[analysis.id],
         )
         for analysis in analyses
     ]
@@ -544,6 +610,8 @@ def get_analysis_details(
             detail="Analysis not found",
         )
 
+    report_summary = _report_summary_map(session, [analysis.id])[analysis.id]
+
     return {
         "id": analysis.id,
         "original_file_name": analysis.original_file_name,
@@ -566,6 +634,7 @@ def get_analysis_details(
         "ai_prediction": _prediction_summary(
             latest_prediction_map(session, [analysis.id]).get(analysis.id)
         ),
+        "report": report_summary,
         "result_summary": analysis.result_summary,
         "error_message": analysis.error_message,
         "created_at": analysis.created_at.isoformat(),

@@ -116,6 +116,10 @@ def test_report_is_finalized_versioned_and_owner_scoped(
             owner_headers = {
                 "Authorization": f"Bearer {owner_login.json()['access_token']}"
             }
+            awaiting = client.get(
+                "/api/analyses",
+                headers=owner_headers,
+            )
             blocked = client.put(
                 f"/api/analyses/{analysis_id}/report",
                 headers=owner_headers,
@@ -128,6 +132,10 @@ def test_report_is_finalized_versioned_and_owner_scoped(
                     "decision": "positive",
                     "comment": "Specialist confirms a Positive JAK2 V617F decision.",
                 },
+            )
+            ready = client.get(
+                f"/api/analyses/{analysis_id}",
+                headers=owner_headers,
             )
             saved = client.put(
                 f"/api/analyses/{analysis_id}/report",
@@ -143,6 +151,10 @@ def test_report_is_finalized_versioned_and_owner_scoped(
             )
             finalized = client.post(
                 f"/api/analyses/{analysis_id}/report/finalize",
+                headers=owner_headers,
+            )
+            archived = client.get(
+                "/api/analyses",
                 headers=owner_headers,
             )
             pdf = client.get(
@@ -185,11 +197,27 @@ def test_report_is_finalized_versioned_and_owner_scoped(
             )
 
         assert blocked.status_code == 409
+        assert awaiting.status_code == 200
+        assert awaiting.json()["items"][0]["report"] == {
+            "status": "awaiting_decision",
+            "decision": None,
+            "version": None,
+            "download_url": None,
+        }
         assert positive_review.status_code == 201
+        assert ready.status_code == 200
+        assert ready.json()["report"]["status"] == "ready_to_create"
+        assert ready.json()["report"]["decision"] == "positive"
         assert saved.status_code == 200
         assert saved.json()["report"]["normal_control_uploaded"] is True
         assert finalized.status_code == 200
         assert finalized.json()["report"]["status"] == "finalized"
+        assert archived.status_code == 200
+        archived_report = archived.json()["items"][0]["report"]
+        assert archived_report["status"] == "finalized"
+        assert archived_report["decision"] == "positive"
+        assert archived_report["version"] == 1
+        assert archived_report["download_url"].endswith("report.pdf?version=1")
         assert pdf.status_code == 200
         assert pdf.headers["content-type"] == "application/pdf"
         assert pdf.content.startswith(b"%PDF-1.4")

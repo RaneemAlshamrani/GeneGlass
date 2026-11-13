@@ -17,6 +17,13 @@ class ModelPredictionSummary(BaseModel):
     research_use_only: bool = True
 
 
+class AnalysisReportSummary(BaseModel):
+    status: str
+    decision: str | None = None
+    version: int | None = None
+    download_url: str | None = None
+
+
 class AnalysisListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -28,6 +35,7 @@ class AnalysisListItem(BaseModel):
     qc_status: str
     v617f_detected: bool | None
     ai_prediction: ModelPredictionSummary | None = None
+    report: AnalysisReportSummary
     created_at: datetime
 
 

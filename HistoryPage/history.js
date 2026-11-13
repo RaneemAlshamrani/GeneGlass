@@ -147,6 +147,60 @@
     return td;
   }
 
+  async function downloadReport(analysis, button) {
+    const token = getToken();
+    const path = analysis.report?.download_url;
+    if (!token || !path) return;
+    const previewWindow = window.open("", "_blank");
+    button.disabled = true;
+    button.textContent = "Opening...";
+    try {
+      const apiOrigin = window.GeneGlassConfig.apiBaseUrl.replace(/\/api$/, "");
+      const response = await fetch(`${apiOrigin}${path}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error("The saved report could not be downloaded.");
+      const blobUrl = URL.createObjectURL(await response.blob());
+      if (previewWindow) {
+        previewWindow.opener = null;
+        previewWindow.location.href = blobUrl;
+      }
+      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    } catch (error) {
+      if (previewWindow) previewWindow.close();
+      message.textContent = error.message;
+    } finally {
+      button.disabled = false;
+      button.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Download';
+    }
+  }
+
+  function createReportCell(analysis) {
+    const td = document.createElement("td");
+    td.className = "history-report-cell";
+    const report = analysis.report || { status: "awaiting_decision" };
+    if (report.status === "finalized") {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "history-report-btn";
+      button.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Download';
+      button.addEventListener("click", () => downloadReport(analysis, button));
+      td.appendChild(button);
+      return td;
+    }
+
+    const status = document.createElement("span");
+    status.className = "history-report-status";
+    status.textContent = report.status === "ready_to_create"
+      ? "Not created"
+      : "Awaiting decision";
+    const complete = document.createElement("a");
+    complete.href = `../AnalysisPage/analysis.html?id=${analysis.id}`;
+    complete.textContent = "Complete";
+    td.append(status, complete);
+    return td;
+  }
+
   async function showAnalysisDetails(analysisId, button) {
     const token = getToken();
 
@@ -229,6 +283,7 @@ message.appendChild(detailsCard);
         createCell(getResultLabel(analysis)),
         createCell(analysis.qc_status),
         createCell(formatDate(analysis.created_at)),
+        createReportCell(analysis),
       );
 
       const actions = document.createElement("td");

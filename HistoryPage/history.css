@@ -294,3 +294,43 @@
   opacity: 0.6;
   cursor: wait;
 }
+
+.history-report-cell {
+  min-width: 145px;
+}
+
+.history-report-btn,
+.history-report-cell a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 11px;
+  border: 1px solid #b9dddd;
+  border-radius: 9px;
+  background: #edf9f9;
+  color: #087f81;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.history-report-btn:hover,
+.history-report-cell a:hover {
+  background: #087f81;
+  color: #fff;
+}
+
+.history-report-btn:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.history-report-status {
+  display: block;
+  margin-bottom: 6px;
+  color: #71858a;
+  font-size: 11px;
+}

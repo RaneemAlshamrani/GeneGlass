@@ -877,3 +877,114 @@ body {
 .analysis-ai-fill.hetero { background:#d76262; }
 .analysis-ai-metadata { font-size:13px; overflow-wrap:anywhere; }
 .analysis-ai-disclaimer { font-size:12px; border-top:1px solid #daebeb; padding-top:14px; }
+
+.analysis-finalization {
+  display: grid;
+  gap: 22px;
+  margin-top: 22px;
+}
+
+.analysis-finalization[hidden] { display: none; }
+.analysis-report-form[hidden],
+.existing-report-actions[hidden] { display: none !important; }
+.workflow-card { padding: 26px; }
+.workflow-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.workflow-heading span { color: #008f96; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.workflow-heading h2 { margin: 4px 0 5px; color: #12363b; font-size: 21px; }
+.workflow-heading p { margin: 0; color: #71858a; }
+.workflow-badge { padding: 8px 12px; border-radius: 999px; background: #edf5f5; color: #42666a; font-size: 12px; }
+.workflow-badge[data-decision="positive"] { background: #fff1f0; color: #a33d3d; }
+.workflow-badge[data-decision="negative"] { background: #eaf8f5; color: #087d72; }
+.workflow-badge[data-decision="needs_more_data"] { background: #fff4dc; color: #8a5b00; }
+
+.analysis-review-form,
+.analysis-report-form {
+  padding: 18px;
+  border: 1px solid #dbeaea;
+  border-radius: 16px;
+  background: #f9fcfc;
+}
+.analysis-review-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.analysis-review-options label { position: relative; cursor: pointer; }
+.analysis-review-options input { position: absolute; opacity: 0; pointer-events: none; }
+.analysis-review-options label > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 54px;
+  padding: 12px;
+  border: 1px solid #d7e8e8;
+  border-radius: 12px;
+  background: #fff;
+}
+.analysis-review-options input:checked + span { border-color: #008f96; box-shadow: 0 0 0 2px rgba(0,143,150,.12); }
+.analysis-review-options .positive input:checked + span { background: #fff3f2; color: #a33d3d; }
+.analysis-review-options .negative input:checked + span { background: #edf9f6; color: #087569; }
+.analysis-review-options .more input:checked + span { background: #fff8e9; color: #8a5b00; }
+.analysis-review-note { display: grid; gap: 8px; margin-top: 16px; color: #315a60; font-size: 13px; font-weight: 700; }
+.analysis-review-note select,
+.analysis-review-note textarea,
+.analysis-report-grid input,
+.analysis-report-grid select,
+.analysis-report-wide textarea,
+.analysis-control-upload input {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #c9e1e2;
+  border-radius: 10px;
+  background: #fff;
+  color: #17393e;
+  font: inherit;
+}
+.analysis-review-note textarea { min-height: 100px; resize: vertical; }
+.workflow-footer { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 16px; }
+.workflow-footer p { margin: 0; color: #61777c; font-size: 12px; }
+.workflow-footer button,
+.existing-report-actions button {
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 10px;
+  background: #008f96;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.workflow-footer button:disabled { opacity: .55; cursor: not-allowed; }
+.analysis-report-decision { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 12px 14px; border: 1px solid #d5e6e7; border-radius: 12px; background: #f4f9f9; color: #315a60; }
+.analysis-report-decision.positive { border-color: #f0caca; background: #fff3f2; color: #9d3737; }
+.analysis-report-decision.negative { border-color: #bfe2d9; background: #edf9f6; color: #087569; }
+.analysis-report-form.is-locked { opacity: .62; }
+.analysis-report-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.analysis-report-grid label,
+.analysis-report-wide,
+.analysis-control-upload label { display: grid; gap: 7px; color: #315a60; font-size: 12px; font-weight: 750; }
+.analysis-report-wide { margin-top: 14px; }
+.analysis-report-wide textarea { resize: vertical; line-height: 1.5; }
+.analysis-control-upload { display: grid; grid-template-columns: minmax(260px,.8fr) 1.2fr; align-items: end; gap: 18px; margin-top: 14px; padding: 14px; border: 1px dashed #9fcfd1; border-radius: 12px; background: #f1f9f9; }
+.analysis-control-upload small { padding-bottom: 10px; color: #61777c; }
+.existing-report-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; border: 1px solid #bfe2d9; border-radius: 12px; background: #edf9f6; }
+.existing-report-actions p { margin: 0; color: #087569; font-weight: 700; }
+
+@media (max-width: 900px) {
+  .analysis-report-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 650px) {
+  .workflow-heading,
+  .workflow-footer,
+  .existing-report-actions { align-items: stretch; flex-direction: column; }
+  .analysis-review-options,
+  .analysis-report-grid,
+  .analysis-control-upload { grid-template-columns: 1fr; }
+  .workflow-footer button,
+  .existing-report-actions button { width: 100%; }
+}
