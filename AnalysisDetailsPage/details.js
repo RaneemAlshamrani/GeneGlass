@@ -74,43 +74,69 @@
     return best ? { startBase: best.start + 1, endBase: best.start + motif.length } : null;
   }
 
-  function makeGeneGlassNoiseNotice(noise) {
-    const node = document.createElement("section");
-    node.id = "geneglassNoiseDetails";
-    node.className = "geneglass-noise-notice";
-    node.setAttribute("role", "status");
-    node.style.cssText = "border:1px solid #e7c887;border-left:5px solid #c98b25;border-radius:12px;padding:15px 18px;margin:12px 0 18px;background:#fff9eb;color:#493b22;";
+  
+function makeGeneGlassNoiseNotice(noise) {
+  const node = document.createElement("section");
+  node.id = "geneglassNoiseDetails";
+  node.className = "geneglass-noise-notice";
+  node.setAttribute("role", "note");
 
-    const heading = document.createElement("strong");
-    const text = document.createElement("p");
-    text.style.margin = "9px 0 0";
+  node.style.cssText =
+    "border:1px solid #d4e6e6;" +
+    "border-left:5px solid #76a8aa;" +
+    "border-radius:12px;" +
+    "padding:15px 18px;" +
+    "margin:12px 0 18px;" +
+    "background:#f5fbfb;" +
+    "color:#29464a;";
 
-    const available = noise?.available === true;
-    const quality = available && noise.min_flank_phred != null
-      ? Number(noise.min_flank_phred) : NaN;
-    const lowQ = Number.isFinite(quality) && quality < 20;
+  const heading = document.createElement("strong");
+  const text = document.createElement("p");
+  text.style.margin = "9px 0 0";
 
-    if (!available || !Number.isFinite(quality)) {
-      heading.textContent = "Signal Quality — Specialist Review Required";
-      text.textContent = "Local signal quality could not be assessed. Inspect the original chromatogram before accepting the AI evidence. The model prediction and stored QC status are unchanged.";
-    } else {
-      const ratioValue = noise.mean_flank_secondary_ratio;
-      const ratio = ratioValue == null || !Number.isFinite(Number(ratioValue))
-        ? "N/A" : Number(ratioValue).toFixed(3);
-      const windowText = `Bases ${noise.window_start_ab1_base_number}–${noise.window_end_ab1_base_number}`;
-      heading.textContent = lowQ
-        ? "Signal Quality — Specialist Review Required"
-        : "Signal Quality — Measurements for Specialist Inspection";
-      text.textContent = `${windowText}: lowest neighboring Phred Q${quality}; mean secondary/primary peak ratio ${ratio}. `
-        + (lowQ
-          ? "One or more neighboring base calls fall below the provisional Q20 threshold. Inspect the original peaks before accepting the AI evidence."
-          : "These measurements alone do not establish that the signal is clean or noisy. Inspect the original chromatogram when reviewing the AI evidence.")
-        + " The AI prediction and existing QC status are unchanged; this is a separate, preliminary quality advisory.";
-    }
+  if (noise?.available !== true) {
+    heading.textContent =
+      "Local Signal Quality — Data Unavailable";
 
-    node.append(heading, text);
-    return node;
+    text.textContent =
+      "Local signal measurements are unavailable. " +
+      "Review the original chromatogram and target mapping.";
+  } else {
+    const minQ = noise.min_flank_phred;
+    const ratio = noise.mean_flank_secondary_ratio;
+
+    const target = Array.isArray(noise.points)
+      ? noise.points.find(point => point.is_target)
+      : null;
+
+    const targetQ = target?.phred ?? "N/A";
+
+    const ratioText = ratio == null
+      ? "N/A"
+      : Number(ratio).toFixed(3);
+
+    const windowText =
+      `Bases ${noise.window_start_ab1_base_number}` +
+      `–${noise.window_end_ab1_base_number}`;
+
+    heading.textContent =
+      "Local Signal Quality — Research Measurements";
+
+    text.textContent =
+      `${windowText}: Target Q${targetQ}; ` +
+      `lowest neighboring Phred Q${minQ ?? "N/A"}; ` +
+      `mean secondary/primary peak ratio ${ratioText}. ` +
+      "These measurements are descriptive only. " +
+      "A low Phred score or overlapping peaks alone " +
+      "cannot establish that the sample is Noise or " +
+      "requires a repeat. Specialist interpretation " +
+      "and validated quality criteria are required.";
   }
+
+  node.append(heading, text);
+  return node;
+}
+
 
   function showUnsupportedTargetAdvisory(pattern) {
     document.getElementById("geneglassUnsupportedNotice")?.remove();
@@ -138,7 +164,7 @@
   }
 
   function renderEvidenceSummary(result) {
-    const status = result.needs_review ? "Needs review" : "Technical evidence ready";
+    const status = result.needs_review ? "Needs review" : "Technical evidence available";
     evidenceBadge.textContent = status;
     evidenceBadge.dataset.status = result.needs_review ? "review" : "ready";
     const items = [
@@ -690,8 +716,8 @@ try {
       ["Primary Peak", peaks.primary_base],
       ["Secondary Peak", peaks.secondary_base],
       ["Secondary / Primary", formatRatio(peaks.overlap_ratio)],
-      ["Review Status", result.needs_review ? "Needs Review" : "Not flagged"],
-      ["Review Reason", reasons || "No preliminary QC review reason"],
+      ["Target QC Review", result.needs_review ? "Needs Review" : "No target QC flag"],
+      ["Target QC Reason", reasons || "No target mapping or peak review reason"],
       ["Pipeline Version", result.pipeline_version]
     ]);
     const reference = result.reference_evidence;

@@ -75,16 +75,82 @@
   cursor: pointer;
 }
 
+
+/* History table: balanced columns without unnecessary desktop scrolling */
 .history-card .table-wrapper {
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
 }
 
 .history-card table {
-  min-width: 780px;
+  width: 100%;
+  min-width: 1020px;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.history-card th,
+.history-card td {
+  padding: 11px 9px;
+  text-align: left;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.history-card th {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .history-card td {
   font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Eight columns total 100%. */
+.history-card th:nth-child(1),
+.history-card td:nth-child(1) {
+  width: 24%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.history-card th:nth-child(2),
+.history-card td:nth-child(2) { width: 6%; }
+
+.history-card th:nth-child(3),
+.history-card td:nth-child(3) { width: 10%; }
+
+.history-card th:nth-child(4),
+.history-card td:nth-child(4) { width: 13%; }
+
+.history-card th:nth-child(5),
+.history-card td:nth-child(5) { width: 10%; }
+
+.history-card th:nth-child(6),
+.history-card td:nth-child(6) { width: 10%; }
+
+.history-card th:nth-child(7),
+.history-card td:nth-child(7) { width: 13%; }
+
+.history-card th:nth-child(8),
+.history-card td:nth-child(8) { width: 14%; }
+
+/* Keep short values readable; long names may wrap naturally. */
+.history-card td:nth-child(2),
+.history-card td:nth-child(3),
+.history-card td:nth-child(6) {
+  white-space: nowrap;
+}
+
+.history-card tbody tr {
+  border-bottom: 1px solid #e1eded;
+}
+
+.history-card tbody tr:hover {
+  background: #f5fbfb;
 }
 
 .history-card td a {
@@ -267,67 +333,85 @@
     grid-template-columns: 1fr;
   }
 }
-/* History View Button */
-.history-view-btn {
+/* Report and Actions are real table cells. Do not make a <td> flex:
+   flex changes its table layout and causes broken row borders/alignment. */
+.history-card td.history-report-cell,
+.history-card td.history-actions {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.history-card td.history-actions {
+  white-space: nowrap;
+}
+
+.history-card td.history-actions > button {
+  vertical-align: middle;
+}
+
+.history-card td.history-actions > button + button {
+  margin-left: 6px;
+}
+
+.history-view-btn,
+.history-delete-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 9px 18px;
+  min-height: 34px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+}
+
+.history-view-btn {
   background: #eaf7f7;
   color: #087f81;
   border: 1px solid #cfe5e5;
-  border-radius: 10px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .history-view-btn:hover:not(:disabled) {
   background: #087f81;
-  color: white;
+  color: #fff;
   border-color: #087f81;
 }
 
-.history-view-btn:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
-.history-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-}
-
 .history-delete-btn {
-  padding: 9px 13px;
-  border: 1px solid #edcaca;
-  border-radius: 10px;
   background: #fff4f4;
   color: #a33d3d;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 650;
-  cursor: pointer;
-  transition: all .2s ease;
+  border: 1px solid #edcaca;
 }
 
 .history-delete-btn:hover:not(:disabled) {
-  border-color: #b84949;
   background: #b84949;
   color: #fff;
+  border-color: #b84949;
 }
 
+.history-view-btn:disabled,
 .history-delete-btn:disabled {
   opacity: .6;
   cursor: wait;
 }
 
 .history-report-cell {
-  min-width: 145px;
+  min-width: 0;
+  vertical-align: middle;
+}
+
+.history-report-status {
+  display: block;
+  margin: 0 0 5px;
+  color: #71858a;
+  font-size: 11px;
+  line-height: 1.25;
+  white-space: normal;
 }
 
 .history-report-btn,
@@ -335,20 +419,23 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 11px;
+  min-height: 34px;
+  padding: 7px 10px;
+  gap: 5px;
   border: 1px solid #b9dddd;
   border-radius: 9px;
   background: #edf9f9;
   color: #087f81;
-  font: inherit;
+  font-family: inherit;
   font-size: 12px;
   font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
 }
 
-.history-report-btn:hover,
+.history-report-btn:hover:not(:disabled),
 .history-report-cell a:hover {
   background: #087f81;
   color: #fff;
@@ -357,11 +444,4 @@
 .history-report-btn:disabled {
   opacity: .6;
   cursor: wait;
-}
-
-.history-report-status {
-  display: block;
-  margin-bottom: 6px;
-  color: #71858a;
-  font-size: 11px;
 }

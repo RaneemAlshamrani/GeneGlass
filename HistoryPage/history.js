@@ -189,17 +189,10 @@
       return td;
     }
 
-    const status = document.createElement("span");
-    status.className = "history-report-status";
-    status.textContent = report.status === "needs_update"
-      ? "Update required"
-      : report.status === "ready_to_create"
-        ? "Not created"
-        : "Awaiting decision";
     const complete = document.createElement("a");
     complete.href = `../AnalysisPage/analysis.html?id=${analysis.id}`;
     complete.textContent = report.status === "needs_update" ? "Update PDF" : "Complete";
-    td.append(status, complete);
+    td.appendChild(complete);
     return td;
   }
 
