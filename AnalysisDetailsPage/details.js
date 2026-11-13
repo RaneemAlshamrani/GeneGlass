@@ -290,6 +290,16 @@
   function renderSavedReport(report) {
     savedReport = report;
     continueReportLink.href = `../AnalysisPage/analysis.html?id=${analysisId}`;
+    if (report?.status === "needs_update") {
+      reportBadge.textContent = "Update required";
+      reportBadge.dataset.decision = report.decision || "pending";
+      reportArchiveTitle.textContent = "PDF decision is outdated";
+      reportArchiveMessage.textContent = "The Specialist Review decision changed. Open New Analysis to generate a new PDF version.";
+      downloadReportButton.hidden = true;
+      continueReportLink.hidden = false;
+      continueReportLink.innerHTML = '<i class="fa-solid fa-rotate"></i> Update PDF';
+      return;
+    }
     if (!report || report.status !== "finalized") {
       reportBadge.textContent = "Not created";
       reportBadge.dataset.decision = "pending";
@@ -297,6 +307,7 @@
       reportArchiveMessage.textContent = "Open this analysis in New Analysis to complete the specialist decision and report.";
       downloadReportButton.hidden = true;
       continueReportLink.hidden = false;
+      continueReportLink.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> Open in New Analysis';
       return;
     }
     const storedDecision = report.final_decision || report.decision;

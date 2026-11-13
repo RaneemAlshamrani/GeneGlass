@@ -170,6 +170,10 @@ def test_report_is_finalized_versioned_and_owner_scoped(
                     "comment": "Specialist confirms a Negative JAK2 V617F decision.",
                 },
             )
+            update_required = client.get(
+                "/api/analyses",
+                headers=owner_headers,
+            )
             second_form = {
                 **form,
                 "interpretation": "Specialist-confirmed negative result.",
@@ -178,6 +182,18 @@ def test_report_is_finalized_versioned_and_owner_scoped(
                 f"/api/analyses/{analysis_id}/report",
                 headers=owner_headers,
                 data=second_form,
+            )
+            second_finalized = client.post(
+                f"/api/analyses/{analysis_id}/report/finalize",
+                headers=owner_headers,
+            )
+            updated_history = client.get(
+                "/api/analyses",
+                headers=owner_headers,
+            )
+            updated_pdf = client.get(
+                f"/api/analyses/{analysis_id}/report.pdf?version=2",
+                headers=owner_headers,
             )
 
             other_login = client.post(
@@ -223,10 +239,23 @@ def test_report_is_finalized_versioned_and_owner_scoped(
         assert pdf.content.startswith(b"%PDF-1.4")
         assert b"decision=positive" in pdf.content
         assert negative_review.status_code == 201
+        assert update_required.status_code == 200
+        stale_report = update_required.json()["items"][0]["report"]
+        assert stale_report["status"] == "needs_update"
+        assert stale_report["decision"] == "negative"
+        assert stale_report["version"] == 1
         assert revised.status_code == 200
         assert revised.json()["report"]["version"] == 2
         assert revised.json()["report"]["status"] == "draft"
         assert revised.json()["report"]["final_decision"] == "negative"
+        assert second_finalized.status_code == 200
+        assert second_finalized.json()["report"]["version"] == 2
+        assert second_finalized.json()["report"]["status"] == "finalized"
+        updated_report = updated_history.json()["items"][0]["report"]
+        assert updated_report["status"] == "finalized"
+        assert updated_report["decision"] == "negative"
+        assert updated_report["version"] == 2
+        assert b"decision=negative" in updated_pdf.content
         assert hidden.status_code == 404
 
         with sessions() as session:
@@ -235,7 +264,7 @@ def test_report_is_finalized_versioned_and_owner_scoped(
             ).all()
             assert [(item.version, item.status) for item in reports] == [
                 (1, "finalized"),
-                (2, "draft"),
+                (2, "finalized"),
             ]
             assert reports[0].final_decision == "positive"
             assert (

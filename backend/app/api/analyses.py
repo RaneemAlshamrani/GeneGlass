@@ -119,7 +119,15 @@ def _report_summary_map(
     for analysis_id in ids:
         decision = latest_decisions.get(analysis_id)
         finalized = finalized_reports.get(analysis_id)
-        if finalized is not None:
+        decision_is_final = decision in {
+            ReviewDecision.POSITIVE,
+            ReviewDecision.NEGATIVE,
+        }
+        if (
+            finalized is not None
+            and decision_is_final
+            and finalized.final_decision == decision.value
+        ):
             summaries[analysis_id] = {
                 "status": "finalized",
                 "decision": finalized.final_decision,
@@ -129,7 +137,17 @@ def _report_summary_map(
                     f"?version={finalized.version}"
                 ),
             }
-        elif decision in {ReviewDecision.POSITIVE, ReviewDecision.NEGATIVE}:
+        elif finalized is not None and decision_is_final:
+            summaries[analysis_id] = {
+                "status": "needs_update",
+                "decision": decision.value,
+                "version": finalized.version,
+                "download_url": (
+                    f"/api/analyses/{analysis_id}/report.pdf"
+                    f"?version={finalized.version}"
+                ),
+            }
+        elif decision_is_final:
             summaries[analysis_id] = {
                 "status": "ready_to_create",
                 "decision": decision.value,

@@ -108,20 +108,26 @@
 
   function setReportAvailability() {
     const decisionIsFinal = ["positive", "negative"].includes(latestReviewDecision);
-    const finalized = savedReport?.status === "finalized";
-    reportBadge.textContent = finalized
+    const reportIsCurrent = savedReport?.status === "finalized"
+      && savedReport.final_decision === latestReviewDecision;
+    const reportNeedsUpdate = savedReport?.status === "finalized"
+      && decisionIsFinal
+      && savedReport.final_decision !== latestReviewDecision;
+    reportBadge.textContent = reportIsCurrent
       ? `Final · v${savedReport.version}`
-      : decisionIsFinal ? "Ready" : "Locked";
-    reportBadge.dataset.decision = finalized
+      : reportNeedsUpdate ? "Update required" : decisionIsFinal ? "Ready" : "Locked";
+    reportBadge.dataset.decision = reportIsCurrent
       ? savedReport.final_decision : (latestReviewDecision || "pending");
     reportDecision.classList.toggle("locked", !decisionIsFinal);
-    reportDecision.innerHTML = decisionIsFinal
-      ? `<i class="fa-solid fa-user-doctor"></i><span>Specialist decision: <strong>${decisionLabel(latestReviewDecision)}</strong></span>`
+    reportDecision.innerHTML = reportNeedsUpdate
+      ? `<i class="fa-solid fa-rotate"></i><span>The decision changed to <strong>${decisionLabel(latestReviewDecision)}</strong>. Generate a new PDF version.</span>`
+      : decisionIsFinal
+        ? `<i class="fa-solid fa-user-doctor"></i><span>Specialist decision: <strong>${decisionLabel(latestReviewDecision)}</strong></span>`
       : '<i class="fa-solid fa-lock"></i><span>Save a Positive or Negative Specialist Review first.</span>';
-    reportForm.hidden = finalized;
-    existingReportActions.hidden = !finalized;
+    reportForm.hidden = reportIsCurrent;
+    existingReportActions.hidden = !reportIsCurrent;
     for (const control of reportForm.elements) {
-      control.disabled = !decisionIsFinal || finalized;
+      control.disabled = !decisionIsFinal || reportIsCurrent;
     }
     if (decisionIsFinal) {
       const defaults = Object.values(DEFAULT_INTERPRETATIONS);
