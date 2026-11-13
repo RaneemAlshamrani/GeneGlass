@@ -203,6 +203,36 @@
     return td;
   }
 
+  async function deleteAnalysis(analysis, button) {
+    const confirmed = window.confirm(
+      `Delete “${analysis.original_file_name}” from History?\n\n` +
+      "The AB1 file, reviews, model results, and saved PDF reports for this analysis will be permanently deleted."
+    );
+    if (!confirmed) return;
+
+    const token = getToken();
+    if (!token) return;
+    button.disabled = true;
+    button.textContent = "Deleting...";
+    try {
+      const response = await fetch(`${API_URL}/${analysis.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.detail || "The analysis could not be deleted.");
+      }
+      if (rows.children.length === 1 && currentPage > 1) currentPage--;
+      await loadHistory();
+      message.textContent = "Analysis deleted from History.";
+    } catch (error) {
+      message.textContent = error.message;
+      button.disabled = false;
+      button.textContent = "Delete";
+    }
+  }
+
   async function showAnalysisDetails(analysisId, button) {
     const token = getToken();
 
@@ -289,6 +319,7 @@ message.appendChild(detailsCard);
       );
 
       const actions = document.createElement("td");
+      actions.className = "history-actions";
       const viewButton = document.createElement("button");
 
       viewButton.type = "button";
@@ -300,8 +331,13 @@ message.appendChild(detailsCard);
     `../AnalysisDetailsPage/details.html?id=${analysis.id}`;
 });
 
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.textContent = "Delete";
+      deleteButton.className = "history-delete-btn";
+      deleteButton.addEventListener("click", () => deleteAnalysis(analysis, deleteButton));
 
-      actions.appendChild(viewButton);
+      actions.append(viewButton, deleteButton);
       tr.appendChild(actions);
 
       rows.appendChild(tr);

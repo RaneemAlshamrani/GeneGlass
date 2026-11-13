@@ -295,6 +295,37 @@
   cursor: wait;
 }
 
+.history-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.history-delete-btn {
+  padding: 9px 13px;
+  border: 1px solid #edcaca;
+  border-radius: 10px;
+  background: #fff4f4;
+  color: #a33d3d;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.history-delete-btn:hover:not(:disabled) {
+  border-color: #b84949;
+  background: #b84949;
+  color: #fff;
+}
+
+.history-delete-btn:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
 .history-report-cell {
   min-width: 145px;
 }

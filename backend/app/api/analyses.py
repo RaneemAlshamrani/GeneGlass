@@ -34,7 +34,7 @@ from app.services.ab1_reader import read_ab1_file
 from app.services.ab1_reader import read_chromatogram
 from app.services.audit import AuditAction, add_audit_event
 from app.services.sequence_cleaner import clean_sequence
-from app.services.storage.ab1_storage import save_ab1_file
+from app.services.storage.ab1_storage import UPLOAD_ROOT, save_ab1_file
 from app.services.clinvar import CLINVAR_SOURCE, ClinVarClient, ClinVarServiceError
 from app.services.model_predictions import (
     get_or_record_current_prediction,
@@ -663,6 +663,83 @@ def get_analysis_details(
             else None
         ),
     }
+
+
+def _remove_owned_upload_files(paths: set[str], user_id: int) -> None:
+    """Remove only files inside the signed-in user's managed upload folder."""
+
+    owned_root = (UPLOAD_ROOT / f"user_{user_id}").resolve()
+    for raw_path in paths:
+        candidate = Path(raw_path).resolve()
+        if not candidate.is_relative_to(owned_root):
+            continue
+        try:
+            candidate.unlink(missing_ok=True)
+        except OSError:
+            # The database deletion is authoritative; an unavailable file can
+            # be cleaned by maintenance without restoring deleted health data.
+            continue
+    try:
+        owned_root.rmdir()
+    except OSError:
+        pass
+
+
+@analyses_router.delete("/{analysis_id}")
+def delete_analysis(
+    analysis_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_db)],
+) -> dict[str, int | str]:
+    """Delete one owned analysis and its managed AB1/report files."""
+
+    analysis = session.scalar(
+        select(Analysis).where(
+            Analysis.id == analysis_id,
+            Analysis.user_id == current_user.id,
+        )
+    )
+    if analysis is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analysis not found",
+        )
+
+    reports = session.scalars(
+        select(MolecularReport).where(
+            MolecularReport.analysis_id == analysis.id
+        )
+    ).all()
+    managed_paths = {
+        path
+        for path in [
+            analysis.stored_file_path,
+            *(report.normal_control_file_path for report in reports),
+        ]
+        if path
+    }
+    add_audit_event(
+        session,
+        actor_id=current_user.id,
+        analysis_id=analysis.id,
+        action=AuditAction.ANALYSIS_DELETED,
+        details={
+            "deleted_analysis_id": analysis.id,
+            "report_count": len(reports),
+        },
+    )
+    try:
+        session.delete(analysis)
+        session.commit()
+    except SQLAlchemyError as exc:
+        session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="The analysis could not be deleted",
+        ) from exc
+
+    _remove_owned_upload_files(managed_paths, current_user.id)
+    return {"id": analysis_id, "status": "deleted"}
 
 
 @analyses_router.get("/{analysis_id}/research-variants")
