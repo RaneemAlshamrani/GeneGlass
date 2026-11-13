@@ -856,9 +856,6 @@ body {
 .chromatogram-card h2 {font-size:20px;margin-bottom:12px;}
 .chromatogram-card canvas {display:block;width:100%;height:auto;border:1px solid #d9ebeb;border-radius:12px;}
 .chromatogram-detail {margin-top:12px;color:#587b81;font-size:13px;}
-#jak2ResultsPanel {position:relative;z-index:2;margin-top:22px;padding:24px;}
-#jak2ResultsPanel h3 {font-size:18px;margin-bottom:12px;}
-#jak2ResultsPanel p {color:#587b81;line-height:1.6;}
 
 /* AI result card below the chromatogram */
 .analysis-ai-result { position:relative; z-index:2; margin-top:20px; padding:24px; }
