@@ -61,15 +61,24 @@ def _wrapped_lines(text: str, max_chars: int) -> list[str]:
 
 def _draw_header(pdf: Canvas, title: str, page_number: int) -> None:
     if LOGO_PATH.is_file():
+        logo_y = PAGE_HEIGHT - 75
         pdf.drawImage(
             ImageReader(str(LOGO_PATH)),
             MARGIN,
-            PAGE_HEIGHT - 75,
+            logo_y,
             width=118,
             height=42,
             preserveAspectRatio=True,
             mask="auto",
         )
+        # The source logo has white brand lettering designed for a dark
+        # background. Replace only that small lettering area so the name
+        # remains legible on the report's white page.
+        pdf.setFillColor(colors.white)
+        pdf.rect(MARGIN + 22, logo_y, 76, 13, stroke=0, fill=1)
+        pdf.setFillColor(colors.HexColor("#0b5f67"))
+        pdf.setFont("Helvetica-Bold", 12)
+        pdf.drawCentredString(MARGIN + 60, logo_y + 2, "GeneGlass")
     pdf.setFillColor(colors.HexColor("#0b777b"))
     pdf.setFont("Helvetica-Bold", 22)
     pdf.drawRightString(PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 48, title)
