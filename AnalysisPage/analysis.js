@@ -22,6 +22,11 @@
   const normalControlState = document.getElementById("analysisNormalControlState");
   const existingReportActions = document.getElementById("existingReportActions");
   const downloadReportButton = document.getElementById("analysisDownloadReport");
+  const researchCard = document.getElementById("analysisResearchCard");
+  const researchButton = document.getElementById("analysisResearchLookup");
+  const researchStatus = document.getElementById("analysisResearchStatus");
+  const researchResults = document.getElementById("analysisResearchResults");
+  const researchBadge = document.getElementById("analysisResearchBadge");
 
   const apiBaseUrl = window.GeneGlassConfig?.apiBaseUrl;
   let activeAnalysisId = null;
@@ -65,6 +70,33 @@
     if (decision === "negative") return "Negative";
     if (decision === "needs_more_data") return "More data requested";
     return "Not reviewed";
+  }
+
+  function findNearbyMotif(sequence, targetBase, motif = "ACAT") {
+    if (!sequence) return null;
+    const normalized = sequence.toUpperCase();
+    const anchor = Number.isInteger(targetBase) ? targetBase - 1 : Math.floor(normalized.length / 2);
+    const from = Number.isInteger(targetBase) ? Math.max(0, anchor - 18) : 0;
+    const to = Number.isInteger(targetBase) ? Math.min(normalized.length, anchor + 22) : normalized.length;
+    let best = null;
+    let index = normalized.indexOf(motif, from);
+    while (index !== -1 && index < to) {
+      const distance = Math.abs(index - anchor);
+      if (!best || distance < best.distance) best = { start: index, distance };
+      index = normalized.indexOf(motif, index + 1);
+    }
+    return best ? { startBase: best.start + 1, endBase: best.start + motif.length } : null;
+  }
+
+  function chromatogramOptions(trace, targetBase, readDirection = "Forward") {
+    return {
+      targetBase: Number.isInteger(targetBase) && targetBase > 0 ? targetBase : undefined,
+      initialBaseCount: 9,
+      initialSequence: "ACAT",
+      highlightRange: findNearbyMotif(trace.sequence, targetBase, "ACAT"),
+      readDirection,
+      compact: true,
+    };
   }
 
   function populateReviewTemplates(decision) {
@@ -295,6 +327,111 @@
     section.insertAdjacentElement("afterend", panel);
   }
 
+  function appendResearchField(container, label, value) {
+    const row = document.createElement("div");
+    row.className = "analysis-research-field";
+    const name = document.createElement("span");
+    name.textContent = label;
+    const content = document.createElement("strong");
+    content.textContent = value || "N/A";
+    row.append(name, content);
+    container.appendChild(row);
+  }
+
+  function renderResearchResults(data, searched = false) {
+    researchResults.replaceChildren();
+    const candidates = (Array.isArray(data?.candidates) ? data.candidates : [])
+      .filter((candidate) => (candidate.external_annotations || []).some(
+        (item) => item.source === "NCBI ClinVar" && item.lookup_status === "matched"
+      ));
+    if (!candidates.length) {
+      researchBadge.textContent = searched ? "0 exact matches" : "Not searched";
+      researchBadge.dataset.state = searched ? "empty" : "idle";
+      if (searched) {
+        const empty = document.createElement("p");
+        empty.className = "analysis-research-empty";
+        empty.textContent = "No exact ClinVar matches were found. Unmatched candidates are not displayed as external results.";
+        researchResults.appendChild(empty);
+      }
+      return;
+    }
+
+    for (const candidate of candidates) {
+      const card = document.createElement("article");
+      card.className = "analysis-research-variant";
+      const title = document.createElement("h3");
+      title.textContent = candidate.hgvs;
+      card.appendChild(title);
+      appendResearchField(card, "AB1 base", String(candidate.ab1_base_number));
+      appendResearchField(card, "Read direction", candidate.direction);
+      appendResearchField(card, "Raw AB1 change", candidate.raw_ab1_change);
+      appendResearchField(card, "Reference change", candidate.reference_oriented_change);
+      appendResearchField(card, "Phred", candidate.phred_quality == null ? "N/A" : `Q${candidate.phred_quality}`);
+      const clinvar = (candidate.external_annotations || []).find(
+        (item) => item.source === "NCBI ClinVar" && item.lookup_status === "matched"
+      );
+      appendResearchField(card, "ClinVar accession", clinvar?.accession_version || clinvar?.accession);
+      appendResearchField(
+        card,
+        "Published classifications",
+        (clinvar?.classifications || []).map((item) => `${item.type}: ${item.description}`).join(" · ")
+      );
+      appendResearchField(card, "Associated conditions", (clinvar?.conditions || []).join("; "));
+      if (clinvar?.source_url) {
+        const link = document.createElement("a");
+        link.className = "analysis-research-link";
+        link.href = clinvar.source_url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Open matched ClinVar record";
+        card.appendChild(link);
+      }
+      researchResults.appendChild(card);
+    }
+    researchBadge.textContent = `${candidates.length} exact match${candidates.length === 1 ? "" : "es"}`;
+    researchBadge.dataset.state = "matched";
+  }
+
+  async function loadSavedResearchResults() {
+    if (!activeAnalysisId) return;
+    const response = await fetch(
+      `${apiBaseUrl}/analyses/${activeAnalysisId}/research-variants`,
+      { headers: authHeaders() },
+    );
+    if (!response.ok) return;
+    const data = await response.json();
+    const previouslySearched = Number(data.screened_candidate_count) > 0 || Number(data.candidate_count) > 0;
+    researchStatus.textContent = data.candidate_count > 0
+      ? `${data.candidate_count} saved exact ClinVar match${data.candidate_count === 1 ? "" : "es"}. Research use only.`
+      : previouslySearched
+        ? "No exact ClinVar matches are saved for this analysis."
+        : "No ClinVar search has been requested.";
+    renderResearchResults(data, previouslySearched);
+  }
+
+  async function refreshResearchResults() {
+    if (!activeAnalysisId || !authHeaders()) return;
+    researchButton.disabled = true;
+    researchButton.textContent = "Searching…";
+    researchStatus.textContent = "Checking eligible JAK2 HGVS candidates in ClinVar…";
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/analyses/${activeAnalysisId}/research-variants/refresh`,
+        { method: "POST", headers: authHeaders() },
+      );
+      const data = await responseJson(response, "ClinVar search failed.");
+      researchStatus.textContent = data.candidate_count > 0
+        ? `${data.candidate_count} exact ClinVar match${data.candidate_count === 1 ? "" : "es"} found. Research use only.`
+        : "No exact ClinVar matches were found. Unmatched candidates are not displayed.";
+      renderResearchResults(data, true);
+    } catch (error) {
+      researchStatus.textContent = error.message;
+    } finally {
+      researchButton.disabled = false;
+      researchButton.textContent = "Search ClinVar";
+    }
+  }
+
   async function loadAnalysis(analysisId, uploadResult = null) {
     const headers = authHeaders();
     if (!headers || !apiBaseUrl) throw new Error("Please sign in again; API configuration is unavailable.");
@@ -307,16 +444,18 @@
     activeTrace = await responseJson(traceResponse, "Chromatogram could not be loaded.");
     section.hidden = false;
     uploadCard.hidden = true;
-    window.GeneGlassChromatogram.render(activeTrace);
+    window.GeneGlassChromatogram.render(activeTrace, chromatogramOptions(activeTrace));
 
     try {
       const targetResponse = await fetch(`${apiBaseUrl}/analyses/${activeAnalysisId}/jak2-target`, { headers });
       const targetData = await responseJson(targetResponse, "Target analysis unavailable.");
       showTarget(targetData);
       const targetBase = Number(targetData.result?.ab1_base_number);
-      if (Number.isInteger(targetBase) && targetBase > 0) {
-        window.GeneGlassChromatogram.render(activeTrace, { targetBase });
-      }
+      const readDirection = targetData.result?.direction || "Forward";
+      window.GeneGlassChromatogram.render(
+        activeTrace,
+        chromatogramOptions(activeTrace, targetBase, readDirection),
+      );
     } catch (error) {
       const note = document.createElement("p");
       note.id = "jak2TargetError";
@@ -334,6 +473,8 @@
     } catch (error) {
       renderAiResult({ status: "Needs Review", reason: `AI result unavailable: ${error.message || "Unknown error"}` });
     }
+    researchCard.hidden = false;
+    await loadSavedResearchResults();
     await loadWorkflowState(activeAnalysisId);
   }
 
@@ -475,6 +616,7 @@
   reviewForm.addEventListener("submit", saveReview);
   reportForm.addEventListener("submit", createReport);
   downloadReportButton.addEventListener("click", downloadSavedReport);
+  researchButton.addEventListener("click", refreshResearchResults);
 
   async function resumeFromUrl() {
     const analysisId = Number(new URLSearchParams(window.location.search).get("id"));
