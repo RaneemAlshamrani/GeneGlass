@@ -100,7 +100,6 @@ def test_report_is_finalized_versioned_and_owner_scoped(
         "submitted_date": "2026-11-12",
         "clinical_history": "Research case",
         "specimen_type": "Peripheral Blood",
-        "final_decision": "positive",
         "interpretation": "Specialist-confirmed positive result.",
     }
 
@@ -117,6 +116,19 @@ def test_report_is_finalized_versioned_and_owner_scoped(
             owner_headers = {
                 "Authorization": f"Bearer {owner_login.json()['access_token']}"
             }
+            blocked = client.put(
+                f"/api/analyses/{analysis_id}/report",
+                headers=owner_headers,
+                data=form,
+            )
+            positive_review = client.post(
+                f"/api/analyses/{analysis_id}/reviews",
+                headers=owner_headers,
+                json={
+                    "decision": "positive",
+                    "comment": "Specialist confirms a Positive JAK2 V617F decision.",
+                },
+            )
             saved = client.put(
                 f"/api/analyses/{analysis_id}/report",
                 headers=owner_headers,
@@ -138,7 +150,18 @@ def test_report_is_finalized_versioned_and_owner_scoped(
                 headers=owner_headers,
             )
 
-            second_form = {**form, "final_decision": "negative"}
+            negative_review = client.post(
+                f"/api/analyses/{analysis_id}/reviews",
+                headers=owner_headers,
+                json={
+                    "decision": "negative",
+                    "comment": "Specialist confirms a Negative JAK2 V617F decision.",
+                },
+            )
+            second_form = {
+                **form,
+                "interpretation": "Specialist-confirmed negative result.",
+            }
             revised = client.put(
                 f"/api/analyses/{analysis_id}/report",
                 headers=owner_headers,
@@ -161,6 +184,8 @@ def test_report_is_finalized_versioned_and_owner_scoped(
                 },
             )
 
+        assert blocked.status_code == 409
+        assert positive_review.status_code == 201
         assert saved.status_code == 200
         assert saved.json()["report"]["normal_control_uploaded"] is True
         assert finalized.status_code == 200
@@ -169,6 +194,7 @@ def test_report_is_finalized_versioned_and_owner_scoped(
         assert pdf.headers["content-type"] == "application/pdf"
         assert pdf.content.startswith(b"%PDF-1.4")
         assert b"decision=positive" in pdf.content
+        assert negative_review.status_code == 201
         assert revised.status_code == 200
         assert revised.json()["report"]["version"] == 2
         assert revised.json()["report"]["status"] == "draft"

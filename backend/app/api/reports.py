@@ -6,7 +6,7 @@ from datetime import UTC, date, datetime
 from io import BytesIO
 from pathlib import Path
 import re
-from typing import Annotated, Literal
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
@@ -17,6 +17,7 @@ from app.api.dependencies import get_current_user
 from app.db.session import get_db
 from app.models.analysis import Analysis
 from app.models.molecular_report import MolecularReport
+from app.models.review import Review, ReviewDecision
 from app.models.user import User
 from app.services.ab1_reader import read_chromatogram
 from app.services.audit import AuditAction, add_audit_event
@@ -46,6 +47,24 @@ def _latest_report(session: Session, analysis_id: int) -> MolecularReport | None
         .order_by(MolecularReport.version.desc())
         .limit(1)
     )
+
+
+def _latest_report_decision(session: Session, analysis_id: int) -> ReviewDecision:
+    decision = session.scalar(
+        select(Review.decision)
+        .where(Review.analysis_id == analysis_id)
+        .order_by(Review.created_at.desc(), Review.id.desc())
+        .limit(1)
+    )
+    if decision not in {ReviewDecision.POSITIVE, ReviewDecision.NEGATIVE}:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Record a Positive or Negative Specialist Review before "
+                "creating the molecular report."
+            ),
+        )
+    return decision
 
 
 def _serialize(report: MolecularReport) -> dict:
@@ -125,11 +144,11 @@ async def save_report_draft(
     submitted_date: Annotated[date, Form()],
     clinical_history: Annotated[str, Form()] = "",
     specimen_type: Annotated[str, Form()] = "Peripheral Blood",
-    final_decision: Annotated[Literal["positive", "negative"], Form()] = "negative",
     interpretation: Annotated[str, Form()] = "",
     normal_control: Annotated[UploadFile | None, File()] = None,
 ) -> dict:
     analysis = _analysis_for_owner(session, analysis_id, current_user.id)
+    review_decision = _latest_report_decision(session, analysis_id)
     latest = _latest_report(session, analysis_id)
     if latest is None:
         report = MolecularReport(
@@ -175,7 +194,7 @@ async def save_report_draft(
     report.submitted_date = submitted_date
     report.clinical_history = clinical_history.strip()
     report.specimen_type = specimen_type.strip() or "Peripheral Blood"
-    report.final_decision = final_decision
+    report.final_decision = review_decision.value
     report.interpretation = interpretation.strip()
     report.author_id = current_user.id
     session.flush()
@@ -209,6 +228,15 @@ def finalize_report(
     report = _latest_report(session, analysis_id)
     if report is None or report.status != "draft":
         raise HTTPException(status_code=409, detail="No report draft is available")
+    review_decision = _latest_report_decision(session, analysis_id)
+    if report.final_decision != review_decision.value:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "The Specialist Review decision changed. Save the report draft "
+                "again before finalizing it."
+            ),
+        )
     required = {
         "patient name": report.patient_name,
         "medical record number": report.medical_record_number,

@@ -9,7 +9,7 @@
 
   <link rel="stylesheet" href="../DashboardPage/dashboard.css">
 <link rel="stylesheet" href="../AnalysisPage/analysis.css?v=20261108-7">
-<link rel="stylesheet" href="details.css?v=20261112-3">
+<link rel="stylesheet" href="details.css?v=20261113-4">
 
   <link rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -18,7 +18,7 @@
 <script src="../assets/config.js" defer></script>
 <script src="../assets/auth.js" defer></script>
 <script src="../assets/chromatogram-viewer.js?v=20261108-5" defer></script>
-<script src="details.js?v=20261112-3" defer></script>
+<script src="details.js?v=20261113-4" defer></script>
 
 </head>
 
@@ -150,7 +150,7 @@
           <div>
             <span class="section-kicker">Human validation</span>
             <h2>Specialist Review</h2>
-            <p>Record a review decision for the available technical evidence.</p>
+            <p>Record the specialist's final JAK2 decision from the available evidence.</p>
           </div>
           <span id="latestReviewBadge" class="review-badge">Not reviewed</span>
         </div>
@@ -159,20 +159,20 @@
           <fieldset class="review-decisions">
             <legend>Choose a decision</legend>
             <div class="review-choice-grid">
-              <label class="review-choice review-choice-approve">
-                <input type="radio" name="reviewDecision" value="approved" required>
-                <span class="review-choice-icon"><i class="fa-solid fa-check"></i></span>
-                <span><strong>Accept evidence</strong><small>Evidence is clear and sufficient for review.</small></span>
+              <label class="review-choice review-choice-positive">
+                <input type="radio" name="reviewDecision" value="positive" required>
+                <span class="review-choice-icon"><i class="fa-solid fa-plus"></i></span>
+                <span><strong>Positive</strong><small>The specialist confirms JAK2 V617F as positive.</small></span>
+              </label>
+              <label class="review-choice review-choice-negative">
+                <input type="radio" name="reviewDecision" value="negative" required>
+                <span class="review-choice-icon"><i class="fa-solid fa-minus"></i></span>
+                <span><strong>Negative</strong><small>The specialist confirms JAK2 V617F as negative.</small></span>
               </label>
               <label class="review-choice review-choice-more">
                 <input type="radio" name="reviewDecision" value="needs_more_data" required>
                 <span class="review-choice-icon"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
                 <span><strong>Request more data</strong><small>Evidence is incomplete or needs confirmation.</small></span>
-              </label>
-              <label class="review-choice review-choice-reject">
-                <input type="radio" name="reviewDecision" value="rejected" required>
-                <span class="review-choice-icon"><i class="fa-solid fa-xmark"></i></span>
-                <span><strong>Reject evidence</strong><small>Evidence is unreliable or unsuitable for use.</small></span>
               </label>
             </div>
           </fieldset>
@@ -211,11 +211,16 @@
       <section class="dashboard-card details-card report-card">
         <div class="report-heading">
           <div>
-            <span class="section-kicker">Final specialist decision</span>
+            <span class="section-kicker">Report preparation</span>
             <h2>Molecular Report</h2>
-            <p>Enter patient details, attach this case's normal control, and generate the final PDF.</p>
+            <p>Available after a Positive or Negative Specialist Review is saved.</p>
           </div>
           <span id="reportBadge" class="review-badge">Not created</span>
+        </div>
+
+        <div id="reportDecisionSummary" class="report-review-decision locked">
+          <i class="fa-solid fa-lock"></i>
+          <span>Save a Positive or Negative decision in Specialist Review first.</span>
         </div>
 
         <form id="reportForm" class="report-form">
@@ -244,17 +249,9 @@
             <span id="normalControlState">Upload the control used for this case.</span>
           </div>
 
-          <fieldset class="report-decision-fieldset">
-            <legend>Doctor's final decision</legend>
-            <div class="report-decision-options">
-              <label class="report-decision positive"><input type="radio" name="final_decision" value="positive" required><span><i class="fa-solid fa-plus"></i> Positive</span></label>
-              <label class="report-decision negative"><input type="radio" name="final_decision" value="negative" required><span><i class="fa-solid fa-minus"></i> Negative</span></label>
-            </div>
-          </fieldset>
-
           <label class="report-wide-field">
             <span>Interpretation <small>Editable</small></span>
-            <textarea id="reportInterpretation" name="interpretation" rows="3" required placeholder="Choose Positive or Negative to insert a ready note."></textarea>
+            <textarea id="reportInterpretation" name="interpretation" rows="3" required placeholder="A ready note appears after the Specialist Review decision is saved."></textarea>
           </label>
 
           <div class="report-actions">

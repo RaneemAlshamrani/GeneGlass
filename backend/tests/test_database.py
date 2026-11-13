@@ -52,7 +52,7 @@ def test_database_schema_and_foreign_keys(tmp_path: Path) -> None:
     with test_engine.connect() as connection:
         assert connection.execute(text("PRAGMA foreign_keys")).scalar_one() == 1
         assert MigrationContext.configure(connection).get_current_revision() == (
-            "20261112_0006"
+            "20261113_0007"
         )
 
     command.check(build_alembic_config(test_engine))
@@ -78,7 +78,7 @@ def test_existing_current_schema_is_stamped_without_data_loss(
         assert user.full_name == "Legacy User"
     with test_engine.connect() as connection:
         assert MigrationContext.configure(connection).get_current_revision() == (
-            "20261112_0006"
+            "20261113_0007"
         )
 
     test_engine.dispose()

@@ -370,32 +370,23 @@
 
 .control-upload-row > span { padding-bottom: 10px; color: #61777c; font-size: 12px; }
 
-.report-decision-fieldset {
-  margin: 16px 0 0;
-  padding: 0;
-  border: 0;
-}
-
-.report-decision-fieldset legend { margin-bottom: 9px; color: #315a60; font-size: 12px; font-weight: 800; }
-.report-decision-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.report-decision { cursor: pointer; }
-.report-decision input { position: absolute; opacity: 0; pointer-events: none; }
-.report-decision span {
+.report-review-decision {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 13px;
-  border: 1px solid #cfe2e3;
-  border-radius: 11px;
-  background: #fff;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid #d5e6e7;
+  border-radius: 12px;
+  background: #f4f9f9;
   color: #315a60;
-  font-size: 14px;
-  font-weight: 800;
+  font-size: 13px;
 }
-.report-decision input:checked + span { border-color: #008f96; box-shadow: 0 0 0 2px rgba(0,143,150,.12); }
-.report-decision.positive input:checked + span { background: #fff1f0; color: #a33d3d; }
-.report-decision.negative input:checked + span { background: #eaf8f5; color: #087d72; }
+
+.report-review-decision.positive { border-color: #f0caca; background: #fff3f2; color: #9d3737; }
+.report-review-decision.negative { border-color: #bfe2d9; background: #edf9f6; color: #087569; }
+.report-review-decision.locked { color: #647b80; }
+.report-form.is-locked { opacity: .64; }
 
 .report-actions {
   display: flex;
@@ -416,10 +407,12 @@
   font-weight: 800;
   cursor: pointer;
 }
-#generateReportButton:disabled { opacity: .6; cursor: wait; }
+#generateReportButton:disabled { opacity: .55; cursor: not-allowed; }
 
-#reportBadge[data-decision="positive"] { background: #fff1f0; color: #a33d3d; }
-#reportBadge[data-decision="negative"] { background: #eaf8f5; color: #087d72; }
+#reportBadge[data-decision="positive"],
+.review-badge[data-decision="positive"] { background: #fff1f0; color: #a33d3d; }
+#reportBadge[data-decision="negative"],
+.review-badge[data-decision="negative"] { background: #eaf8f5; color: #087d72; }
 
 .details-grid {
   display: grid;
@@ -592,9 +585,9 @@
   box-shadow: 0 0 0 2px rgba(0, 143, 150, .10);
 }
 
-.review-choice-approve:has(input:checked) {
-  border-color: #49a77d;
-  background: #f1faf6;
+.review-choice-positive:has(input:checked) {
+  border-color: #cf6d6d;
+  background: #fff6f6;
 }
 
 .review-choice-more:has(input:checked) {
@@ -602,9 +595,9 @@
   background: #fff9ec;
 }
 
-.review-choice-reject:has(input:checked) {
-  border-color: #cf6d6d;
-  background: #fff6f6;
+.review-choice-negative:has(input:checked) {
+  border-color: #49a77d;
+  background: #f1faf6;
 }
 
 .review-choice-icon {
@@ -617,9 +610,9 @@
   color: #008f96;
 }
 
-.review-choice-approve .review-choice-icon {
-  background: #e8f7ef;
-  color: #20815a;
+.review-choice-positive .review-choice-icon {
+  background: #fdecec;
+  color: #ae4747;
 }
 
 .review-choice-more .review-choice-icon {
@@ -627,9 +620,9 @@
   color: #9a6b08;
 }
 
-.review-choice-reject .review-choice-icon {
-  background: #fdecec;
-  color: #ae4747;
+.review-choice-negative .review-choice-icon {
+  background: #e8f7ef;
+  color: #20815a;
 }
 
 .review-choice > span:last-child {
@@ -1327,8 +1320,7 @@
   }
 
   .report-fields-grid,
-  .control-upload-row,
-  .report-decision-options {
+  .control-upload-row {
     grid-template-columns: 1fr;
   }
 

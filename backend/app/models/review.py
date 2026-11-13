@@ -18,6 +18,8 @@ class ReviewDecision(str, Enum):
     APPROVED = "approved"
     REJECTED = "rejected"
     NEEDS_MORE_DATA = "needs_more_data"
+    POSITIVE = "positive"
+    NEGATIVE = "negative"
 
 
 class Review(TimestampMixin, Base):

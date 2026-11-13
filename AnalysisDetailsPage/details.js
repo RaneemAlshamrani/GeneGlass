@@ -30,6 +30,9 @@
   const normalControlFile = document.getElementById("normalControlFile");
   const normalControlState = document.getElementById("normalControlState");
   const reportInterpretation = document.getElementById("reportInterpretation");
+  const reportDecisionSummary = document.getElementById("reportDecisionSummary");
+
+  let latestReviewDecision = null;
 
   const apiBaseUrl = window.GeneGlassConfig.apiBaseUrl;
 
@@ -303,11 +306,36 @@
     if (field && value != null) field.value = value;
   }
 
+  function syncReportAvailability() {
+    const available = ["positive", "negative"].includes(latestReviewDecision);
+    reportForm.querySelectorAll("input, select, textarea, button").forEach((control) => {
+      control.disabled = !available;
+    });
+    reportForm.classList.toggle("is-locked", !available);
+    reportDecisionSummary.className = `report-review-decision ${available ? latestReviewDecision : "locked"}`;
+
+    if (!available) {
+      reportDecisionSummary.innerHTML = '<i class="fa-solid fa-lock"></i><span>Save a Positive or Negative decision in Specialist Review first.</span>';
+      reportStatus.textContent = "The report is locked until the specialist records a final decision.";
+      return;
+    }
+
+    const label = latestReviewDecision === "positive" ? "Positive" : "Negative";
+    const icon = latestReviewDecision === "positive" ? "fa-plus" : "fa-minus";
+    reportDecisionSummary.innerHTML = `<i class="fa-solid ${icon}"></i><span>Specialist Review decision: <strong>${label}</strong></span>`;
+    const currentInterpretation = reportInterpretation.value.trim();
+    if (!currentInterpretation || Object.values(reportInterpretationTemplates).includes(currentInterpretation)) {
+      reportInterpretation.value = reportInterpretationTemplates[latestReviewDecision];
+    }
+    if (reportStatus.textContent.includes("locked")) reportStatus.textContent = "";
+  }
+
   function renderSavedReport(report) {
     if (!report) {
       reportBadge.textContent = "Not created";
       reportBadge.dataset.decision = "pending";
       normalControlState.textContent = "Upload the control used for this case.";
+      syncReportAvailability();
       return;
     }
     [
@@ -323,10 +351,6 @@
       "specimen_type",
       "interpretation",
     ].forEach((name) => setReportFormValue(name, report[name]));
-    const decision = reportForm.querySelector(
-      `input[name="final_decision"][value="${report.final_decision || ""}"]`
-    );
-    if (decision) decision.checked = true;
     normalControlState.textContent = report.normal_control_uploaded
       ? "Normal control attached. Choose a new file only to replace it."
       : "Upload the control used for this case.";
@@ -337,6 +361,7 @@
     generateReportButton.innerHTML = report.status === "finalized"
       ? '<i class="fa-solid fa-file-pen"></i> Generate updated PDF'
       : '<i class="fa-solid fa-file-pdf"></i> Generate PDF';
+    syncReportAvailability();
   }
 
   async function loadMolecularReport(token) {
@@ -356,6 +381,10 @@
     event.preventDefault();
     const token = window.GeneGlassAuth?.token;
     if (!token) return;
+    if (!["positive", "negative"].includes(latestReviewDecision)) {
+      reportStatus.textContent = "Save a Positive or Negative Specialist Review before generating the report.";
+      return;
+    }
     if (!reportForm.reportValidity()) return;
     const previewWindow = window.open("", "_blank");
     generateReportButton.disabled = true;
@@ -409,10 +438,10 @@
       }
       reportStatus.textContent = error.message;
     } finally {
-      generateReportButton.disabled = false;
       if (!generateReportButton.querySelector("i")) {
         generateReportButton.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Generate PDF';
       }
+      syncReportAvailability();
     }
   }
 
@@ -428,12 +457,22 @@
   }
 
   const reviewLabels = {
+    positive: "Positive",
+    negative: "Negative",
     approved: "Evidence accepted",
     rejected: "Evidence rejected",
     needs_more_data: "More data requested",
   };
 
   const reviewNoteTemplates = {
+    positive: [
+      "The chromatogram and supporting technical evidence are consistent with a Positive JAK2 V617F decision.",
+      "The target-region signal supports a Positive JAK2 V617F decision after specialist review.",
+    ],
+    negative: [
+      "The chromatogram and supporting technical evidence are consistent with a Negative JAK2 V617F decision.",
+      "No supporting target-region signal was identified for JAK2 V617F after specialist review.",
+    ],
     approved: [
       "Chromatogram peaks are clear and the available QC metrics are acceptable for technical review.",
       "Target-region coverage and signal quality are sufficient for technical review.",
@@ -555,10 +594,12 @@
     const reviews = Array.isArray(data.reviews) ? data.reviews : [];
     reviewHistory.replaceChildren();
     reviewHistoryCount.textContent = String(reviews.length);
+    latestReviewDecision = data.latest_decision || null;
     latestReviewBadge.textContent = data.latest_decision
       ? reviewLabels[data.latest_decision] || data.latest_decision
       : "Not reviewed";
     latestReviewBadge.dataset.decision = data.latest_decision || "none";
+    syncReportAvailability();
 
     if (!reviews.length) {
       const empty = document.createElement("p");
@@ -913,18 +954,10 @@ try {
   });
   reviewComment.addEventListener("input", syncQuickNoteSelection);
   reportForm.addEventListener("submit", submitMolecularReport);
-  reportForm.addEventListener("change", (event) => {
-    if (event.target.matches('input[name="final_decision"]')) {
-      const template = reportInterpretationTemplates[event.target.value];
-      if (!reportInterpretation.value.trim() || Object.values(reportInterpretationTemplates).includes(reportInterpretation.value.trim())) {
-        reportInterpretation.value = template;
-      }
-      reportBadge.dataset.decision = event.target.value;
-    }
-  });
   renderQuickNotes(
     reviewForm.querySelector('input[name="reviewDecision"]:checked')?.value || ""
   );
+  syncReportAvailability();
 
   if (window.GeneGlassAuth?.token) {
     loadDetails();

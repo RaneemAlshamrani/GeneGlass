@@ -85,8 +85,8 @@ def test_specialist_review_history_is_append_only_and_owner_scoped(
                 f"/api/analyses/{analysis_id}/reviews",
                 headers=owner_headers,
                 json={
-                    "decision": "approved",
-                    "comment": "The repeated trace supports the available evidence.",
+                    "decision": "positive",
+                    "comment": "The repeated trace supports a Positive JAK2 V617F decision.",
                 },
             )
             history = client.get(
@@ -124,9 +124,9 @@ def test_specialist_review_history_is_append_only_and_owner_scoped(
         payload = history.json()
         assert history.status_code == 200
         assert payload["review_count"] == 2
-        assert payload["latest_decision"] == "approved"
+        assert payload["latest_decision"] == "positive"
         assert [item["decision"] for item in payload["reviews"]] == [
-            "approved",
+            "positive",
             "needs_more_data",
         ]
         assert payload["reviews"][0]["reviewer_name"] == "Review Specialist"

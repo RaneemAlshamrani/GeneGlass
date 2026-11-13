@@ -284,7 +284,7 @@ def build_molecular_report_pdf(
     pdf.roundRect(MARGIN, y - 54, PAGE_WIDTH - (2 * MARGIN), 54, 8, stroke=0, fill=1)
     pdf.setFillColor(colors.HexColor("#17393e"))
     pdf.setFont("Helvetica-Bold", 9)
-    pdf.drawString(MARGIN + 14, y - 18, "FINAL SPECIALIST DECISION")
+    pdf.drawString(MARGIN + 14, y - 18, "SPECIALIST REVIEW DECISION")
     pdf.setFont("Helvetica-Bold", 17)
     decision = _clean(report.final_decision).upper()
     pdf.setFillColor(
