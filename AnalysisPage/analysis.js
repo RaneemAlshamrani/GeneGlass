@@ -243,6 +243,10 @@
       }
       panel.append(metrics);
     }
+    const explanation = window.GeneGlassShapExplanation?.create(
+      data?.explanation
+    );
+    if (explanation) panel.append(explanation);
     const meta = document.createElement("p");
     meta.className = "analysis-ai-metadata";
     meta.textContent = `Model: ${data?.model_name || "GeneGlass"} · Version: ${data?.model_version || "Unavailable"} · Orientation: ${data?.orientation || "Unavailable"}`;

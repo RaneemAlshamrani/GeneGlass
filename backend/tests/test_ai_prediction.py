@@ -76,6 +76,21 @@ def test_ai_prediction_returns_owner_scoped_research_result(
             "model_artifact_sha256": "a" * 64,
             "research_use_only": True,
             "features": {"alignment_score": 0.99},
+            "explanation": {
+                "available": True,
+                "method": "Tree SHAP",
+                "target_class": "hetero",
+                "base_value": 0.4,
+                "output_value": 0.88,
+                "contributions": [
+                    {
+                        "feature": "alignment_score",
+                        "value": 0.99,
+                        "impact": 0.48,
+                        "direction": "toward_hetero",
+                    }
+                ],
+            },
             "limitations": "Research use only",
         }
 
@@ -145,6 +160,8 @@ def test_ai_prediction_returns_owner_scoped_research_result(
         assert payload["probabilities"] == {"negative": 0.12, "hetero": 0.88}
         assert payload["research_use_only"] is True
         assert payload["model_version"] == "abc123def456"
+        assert payload["explanation"]["method"] == "Tree SHAP"
+        assert payload["explanation"]["output_value"] == 0.88
         assert repeated_response.json()["prediction_id"] == payload["prediction_id"]
         list_prediction = list_response.json()["items"][0]["ai_prediction"]
         assert list_prediction["prediction"] == "hetero"

@@ -255,6 +255,11 @@
       body.appendChild(metrics);
     }
 
+    const explanation = window.GeneGlassShapExplanation?.create(
+      data.explanation
+    );
+    if (explanation) body.appendChild(explanation);
+
     const notice = document.createElement("div");
     notice.className = "ai-research-notice";
     notice.innerHTML = '<i class="fa-solid fa-flask" aria-hidden="true"></i><span><strong>Research use only</strong><small>This model output supports specialist review and is not a clinical diagnosis.</small></span>';

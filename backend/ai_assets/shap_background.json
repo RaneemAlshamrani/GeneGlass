@@ -1,0 +1,936 @@
+{
+  "schema_version": 1,
+  "feature_names": [
+    "alignment_score",
+    "reference_peak",
+    "alternative_peak",
+    "alternative_ratio",
+    "phred_quality",
+    "peak_overlap_score",
+    "local_noise_ratio"
+  ],
+  "background_rows": [
+    {
+      "alignment_score": 803.0,
+      "reference_peak": 846.0,
+      "alternative_peak": 31.0,
+      "alternative_ratio": 0.03534777651083238,
+      "phred_quality": 58.0,
+      "peak_overlap_score": 0.03664302600472813,
+      "local_noise_ratio": 0.00928740290442418
+    },
+    {
+      "alignment_score": 851.0,
+      "reference_peak": 872.0,
+      "alternative_peak": 33.0,
+      "alternative_ratio": 0.036464088397790057,
+      "phred_quality": 55.0,
+      "peak_overlap_score": 0.03784403669724771,
+      "local_noise_ratio": 0.007617955439056357
+    },
+    {
+      "alignment_score": 896.0,
+      "reference_peak": 733.0,
+      "alternative_peak": 34.0,
+      "alternative_ratio": 0.04432855280312908,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.04638472032742155,
+      "local_noise_ratio": 0.012180861430520367
+    },
+    {
+      "alignment_score": 888.0,
+      "reference_peak": 687.0,
+      "alternative_peak": 175.0,
+      "alternative_ratio": 0.20301624129930396,
+      "phred_quality": 46.0,
+      "peak_overlap_score": 0.2547307132459971,
+      "local_noise_ratio": 0.015075899355375339
+    },
+    {
+      "alignment_score": 891.0,
+      "reference_peak": 842.0,
+      "alternative_peak": 31.0,
+      "alternative_ratio": 0.035509736540664374,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.03681710213776722,
+      "local_noise_ratio": 0.015524261961316593
+    },
+    {
+      "alignment_score": 550.0,
+      "reference_peak": 204.0,
+      "alternative_peak": 27.0,
+      "alternative_ratio": 0.11688311688311688,
+      "phred_quality": 19.0,
+      "peak_overlap_score": 0.1323529411764706,
+      "local_noise_ratio": 0.07457983193277311
+    },
+    {
+      "alignment_score": 470.0,
+      "reference_peak": 665.0,
+      "alternative_peak": 161.0,
+      "alternative_ratio": 0.19491525423728814,
+      "phred_quality": 34.0,
+      "peak_overlap_score": 0.24210526315789474,
+      "local_noise_ratio": 0.023952738990332973
+    },
+    {
+      "alignment_score": 473.0,
+      "reference_peak": 618.0,
+      "alternative_peak": 148.0,
+      "alternative_ratio": 0.19321148825065274,
+      "phred_quality": 36.0,
+      "peak_overlap_score": 0.23948220064724918,
+      "local_noise_ratio": 0.011095700416088766
+    },
+    {
+      "alignment_score": 479.0,
+      "reference_peak": 645.0,
+      "alternative_peak": 224.0,
+      "alternative_ratio": 0.25776754890678943,
+      "phred_quality": 34.0,
+      "peak_overlap_score": 0.34728682170542635,
+      "local_noise_ratio": 0.011295681063122924
+    },
+    {
+      "alignment_score": 463.0,
+      "reference_peak": 207.0,
+      "alternative_peak": 606.0,
+      "alternative_ratio": 0.7453874538745388,
+      "phred_quality": 32.0,
+      "peak_overlap_score": 0.3415841584158416,
+      "local_noise_ratio": 0.0231023102310231
+    },
+    {
+      "alignment_score": 477.0,
+      "reference_peak": 635.0,
+      "alternative_peak": 253.0,
+      "alternative_ratio": 0.2849099099099099,
+      "phred_quality": 23.0,
+      "peak_overlap_score": 0.3984251968503937,
+      "local_noise_ratio": 0.02778402699662542
+    },
+    {
+      "alignment_score": 472.0,
+      "reference_peak": 707.0,
+      "alternative_peak": 196.0,
+      "alternative_ratio": 0.21705426356589147,
+      "phred_quality": 28.0,
+      "peak_overlap_score": 0.27722772277227725,
+      "local_noise_ratio": 0.018387553041018388
+    },
+    {
+      "alignment_score": 538.0,
+      "reference_peak": 852.0,
+      "alternative_peak": 190.0,
+      "alternative_ratio": 0.18234165067178504,
+      "phred_quality": 32.0,
+      "peak_overlap_score": 0.22300469483568075,
+      "local_noise_ratio": 0.07142857142857142
+    },
+    {
+      "alignment_score": 461.0,
+      "reference_peak": 477.0,
+      "alternative_peak": 313.0,
+      "alternative_ratio": 0.3962025316455696,
+      "phred_quality": 10.0,
+      "peak_overlap_score": 0.6561844863731656,
+      "local_noise_ratio": 0.04043126684636119
+    },
+    {
+      "alignment_score": 467.0,
+      "reference_peak": 22.0,
+      "alternative_peak": 88.0,
+      "alternative_ratio": 0.8,
+      "phred_quality": 48.0,
+      "peak_overlap_score": 0.25,
+      "local_noise_ratio": 0.05844155844155845
+    },
+    {
+      "alignment_score": 404.0,
+      "reference_peak": 159.0,
+      "alternative_peak": 165.0,
+      "alternative_ratio": 0.5092592592592593,
+      "phred_quality": 18.0,
+      "peak_overlap_score": 0.9636363636363636,
+      "local_noise_ratio": 0.08701298701298701
+    },
+    {
+      "alignment_score": 466.0,
+      "reference_peak": 544.0,
+      "alternative_peak": 376.0,
+      "alternative_ratio": 0.40869565217391307,
+      "phred_quality": 18.0,
+      "peak_overlap_score": 0.6911764705882353,
+      "local_noise_ratio": 0.011292016806722689
+    },
+    {
+      "alignment_score": 468.0,
+      "reference_peak": 441.0,
+      "alternative_peak": 363.0,
+      "alternative_ratio": 0.45149253731343286,
+      "phred_quality": 13.0,
+      "peak_overlap_score": 0.8231292517006803,
+      "local_noise_ratio": 0.013119533527696793
+    },
+    {
+      "alignment_score": 903.0,
+      "reference_peak": 683.0,
+      "alternative_peak": 201.0,
+      "alternative_ratio": 0.22737556561085973,
+      "phred_quality": 38.0,
+      "peak_overlap_score": 0.29428989751098095,
+      "local_noise_ratio": 0.017360384856724535
+    },
+    {
+      "alignment_score": 907.0,
+      "reference_peak": 422.0,
+      "alternative_peak": 429.0,
+      "alternative_ratio": 0.5041128084606346,
+      "phred_quality": 13.0,
+      "peak_overlap_score": 0.9836829836829837,
+      "local_noise_ratio": 0.02947052947052947
+    },
+    {
+      "alignment_score": 473.0,
+      "reference_peak": 708.0,
+      "alternative_peak": 134.0,
+      "alternative_ratio": 0.15914489311163896,
+      "phred_quality": 30.0,
+      "peak_overlap_score": 0.18926553672316385,
+      "local_noise_ratio": 0.01735270379338176
+    },
+    {
+      "alignment_score": 468.0,
+      "reference_peak": 904.0,
+      "alternative_peak": 21.0,
+      "alternative_ratio": 0.022702702702702703,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.023230088495575223,
+      "local_noise_ratio": 0.0064791403286978515
+    },
+    {
+      "alignment_score": 466.0,
+      "reference_peak": 859.0,
+      "alternative_peak": 24.0,
+      "alternative_ratio": 0.027180067950169876,
+      "phred_quality": 49.0,
+      "peak_overlap_score": 0.027939464493597205,
+      "local_noise_ratio": 0.027440545484782967
+    },
+    {
+      "alignment_score": 908.0,
+      "reference_peak": 798.0,
+      "alternative_peak": 32.0,
+      "alternative_ratio": 0.03855421686746988,
+      "phred_quality": 54.0,
+      "peak_overlap_score": 0.040100250626566414,
+      "local_noise_ratio": 0.029180093089867524
+    },
+    {
+      "alignment_score": 475.0,
+      "reference_peak": 821.0,
+      "alternative_peak": 14.0,
+      "alternative_ratio": 0.016766467065868262,
+      "phred_quality": 32.0,
+      "peak_overlap_score": 0.01705237515225335,
+      "local_noise_ratio": 0.07917174177831912
+    },
+    {
+      "alignment_score": 859.0,
+      "reference_peak": 791.0,
+      "alternative_peak": 37.0,
+      "alternative_ratio": 0.04468599033816425,
+      "phred_quality": 58.0,
+      "peak_overlap_score": 0.04677623261694058,
+      "local_noise_ratio": 0.019505147191620012
+    },
+    {
+      "alignment_score": 905.0,
+      "reference_peak": 897.0,
+      "alternative_peak": 35.0,
+      "alternative_ratio": 0.03755364806866953,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.03901895206243032,
+      "local_noise_ratio": 0.008600095556617296
+    },
+    {
+      "alignment_score": 445.0,
+      "reference_peak": 774.0,
+      "alternative_peak": 132.0,
+      "alternative_ratio": 0.1456953642384106,
+      "phred_quality": 46.0,
+      "peak_overlap_score": 0.17054263565891473,
+      "local_noise_ratio": 0.0369139904023625
+    },
+    {
+      "alignment_score": 464.0,
+      "reference_peak": 784.0,
+      "alternative_peak": 81.0,
+      "alternative_ratio": 0.09364161849710982,
+      "phred_quality": 59.0,
+      "peak_overlap_score": 0.10331632653061225,
+      "local_noise_ratio": 0.019497084548104955
+    },
+    {
+      "alignment_score": 472.0,
+      "reference_peak": 184.0,
+      "alternative_peak": 4.0,
+      "alternative_ratio": 0.02127659574468085,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.021739130434782608,
+      "local_noise_ratio": 0.009316770186335404
+    },
+    {
+      "alignment_score": 450.0,
+      "reference_peak": 820.0,
+      "alternative_peak": 109.0,
+      "alternative_ratio": 0.11733046286329386,
+      "phred_quality": 50.0,
+      "peak_overlap_score": 0.1329268292682927,
+      "local_noise_ratio": 0.01524390243902439
+    },
+    {
+      "alignment_score": 419.0,
+      "reference_peak": 849.0,
+      "alternative_peak": 41.0,
+      "alternative_ratio": 0.046067415730337076,
+      "phred_quality": 49.0,
+      "peak_overlap_score": 0.048292108362779744,
+      "local_noise_ratio": 0.01598519266363789
+    },
+    {
+      "alignment_score": 475.0,
+      "reference_peak": 573.0,
+      "alternative_peak": 15.0,
+      "alternative_ratio": 0.025510204081632654,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.02617801047120419,
+      "local_noise_ratio": 0.004986287708800798
+    },
+    {
+      "alignment_score": 470.0,
+      "reference_peak": 834.0,
+      "alternative_peak": 27.0,
+      "alternative_ratio": 0.0313588850174216,
+      "phred_quality": 33.0,
+      "peak_overlap_score": 0.03237410071942446,
+      "local_noise_ratio": 0.05258650222678999
+    },
+    {
+      "alignment_score": 472.0,
+      "reference_peak": 869.0,
+      "alternative_peak": 27.0,
+      "alternative_ratio": 0.030133928571428572,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.031070195627157654,
+      "local_noise_ratio": 0.006411310208778563
+    },
+    {
+      "alignment_score": 520.0,
+      "reference_peak": 772.0,
+      "alternative_peak": 26.0,
+      "alternative_ratio": 0.03258145363408521,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.03367875647668394,
+      "local_noise_ratio": 0.005736491487786825
+    },
+    {
+      "alignment_score": 476.0,
+      "reference_peak": 621.0,
+      "alternative_peak": 25.0,
+      "alternative_ratio": 0.03869969040247678,
+      "phred_quality": 54.0,
+      "peak_overlap_score": 0.040257648953301126,
+      "local_noise_ratio": 0.03979756153669197
+    },
+    {
+      "alignment_score": 529.0,
+      "reference_peak": 843.0,
+      "alternative_peak": 28.0,
+      "alternative_ratio": 0.03214695752009185,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.033214709371293,
+      "local_noise_ratio": 0.00864260294865277
+    },
+    {
+      "alignment_score": 477.0,
+      "reference_peak": 903.0,
+      "alternative_peak": 31.0,
+      "alternative_ratio": 0.033190578158458245,
+      "phred_quality": 59.0,
+      "peak_overlap_score": 0.03433001107419712,
+      "local_noise_ratio": 0.005220692928334125
+    },
+    {
+      "alignment_score": 475.0,
+      "reference_peak": 934.0,
+      "alternative_peak": 28.0,
+      "alternative_ratio": 0.029106029106029108,
+      "phred_quality": 46.0,
+      "peak_overlap_score": 0.029978586723768737,
+      "local_noise_ratio": 0.009788926277148976
+    },
+    {
+      "alignment_score": 339.0,
+      "reference_peak": 787.0,
+      "alternative_peak": 19.0,
+      "alternative_ratio": 0.02357320099255583,
+      "phred_quality": 44.0,
+      "peak_overlap_score": 0.0241423125794155,
+      "local_noise_ratio": 0.01325104374659648
+    },
+    {
+      "alignment_score": 521.0,
+      "reference_peak": 471.0,
+      "alternative_peak": 13.0,
+      "alternative_ratio": 0.026859504132231406,
+      "phred_quality": 56.0,
+      "peak_overlap_score": 0.027600849256900213,
+      "local_noise_ratio": 0.041401273885350316
+    },
+    {
+      "alignment_score": 534.0,
+      "reference_peak": 361.0,
+      "alternative_peak": 10.0,
+      "alternative_ratio": 0.026954177897574125,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.027700831024930747,
+      "local_noise_ratio": 0.004352987732489117
+    },
+    {
+      "alignment_score": 535.0,
+      "reference_peak": 256.0,
+      "alternative_peak": 3.0,
+      "alternative_ratio": 0.011583011583011582,
+      "phred_quality": 22.0,
+      "peak_overlap_score": 0.01171875,
+      "local_noise_ratio": 0.068359375
+    },
+    {
+      "alignment_score": 513.0,
+      "reference_peak": 727.0,
+      "alternative_peak": 15.0,
+      "alternative_ratio": 0.02021563342318059,
+      "phred_quality": 45.0,
+      "peak_overlap_score": 0.02063273727647868,
+      "local_noise_ratio": 0.08488897622322657
+    },
+    {
+      "alignment_score": 410.0,
+      "reference_peak": 919.0,
+      "alternative_peak": 42.0,
+      "alternative_ratio": 0.043704474505723206,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.04570184983677911,
+      "local_noise_ratio": 0.02176278563656148
+    },
+    {
+      "alignment_score": 408.0,
+      "reference_peak": 930.0,
+      "alternative_peak": 37.0,
+      "alternative_ratio": 0.038262668045501554,
+      "phred_quality": 54.0,
+      "peak_overlap_score": 0.03978494623655914,
+      "local_noise_ratio": 0.024961597542242704
+    },
+    {
+      "alignment_score": 904.0,
+      "reference_peak": 765.0,
+      "alternative_peak": 46.0,
+      "alternative_ratio": 0.05672009864364982,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.06013071895424837,
+      "local_noise_ratio": 0.022782446311858075
+    },
+    {
+      "alignment_score": 518.0,
+      "reference_peak": 824.0,
+      "alternative_peak": 37.0,
+      "alternative_ratio": 0.0429732868757259,
+      "phred_quality": 54.0,
+      "peak_overlap_score": 0.044902912621359224,
+      "local_noise_ratio": 0.023838418862690707
+    },
+    {
+      "alignment_score": 519.0,
+      "reference_peak": 895.0,
+      "alternative_peak": 34.0,
+      "alternative_ratio": 0.03659849300322928,
+      "phred_quality": 59.0,
+      "peak_overlap_score": 0.03798882681564246,
+      "local_noise_ratio": 0.053631284916201116
+    },
+    {
+      "alignment_score": 565.0,
+      "reference_peak": 245.0,
+      "alternative_peak": 3.0,
+      "alternative_ratio": 0.012096774193548387,
+      "phred_quality": 27.0,
+      "peak_overlap_score": 0.012244897959183673,
+      "local_noise_ratio": 0.08163265306122448
+    },
+    {
+      "alignment_score": 461.0,
+      "reference_peak": 783.0,
+      "alternative_peak": 21.0,
+      "alternative_ratio": 0.026119402985074626,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.02681992337164751,
+      "local_noise_ratio": 0.0120415982484948
+    },
+    {
+      "alignment_score": 465.0,
+      "reference_peak": 377.0,
+      "alternative_peak": 8.0,
+      "alternative_ratio": 0.02077922077922078,
+      "phred_quality": 34.0,
+      "peak_overlap_score": 0.021220159151193633,
+      "local_noise_ratio": 0.033724895793861315
+    },
+    {
+      "alignment_score": 529.0,
+      "reference_peak": 811.0,
+      "alternative_peak": 27.0,
+      "alternative_ratio": 0.032219570405727926,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.03329223181257707,
+      "local_noise_ratio": 0.012066232164875816
+    },
+    {
+      "alignment_score": 913.0,
+      "reference_peak": 849.0,
+      "alternative_peak": 35.0,
+      "alternative_ratio": 0.03959276018099547,
+      "phred_quality": 56.0,
+      "peak_overlap_score": 0.04122497055359246,
+      "local_noise_ratio": 0.04921756688541141
+    },
+    {
+      "alignment_score": 384.0,
+      "reference_peak": 1103.0,
+      "alternative_peak": 46.0,
+      "alternative_ratio": 0.04003481288076589,
+      "phred_quality": 54.0,
+      "peak_overlap_score": 0.04170444242973708,
+      "local_noise_ratio": 0.01683719725424168
+    },
+    {
+      "alignment_score": 512.0,
+      "reference_peak": 1074.0,
+      "alternative_peak": 40.0,
+      "alternative_ratio": 0.03590664272890485,
+      "phred_quality": 34.0,
+      "peak_overlap_score": 0.037243947858473,
+      "local_noise_ratio": 0.05566640063846768
+    },
+    {
+      "alignment_score": 363.0,
+      "reference_peak": 1045.0,
+      "alternative_peak": 43.0,
+      "alternative_ratio": 0.03952205882352941,
+      "phred_quality": 59.0,
+      "peak_overlap_score": 0.04114832535885168,
+      "local_noise_ratio": 0.01291866028708134
+    },
+    {
+      "alignment_score": 539.0,
+      "reference_peak": 777.0,
+      "alternative_peak": 25.0,
+      "alternative_ratio": 0.03117206982543641,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.032175032175032175,
+      "local_noise_ratio": 0.013237727523441808
+    },
+    {
+      "alignment_score": 450.0,
+      "reference_peak": 353.0,
+      "alternative_peak": 14.0,
+      "alternative_ratio": 0.03814713896457766,
+      "phred_quality": 31.0,
+      "peak_overlap_score": 0.039660056657223795,
+      "local_noise_ratio": 0.10056657223796034
+    },
+    {
+      "alignment_score": 913.0,
+      "reference_peak": 843.0,
+      "alternative_peak": 35.0,
+      "alternative_ratio": 0.03986332574031891,
+      "phred_quality": 59.0,
+      "peak_overlap_score": 0.04151838671411625,
+      "local_noise_ratio": 0.04524656837824098
+    },
+    {
+      "alignment_score": 439.0,
+      "reference_peak": 847.0,
+      "alternative_peak": 23.0,
+      "alternative_ratio": 0.026436781609195402,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.02715466351829988,
+      "local_noise_ratio": 0.037949063923089894
+    },
+    {
+      "alignment_score": 555.0,
+      "reference_peak": 1003.0,
+      "alternative_peak": 14.0,
+      "alternative_ratio": 0.01376597836774828,
+      "phred_quality": 34.0,
+      "peak_overlap_score": 0.013958125623130608,
+      "local_noise_ratio": 0.06893604899586953
+    },
+    {
+      "alignment_score": 906.0,
+      "reference_peak": 746.0,
+      "alternative_peak": 45.0,
+      "alternative_ratio": 0.056890012642225034,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.06032171581769437,
+      "local_noise_ratio": 0.02039448487169667
+    },
+    {
+      "alignment_score": 532.0,
+      "reference_peak": 749.0,
+      "alternative_peak": 20.0,
+      "alternative_ratio": 0.02600780234070221,
+      "phred_quality": 54.0,
+      "peak_overlap_score": 0.0267022696929239,
+      "local_noise_ratio": 0.023936677474728208
+    },
+    {
+      "alignment_score": 461.0,
+      "reference_peak": 703.0,
+      "alternative_peak": 32.0,
+      "alternative_ratio": 0.04353741496598639,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.04551920341394026,
+      "local_noise_ratio": 0.012700670595407438
+    },
+    {
+      "alignment_score": 452.0,
+      "reference_peak": 784.0,
+      "alternative_peak": 28.0,
+      "alternative_ratio": 0.034482758620689655,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.03571428571428571,
+      "local_noise_ratio": 0.009566326530612245
+    },
+    {
+      "alignment_score": 463.0,
+      "reference_peak": 973.0,
+      "alternative_peak": 27.0,
+      "alternative_ratio": 0.027,
+      "phred_quality": 40.0,
+      "peak_overlap_score": 0.02774922918807811,
+      "local_noise_ratio": 0.015709881074732052
+    },
+    {
+      "alignment_score": 460.0,
+      "reference_peak": 874.0,
+      "alternative_peak": 40.0,
+      "alternative_ratio": 0.0437636761487965,
+      "phred_quality": 59.0,
+      "peak_overlap_score": 0.04576659038901602,
+      "local_noise_ratio": 0.011278195488721806
+    },
+    {
+      "alignment_score": 477.0,
+      "reference_peak": 911.0,
+      "alternative_peak": 24.0,
+      "alternative_ratio": 0.025668449197860963,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.026344676180021953,
+      "local_noise_ratio": 0.015916575192096598
+    },
+    {
+      "alignment_score": 467.0,
+      "reference_peak": 827.0,
+      "alternative_peak": 24.0,
+      "alternative_ratio": 0.0282021151586369,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.02902055622732769,
+      "local_noise_ratio": 0.014251166004491275
+    },
+    {
+      "alignment_score": 460.0,
+      "reference_peak": 628.0,
+      "alternative_peak": 17.0,
+      "alternative_ratio": 0.02635658914728682,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.027070063694267517,
+      "local_noise_ratio": 0.00875796178343949
+    },
+    {
+      "alignment_score": 557.0,
+      "reference_peak": 449.0,
+      "alternative_peak": 4.0,
+      "alternative_ratio": 0.008830022075055188,
+      "phred_quality": 26.0,
+      "peak_overlap_score": 0.008908685968819599,
+      "local_noise_ratio": 0.05822462615335666
+    },
+    {
+      "alignment_score": 905.0,
+      "reference_peak": 888.0,
+      "alternative_peak": 49.0,
+      "alternative_ratio": 0.052294557097118465,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.05518018018018018,
+      "local_noise_ratio": 0.013996138996138994
+    },
+    {
+      "alignment_score": 457.0,
+      "reference_peak": 780.0,
+      "alternative_peak": 18.0,
+      "alternative_ratio": 0.022556390977443608,
+      "phred_quality": 54.0,
+      "peak_overlap_score": 0.023076923076923078,
+      "local_noise_ratio": 0.020512820512820513
+    },
+    {
+      "alignment_score": 461.0,
+      "reference_peak": 763.0,
+      "alternative_peak": 17.0,
+      "alternative_ratio": 0.021794871794871794,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.022280471821756225,
+      "local_noise_ratio": 0.02059539412095113
+    },
+    {
+      "alignment_score": 460.0,
+      "reference_peak": 595.0,
+      "alternative_peak": 177.0,
+      "alternative_ratio": 0.22927461139896374,
+      "phred_quality": 27.0,
+      "peak_overlap_score": 0.29747899159663865,
+      "local_noise_ratio": 0.04021608643457383
+    },
+    {
+      "alignment_score": 467.0,
+      "reference_peak": 182.0,
+      "alternative_peak": 5.0,
+      "alternative_ratio": 0.026737967914438502,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.027472527472527472,
+      "local_noise_ratio": 0.015698587127158554
+    },
+    {
+      "alignment_score": 471.0,
+      "reference_peak": 1004.0,
+      "alternative_peak": 7.0,
+      "alternative_ratio": 0.006923837784371909,
+      "phred_quality": 27.0,
+      "peak_overlap_score": 0.0069721115537848604,
+      "local_noise_ratio": 0.11632043255549232
+    },
+    {
+      "alignment_score": 473.0,
+      "reference_peak": 455.0,
+      "alternative_peak": 9.0,
+      "alternative_ratio": 0.01939655172413793,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.01978021978021978,
+      "local_noise_ratio": 0.009262166405023548
+    },
+    {
+      "alignment_score": 455.0,
+      "reference_peak": 778.0,
+      "alternative_peak": 51.0,
+      "alternative_ratio": 0.061519903498190594,
+      "phred_quality": 49.0,
+      "peak_overlap_score": 0.06555269922879177,
+      "local_noise_ratio": 0.010833639368343738
+    },
+    {
+      "alignment_score": 468.0,
+      "reference_peak": 975.0,
+      "alternative_peak": 30.0,
+      "alternative_ratio": 0.029850746268656716,
+      "phred_quality": 49.0,
+      "peak_overlap_score": 0.03076923076923077,
+      "local_noise_ratio": 0.015164835164835164
+    },
+    {
+      "alignment_score": 461.0,
+      "reference_peak": 879.0,
+      "alternative_peak": 18.0,
+      "alternative_ratio": 0.020066889632107024,
+      "phred_quality": 49.0,
+      "peak_overlap_score": 0.020477815699658702,
+      "local_noise_ratio": 0.03721761742239558
+    },
+    {
+      "alignment_score": 898.0,
+      "reference_peak": 788.0,
+      "alternative_peak": 39.0,
+      "alternative_ratio": 0.0471584038694075,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.04949238578680203,
+      "local_noise_ratio": 0.008339376359680928
+    },
+    {
+      "alignment_score": 450.0,
+      "reference_peak": 161.0,
+      "alternative_peak": 6.0,
+      "alternative_ratio": 0.03592814371257485,
+      "phred_quality": 50.0,
+      "peak_overlap_score": 0.037267080745341616,
+      "local_noise_ratio": 0.022182786157941437
+    },
+    {
+      "alignment_score": 461.0,
+      "reference_peak": 920.0,
+      "alternative_peak": 33.0,
+      "alternative_ratio": 0.03462749213011543,
+      "phred_quality": 59.0,
+      "peak_overlap_score": 0.035869565217391305,
+      "local_noise_ratio": 0.01731366459627329
+    },
+    {
+      "alignment_score": 463.0,
+      "reference_peak": 499.0,
+      "alternative_peak": 35.0,
+      "alternative_ratio": 0.06554307116104868,
+      "phred_quality": 59.0,
+      "peak_overlap_score": 0.07014028056112225,
+      "local_noise_ratio": 0.026481534497566562
+    },
+    {
+      "alignment_score": 473.0,
+      "reference_peak": 854.0,
+      "alternative_peak": 31.0,
+      "alternative_ratio": 0.03502824858757062,
+      "phred_quality": 59.0,
+      "peak_overlap_score": 0.03629976580796253,
+      "local_noise_ratio": 0.006858481097356975
+    },
+    {
+      "alignment_score": 474.0,
+      "reference_peak": 803.0,
+      "alternative_peak": 14.0,
+      "alternative_ratio": 0.017135862913096694,
+      "phred_quality": 51.0,
+      "peak_overlap_score": 0.017434620174346202,
+      "local_noise_ratio": 0.02526240882405266
+    },
+    {
+      "alignment_score": 470.0,
+      "reference_peak": 803.0,
+      "alternative_peak": 14.0,
+      "alternative_ratio": 0.017135862913096694,
+      "phred_quality": 48.0,
+      "peak_overlap_score": 0.017434620174346202,
+      "local_noise_ratio": 0.016900907311866217
+    },
+    {
+      "alignment_score": 914.0,
+      "reference_peak": 852.0,
+      "alternative_peak": 43.0,
+      "alternative_ratio": 0.048044692737430165,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.05046948356807512,
+      "local_noise_ratio": 0.0249832327297116
+    },
+    {
+      "alignment_score": 466.0,
+      "reference_peak": 537.0,
+      "alternative_peak": 16.0,
+      "alternative_ratio": 0.028933092224231464,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.0297951582867784,
+      "local_noise_ratio": 0.010242085661080074
+    },
+    {
+      "alignment_score": 455.0,
+      "reference_peak": 789.0,
+      "alternative_peak": 22.0,
+      "alternative_ratio": 0.027127003699136867,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.02788339670468948,
+      "local_noise_ratio": 0.010048886474741987
+    },
+    {
+      "alignment_score": 456.0,
+      "reference_peak": 844.0,
+      "alternative_peak": 31.0,
+      "alternative_ratio": 0.03542857142857143,
+      "phred_quality": 59.0,
+      "peak_overlap_score": 0.03672985781990521,
+      "local_noise_ratio": 0.012694651320243739
+    },
+    {
+      "alignment_score": 916.0,
+      "reference_peak": 788.0,
+      "alternative_peak": 51.0,
+      "alternative_ratio": 0.060786650774731825,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.06472081218274112,
+      "local_noise_ratio": 0.018219724437998547
+    },
+    {
+      "alignment_score": 469.0,
+      "reference_peak": 531.0,
+      "alternative_peak": 15.0,
+      "alternative_ratio": 0.027472527472527472,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.02824858757062147,
+      "local_noise_ratio": 0.007936507936507936
+    },
+    {
+      "alignment_score": 460.0,
+      "reference_peak": 669.0,
+      "alternative_peak": 18.0,
+      "alternative_ratio": 0.026200873362445413,
+      "phred_quality": 59.0,
+      "peak_overlap_score": 0.026905829596412557,
+      "local_noise_ratio": 0.010356609011317531
+    },
+    {
+      "alignment_score": 471.0,
+      "reference_peak": 874.0,
+      "alternative_peak": 19.0,
+      "alternative_ratio": 0.02127659574468085,
+      "phred_quality": 21.0,
+      "peak_overlap_score": 0.021739130434782608,
+      "local_noise_ratio": 0.019042170644001308
+    },
+    {
+      "alignment_score": 461.0,
+      "reference_peak": 797.0,
+      "alternative_peak": 22.0,
+      "alternative_ratio": 0.026862026862026864,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.027603513174404015,
+      "local_noise_ratio": 0.012636673238931707
+    },
+    {
+      "alignment_score": 834.0,
+      "reference_peak": 831.0,
+      "alternative_peak": 25.0,
+      "alternative_ratio": 0.029205607476635514,
+      "phred_quality": 62.0,
+      "peak_overlap_score": 0.030084235860409144,
+      "local_noise_ratio": 0.011432009626955475
+    },
+    {
+      "alignment_score": 907.0,
+      "reference_peak": 707.0,
+      "alternative_peak": 29.0,
+      "alternative_ratio": 0.03940217391304348,
+      "phred_quality": 59.0,
+      "peak_overlap_score": 0.04101838755304102,
+      "local_noise_ratio": 0.024853505758739135
+    }
+  ],
+  "provenance": {
+    "training_sample_count": 101,
+    "testing_sample_count": 20,
+    "training_label_counts": {
+      "hetero": 18,
+      "negative": 83
+    },
+    "training_manifest_sha256": "e7db65caafa6ea4648f05119509b12766d2c5232642588dab4eabfb90484bd3c",
+    "testing_manifest_sha256": "1da9db71090b7eb7c8215a1eaa7c8a92700be22c05bd698bebb54a23e2dda007",
+    "test_overlap_sha256_count": 0,
+    "contains_filenames": false,
+    "note": "Background uses the 101-file reconstructed training complement. The original Colab training manifest was not retained; this split is strongly evidenced but not independently proven."
+  }
+}

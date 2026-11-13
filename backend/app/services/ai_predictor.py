@@ -13,6 +13,11 @@ import joblib
 import numpy as np
 import pandas as pd
 
+from app.services.shap_explainer import (
+    explain_hetero_probability,
+    unavailable_explanation,
+)
+
 ASSETS = Path(__file__).resolve().parents[2] / "ai_assets"
 MODEL_PATH = ASSETS / "geneglass_random_forest.joblib"
 LIMITATIONS = (
@@ -27,13 +32,16 @@ def get_model_identity() -> dict[str, str]:
 
     artifact_digest = hashlib.sha256(MODEL_PATH.read_bytes()).hexdigest()
     bundle_digest = hashlib.sha256()
-    for asset_name in (
-        "geneglass_random_forest.joblib",
-        "ab1_processing.py",
-        "model_metadata.json",
-        "jak2_reference.txt",
-    ):
-        asset = ASSETS / asset_name
+    bundle_assets = (
+        ASSETS / "geneglass_random_forest.joblib",
+        ASSETS / "ab1_processing.py",
+        ASSETS / "model_metadata.json",
+        ASSETS / "jak2_reference.txt",
+        ASSETS / "shap_background.json",
+        Path(__file__).with_name("shap_explainer.py"),
+    )
+    for asset in bundle_assets:
+        asset_name = asset.name
         bundle_digest.update(asset_name.encode("utf-8"))
         bundle_digest.update(asset.read_bytes())
     metadata = json.loads(
@@ -78,6 +86,9 @@ def predict_ab1(file_path: str | Path, *, qc_passed: bool = True,
             "probabilities": None,
             "orientation": None,
             "features": None,
+            "explanation": unavailable_explanation(
+                "Existing QC requires specialist review"
+            ),
             **identity,
             "research_use_only": True,
             "limitations": LIMITATIONS,
@@ -96,6 +107,26 @@ def predict_ab1(file_path: str | Path, *, qc_passed: bool = True,
         predicted = metadata["classes"][str(int(model.predict(row)[0]))]
         maximum = max(probabilities.values())
         review = minimum_class_probability is not None and maximum < minimum_class_probability
+        try:
+            explanation = explain_hetero_probability(
+                model,
+                row,
+                list(metadata["features"]),
+            )
+        except (
+            ValueError,
+            KeyError,
+            IndexError,
+            OSError,
+            ImportError,
+            AttributeError,
+            UnicodeError,
+            RuntimeError,
+            FloatingPointError,
+        ) as exc:
+            explanation = unavailable_explanation(
+                f"SHAP explanation unavailable: {type(exc).__name__}"
+            )
         return {
             "status": "Needs Review" if review else ("Hetero" if predicted == "hetero" else "Negative"),
             "prediction": predicted,
@@ -103,6 +134,7 @@ def predict_ab1(file_path: str | Path, *, qc_passed: bool = True,
             "reason": "Prediction below provisional review threshold" if review else None,
             "orientation": features["orientation"],
             "features": {k: None if not math.isfinite(float(features[k])) else float(features[k]) for k in metadata["features"]},
+            "explanation": explanation,
             **identity,
             "research_use_only": True,
             "limitations": LIMITATIONS,
@@ -115,6 +147,9 @@ def predict_ab1(file_path: str | Path, *, qc_passed: bool = True,
             "reason": f"AI processing unavailable: {type(exc).__name__}",
             "orientation": None,
             "features": None,
+            "explanation": unavailable_explanation(
+                "Prediction features are unavailable"
+            ),
             **identity,
             "research_use_only": True,
             "limitations": LIMITATIONS,

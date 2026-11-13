@@ -31,6 +31,13 @@ def serialize_prediction(record: ModelPrediction) -> dict:
         except json.JSONDecodeError:
             features = None
 
+    explanation = None
+    if record.explanation_json:
+        try:
+            explanation = json.loads(record.explanation_json)
+        except json.JSONDecodeError:
+            explanation = None
+
     return {
         "prediction_id": record.id,
         "analysis_id": record.analysis_id,
@@ -40,6 +47,7 @@ def serialize_prediction(record: ModelPrediction) -> dict:
         "reason": record.reason,
         "orientation": record.orientation,
         "features": features,
+        "explanation": explanation,
         "model_name": record.model_name,
         "model_version": record.model_version,
         "model_artifact_sha256": record.model_artifact_sha256,
@@ -92,6 +100,7 @@ def record_prediction(
     )
     probabilities = result.get("probabilities") or {}
     features = result.get("features")
+    explanation = result.get("explanation")
     record = ModelPrediction(
         analysis_id=analysis.id,
         status=result["status"],
@@ -103,6 +112,11 @@ def record_prediction(
         features_json=(
             json.dumps(features, ensure_ascii=True, separators=(",", ":"))
             if features is not None
+            else None
+        ),
+        explanation_json=(
+            json.dumps(explanation, ensure_ascii=True, separators=(",", ":"))
+            if explanation is not None
             else None
         ),
         model_name=result["model_name"],
@@ -130,6 +144,7 @@ def get_or_record_current_prediction(
         and latest.model_artifact_sha256 == current["model_artifact_sha256"]
         and latest.model_version == current["model_version"]
         and latest.input_qc_status == analysis.qc_status.value
+        and latest.explanation_json is not None
     ):
         return latest, False
     return record_prediction(session, analysis), True

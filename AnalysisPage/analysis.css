@@ -855,6 +855,145 @@ body {
 .analysis-ai-metadata { font-size:13px; overflow-wrap:anywhere; }
 .analysis-ai-disclaimer { font-size:12px; border-top:1px solid #daebeb; padding-top:14px; }
 
+/* Per-analysis Tree SHAP explanation shared by New Analysis and History details. */
+.shap-explanation {
+  margin: 20px 0 4px;
+  border: 1px solid #d8e9e9;
+  border-radius: 15px;
+  background: #fbfefe;
+  overflow: hidden;
+}
+.shap-explanation > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  cursor: pointer;
+  list-style: none;
+}
+.shap-explanation > summary::-webkit-details-marker { display: none; }
+.shap-explanation > summary::after {
+  content: "\f078";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  color: #71858a;
+  transition: transform .2s ease;
+}
+.shap-explanation[open] > summary::after { transform: rotate(180deg); }
+.shap-summary-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.shap-summary-title > i {
+  display: grid;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 11px;
+  background: #e6f6f6;
+  color: #008f96;
+}
+.shap-summary-title > span { display: grid; gap: 3px; }
+.shap-summary-title strong { color: #12363b; font-size: 14px; }
+.shap-summary-title small { color: #71858a; font-size: 11px; }
+.shap-method-badge {
+  margin-left: auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #edf5f5;
+  color: #42666a;
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+.shap-explanation-body {
+  padding: 18px;
+  border-top: 1px solid #e2eeee;
+}
+.shap-overview {
+  margin: 0 0 16px !important;
+  color: #315a60 !important;
+  font-size: 13px;
+  font-weight: 750;
+}
+.shap-contribution-list { display: grid; gap: 11px; }
+.shap-contribution {
+  display: grid;
+  grid-template-columns: minmax(150px, .9fr) minmax(180px, 1.4fr) minmax(105px, .55fr);
+  align-items: center;
+  gap: 14px;
+}
+.shap-feature-label,
+.shap-impact-value { display: grid; gap: 2px; }
+.shap-feature-label strong { color: #17393e; font-size: 12px; }
+.shap-feature-label small,
+.shap-impact-value small { color: #71858a; font-size: 10px; }
+.shap-impact-value { text-align: right; }
+.shap-impact-value strong { color: #315a60; font-size: 12px; }
+.shap-impact-track {
+  position: relative;
+  height: 9px;
+  border-radius: 999px;
+  background: #edf3f3;
+  overflow: hidden;
+}
+.shap-impact-track::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: #9bb2b5;
+}
+.shap-impact-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+}
+.shap-contribution[data-direction="hetero"] .shap-impact-fill {
+  left: 50%;
+  background: #d86161;
+}
+.shap-contribution[data-direction="negative"] .shap-impact-fill {
+  right: 50%;
+  background: #11969c;
+}
+.shap-provenance {
+  margin: 16px 0 0 !important;
+  color: #71858a !important;
+  font-size: 10px !important;
+}
+.shap-caution {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 0 !important;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f0f7f7;
+  color: #526f74 !important;
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+}
+.ai-prediction-body > .shap-explanation { grid-column: 1 / -1; }
+
+@media (max-width: 700px) {
+  .shap-explanation > summary { align-items: flex-start; }
+  .shap-method-badge { display: none; }
+  .shap-contribution {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #edf3f3;
+  }
+  .shap-impact-value { text-align: left; }
+}
+
 .analysis-research-card { padding: 0; margin-top: 22px; overflow: hidden; }
 .analysis-research-card[hidden] { display: none; }
 .analysis-research-disclosure > summary {

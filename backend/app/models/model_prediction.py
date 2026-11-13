@@ -36,6 +36,7 @@ class ModelPrediction(Base):
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     orientation: Mapped[str | None] = mapped_column(String(20), nullable=True)
     features_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    explanation_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     model_name: Mapped[str] = mapped_column(String(150), nullable=False)
     model_version: Mapped[str] = mapped_column(String(32), nullable=False)
     model_artifact_sha256: Mapped[str] = mapped_column(

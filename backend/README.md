@@ -165,7 +165,7 @@ python -m alembic upgrade head
 - `audit_events`: سجل غير قابل للتعديل عبر الـAPI للعمليات المهمة والمستخدم المنفذ والتحليل المرتبط إن وجد.
 - `candidate_variants`: اختلافات JAK2 البحثية المرشحة.
 - `external_annotations`: نتائج ClinVar المخزنة مؤقتًا.
-- `model_predictions`: سجل append-only لكل تشغيل للمودل، مع الاحتمالات وبصمة ملف المودل وإصدار مشتق من حزمة المودل والمعالجة وحالة QC وقت التشغيل.
+- `model_predictions`: سجل append-only لكل تشغيل للمودل، مع الاحتمالات وTree SHAP explanation وبصمة ملف المودل وإصدار مشتق من حزمة المودل والمعالجة وحالة QC وقت التشغيل.
 - `molecular_reports`: مسودات وإصدارات التقارير المعتمدة، وقرار المختص، ومسار Normal Control الخاص بكل تقرير.
 
 لا توجد بيانات Seed افتراضية؛ لذلك تبدأ الجداول فارغة.
@@ -202,6 +202,22 @@ python -m alembic upgrade head
 ```
 
 الأمر لا يستبدل نتيجة سابقة متوافقة مع نفس بصمة المودل وحالة QC.
+
+## تفسير المودل باستخدام Tree SHAP
+
+يعرض New Analysis وAnalysis Details تفسيرًا قابلًا للفتح أسفل نتيجة المودل. يوضح التفسير مساهمة كل واحدة من الخصائص السبع في احتمال `hetero`. القيم موجبة باتجاه Hetero وسالبة باتجاه Negative، ومجموعها مع `base_value` يعيد احتمال Hetero نفسه ضمن سماحية عددية صغيرة.
+
+الملف `ai_assets/shap_background.json` مبني من 101 ملفًا في training split فقط، ولا يحتوي أسماء ملفات AB1 أو مساراتها. تم التحقق بالـSHA-256 أن ملفات الاختبار العشرين لا تتقاطع مع الخلفية. لأن manifest التدريب الأصلي من Colab لم يُحفظ، تحمل الخلفية ملاحظة صريحة بأن التقسيم الحالي reconstructed training complement وليس إثباتًا مستقلًا للتقسيم الأصلي.
+
+لإعادة بناء الخلفية من النسخة المحلية للداتا:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.cli.build_shap_background `
+  --training-root "C:\path\to\GeneGlass_Final_Training_AB1" `
+  --testing-root "C:\path\to\GeneGlass_Final_Testing_AB1"
+```
+
+SHAP يفسر سلوك المودل فقط، ولا يثبت السببية البيولوجية أو الصحة السريرية. الخصائص المشتقة والمترابطة مثل `reference_peak` و`alternative_peak` و`alternative_ratio` و`peak_overlap_score` قد تتشارك الإسناد. لا يُضاف تفسير SHAP إلى Molecular PDF، الذي يبقى مبنيًا على قرار المختص.
 
 ## Reference Dataset and Pipeline Validation
 
