@@ -103,36 +103,6 @@
           <p id="chromatogramDetail" class="chromatogram-detail"></p>
         </section>
 
-        <section id="analysisResearchCard" class="dashboard-card analysis-research-card" hidden>
-          <details class="analysis-research-disclosure">
-            <summary>
-              <span class="analysis-research-icon"><i class="fa-solid fa-database"></i></span>
-              <span>
-                <strong>Research Databases</strong>
-                <small>Optional external evidence · research use only</small>
-              </span>
-              <span id="analysisResearchBadge" class="analysis-research-badge">Not searched</span>
-            </summary>
-            <div class="analysis-research-panel">
-              <div class="analysis-source-dashboard">
-                <article class="analysis-source-card primary">
-                  <div><i class="fa-solid fa-shield-halved"></i><span><strong>NCBI ClinVar</strong><small>Exact HGVS matches only</small></span></div>
-                  <p>Checks eligible variants within the JAK2 region covered by this AB1 read.</p>
-                  <button id="analysisResearchLookup" type="button">Search ClinVar</button>
-                </article>
-                <article class="analysis-source-card">
-                  <div><i class="fa-solid fa-arrow-up-right-from-square"></i><span><strong>Genovate</strong><small>Independent research workspace</small></span></div>
-                  <p>Opens externally. GeneGlass does not send patient or sequence data.</p>
-                  <a href="https://genovate-variant-validation-system-921860441860.us-west1.run.app/" target="_blank" rel="noopener noreferrer">Open Genovate</a>
-                </article>
-              </div>
-              <p id="analysisResearchStatus" class="analysis-research-status" role="status">No ClinVar search has been requested.</p>
-              <div id="analysisResearchResults" class="analysis-research-results"></div>
-              <p class="analysis-research-footnote"><i class="fa-solid fa-circle-info"></i> External results support research review and do not replace specialist interpretation.</p>
-            </div>
-          </details>
-        </section>
-
         <div id="finalizationWorkspace" class="analysis-finalization" hidden>
           <section class="dashboard-card workflow-card">
             <div class="workflow-heading">
@@ -209,6 +179,36 @@
             </form>
           </section>
         </div>
+
+        <section id="analysisResearchCard" class="dashboard-card analysis-research-card" hidden>
+          <details class="analysis-research-disclosure">
+            <summary>
+              <span class="analysis-research-icon"><i class="fa-solid fa-database"></i></span>
+              <span>
+                <strong>Research Databases</strong>
+                <small>Optional external evidence · research use only</small>
+              </span>
+              <span id="analysisResearchBadge" class="analysis-research-badge">Not searched</span>
+            </summary>
+            <div class="analysis-research-panel">
+              <div class="analysis-source-dashboard">
+                <article class="analysis-source-card primary">
+                  <div><i class="fa-solid fa-shield-halved"></i><span><strong>NCBI ClinVar</strong><small>Exact HGVS matches only</small></span></div>
+                  <p>Checks eligible variants within the JAK2 region covered by this AB1 read.</p>
+                  <button id="analysisResearchLookup" type="button">Search ClinVar</button>
+                </article>
+                <article class="analysis-source-card">
+                  <div><i class="fa-solid fa-arrow-up-right-from-square"></i><span><strong>Genovate</strong><small>Independent research workspace</small></span></div>
+                  <p>Opens externally. GeneGlass does not send patient or sequence data.</p>
+                  <a href="https://genovate-variant-validation-system-921860441860.us-west1.run.app/" target="_blank" rel="noopener noreferrer">Open Genovate</a>
+                </article>
+              </div>
+              <p id="analysisResearchStatus" class="analysis-research-status" role="status">No ClinVar search has been requested.</p>
+              <div id="analysisResearchResults" class="analysis-research-results"></div>
+              <p class="analysis-research-footnote"><i class="fa-solid fa-circle-info"></i> External results support research review and do not replace specialist interpretation.</p>
+            </div>
+          </details>
+        </section>
       </main>
     </div>
   </body>
