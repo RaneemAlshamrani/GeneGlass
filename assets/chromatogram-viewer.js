@@ -1,93 +1,3 @@
-const CHROMATOGRAM_SMOOTHING_PRESETS = Object.freeze({
-  light: Object.freeze([1, 2, 1]),
-  medium: Object.freeze([1, 2, 3, 2, 1]),
-  strong: Object.freeze([1, 2, 3, 4, 3, 2, 1])
-});
-
-function smoothChromatogramSignal(values, weights) {
-  const radius = Math.floor(weights.length / 2);
-
-  return values.map((_value, index) => {
-    let weightedTotal = 0;
-    let appliedWeight = 0;
-    for (let offset = -radius; offset <= radius; offset++) {
-      const sourceIndex = index + offset;
-      if (sourceIndex < 0 || sourceIndex >= values.length) continue;
-      const weight = weights[offset + radius];
-      weightedTotal += (Number(values[sourceIndex]) || 0) * weight;
-      appliedWeight += weight;
-    }
-    return appliedWeight ? weightedTotal / appliedWeight : 0;
-  });
-}
-
-function percentile(values, fraction) {
-  if (!values.length) return 0;
-  const ordered = [...values].sort((a, b) => a - b);
-  const index = Math.max(
-    0,
-    Math.min(ordered.length - 1, Math.floor((ordered.length - 1) * fraction))
-  );
-  return Number(ordered[index]) || 0;
-}
-
-function buildLocalCleanupChannels(channels, positions, targetIndex, flankBases = 6) {
-  const bases = ["A", "C", "G", "T"];
-  if (
-    !Number.isInteger(targetIndex) ||
-    targetIndex < 0 ||
-    targetIndex >= positions.length
-  ) {
-    return Object.fromEntries(bases.map((base) => [base, [...channels[base]]]));
-  }
-
-  const firstBase = Math.max(0, targetIndex - flankBases);
-  const lastBase = Math.min(positions.length - 1, targetIndex + flankBases);
-  const signalStart = Math.max(0, Number(positions[firstBase]) || 0);
-  const signalEnd = Math.min(
-    channels.A.length - 1,
-    Number(positions[lastBase]) || channels.A.length - 1
-  );
-  const previousPosition = Number(positions[Math.max(0, targetIndex - 1)]);
-  const targetPosition = Number(positions[targetIndex]);
-  const nextPosition = Number(positions[Math.min(positions.length - 1, targetIndex + 1)]);
-  if (
-    signalEnd <= signalStart ||
-    ![previousPosition, targetPosition, nextPosition].every(Number.isFinite)
-  ) {
-    return Object.fromEntries(bases.map((base) => [base, [...channels[base]]]));
-  }
-  const protectedStart = Math.floor((previousPosition + targetPosition) / 2);
-  const protectedEnd = Math.ceil((targetPosition + nextPosition) / 2);
-
-  return Object.fromEntries(bases.map((base) => {
-    const original = channels[base];
-    const corrected = [...original];
-    const background = [];
-    for (let sample = signalStart; sample <= signalEnd; sample++) {
-      if (sample < protectedStart || sample > protectedEnd) {
-        background.push(Math.max(0, Number(original[sample]) || 0));
-      }
-    }
-    const baseline = percentile(background, 0.20);
-    const adjusted = sample => Math.max(0, (Number(original[sample]) || 0) - baseline);
-
-    for (let sample = signalStart; sample <= signalEnd; sample++) {
-      if (sample >= protectedStart && sample <= protectedEnd) {
-        // Keep the target peak shape; subtract only the local baseline.
-        corrected[sample] = adjusted(sample);
-        continue;
-      }
-      const left = Math.max(signalStart, sample - 1);
-      const right = Math.min(signalEnd, sample + 1);
-      corrected[sample] = (
-        adjusted(left) + (2 * adjusted(sample)) + adjusted(right)
-      ) / 4;
-    }
-    return [base, corrected];
-  }));
-}
-
 const DNA_IUPAC = Object.freeze({
   A: "A", C: "C", G: "G", T: "T",
   R: "AG", Y: "CT", S: "GC", W: "AT", K: "GT", M: "AC",
@@ -200,34 +110,6 @@ window.GeneGlassChromatogram = {
       requestedTarget >= 1 && requestedTarget <= n
       ? requestedTarget - 1
       : null;
-    let smoothedChannels;
-    let localCleanedChannels;
-
-    function currentTargetIndex() {
-      if (rawTargetIndex === null) return null;
-      return showingFlipped ? n - 1 - rawTargetIndex : rawTargetIndex;
-    }
-
-    function refreshSmoothedChannels() {
-      smoothedChannels = Object.fromEntries(
-        Object.entries(CHROMATOGRAM_SMOOTHING_PRESETS).map(([level, weights]) => [
-          level,
-          Object.fromEntries(
-            ["A", "C", "G", "T"].map((base) => [
-              base,
-              smoothChromatogramSignal(channels[base], weights)
-            ])
-          )
-        ])
-      );
-      localCleanedChannels = buildLocalCleanupChannels(
-        channels,
-        positions,
-        currentTargetIndex(),
-      );
-    }
-    refreshSmoothedChannels();
-
     const requestedCount = Number(options.initialBaseCount);
     let count = Math.min(
       Number.isInteger(requestedCount) ? Math.max(5, requestedCount) : 30,
@@ -271,17 +153,6 @@ window.GeneGlassChromatogram = {
           <input class="gg-go-base" type="number" min="1" max="${n}" placeholder="e.g. 184">
           <button class="gg-go-button" type="button">Go</button>
         </span>
-      </label>
-      <label class="gg-signal-label">
-        Signal view
-        <select class="gg-signal-mode">
-          <option value="original">Original (off)</option>
-          <option value="local">Local cleanup · visual only</option>
-          <option value="light">Light · 3 points</option>
-          <option value="medium">Medium · 5 points</option>
-          <option value="strong">Strong · 7 points</option>
-        </select>
-        <small class="gg-signal-note" aria-live="polite"></small>
       </label>
       <div class="gg-direction-control">
         <span>Display orientation</span>
@@ -338,19 +209,11 @@ window.GeneGlassChromatogram = {
     const sequenceInput = toolbar.querySelector(".gg-sequence-query");
     const sequenceStatus = toolbar.querySelector(".gg-sequence-status");
     const findSequenceButton = toolbar.querySelector(".gg-find-sequence");
-    const signalMode = toolbar.querySelector(".gg-signal-mode");
-    const signalNote = toolbar.querySelector(".gg-signal-note");
     const directionButton = toolbar.querySelector(".gg-toggle-direction");
     const verticalSlider = scaleControl.querySelector(".gg-vertical-scale");
     const verticalValue = scaleControl.querySelector(".gg-vertical-value");
     const horizontalSlider = overview.querySelector(".gg-overview-range");
     const horizontalValue = overview.querySelector(".gg-total-bases");
-
-    const localOption = signalMode.querySelector('option[value="local"]');
-    if (rawTargetIndex === null) {
-      localOption.disabled = true;
-      localOption.textContent = "Local cleanup · target unavailable";
-    }
 
     function clampFirst(value) {
       return Math.max(0, Math.min(n - count, Math.round(value)));
@@ -479,15 +342,7 @@ window.GeneGlassChromatogram = {
       }
 
       for (const base of ["A", "C", "G", "T"]) {
-        if (signalMode.value !== "original") {
-          drawTrace(channels[base], base, 0.22, 0.8);
-          const displayedChannels = signalMode.value === "local"
-            ? localCleanedChannels
-            : smoothedChannels[signalMode.value];
-          drawTrace(displayedChannels[base], base, 1, 1.5);
-        } else {
-          drawTrace(channels[base], base, 1, 1.35);
-        }
+        drawTrace(channels[base], base, 1, 1.35);
       }
 
       // Keep all original signal peaks. Only thin text labels when there is
@@ -531,15 +386,9 @@ window.GeneGlassChromatogram = {
         ctx.fillText(String(selected + 1), selectedX, h - 18);
       }
 
-      const localCleanupActive = signalMode.value === "local";
-      signalNote.textContent = localCleanupActive
-        ? "Local baseline correction around V617F. Display only; original data remain unchanged."
-        : signalMode.value === "original"
-          ? ""
-          : "Visual smoothing only; compare with the faint original trace.";
       detail.textContent = options.compact
-        ? `${displayDirection} · bases ${first + 1}–${last + 1}${localCleanupActive ? " · local visual cleanup" : ""}`
-        : `Showing AB1 bases ${first + 1}–${last + 1} of ${n}. ${localCleanupActive ? "Local cleanup is visual only; " : ""}QC uses the original signal.`;
+        ? `${displayDirection} · bases ${first + 1}–${last + 1}`
+        : `Showing AB1 bases ${first + 1}–${last + 1} of ${n}.`;
 
       horizontalSlider.value = String(count);
       horizontalValue.textContent = `${count} bases`;
@@ -594,8 +443,6 @@ window.GeneGlassChromatogram = {
 
     goInput.oninput = () => goInput.setCustomValidity("");
 
-    signalMode.onchange = draw;
-
     updateDirectionButton();
     directionButton.onclick = () => {
       const previousCenter = first + (count - 1) / 2;
@@ -624,7 +471,6 @@ window.GeneGlassChromatogram = {
       sequenceMatchIndex = -1;
       sequenceStatus.textContent = "";
       sequenceStatus.dataset.state = "";
-      refreshSmoothedChannels();
       updateDirectionButton();
       draw();
     };
@@ -694,7 +540,3 @@ window.GeneGlassChromatogram = {
     draw();
   }
 };
-
-if (typeof module !== "undefined" && module.exports) {
-  module.exports = { buildLocalCleanupChannels };
-}

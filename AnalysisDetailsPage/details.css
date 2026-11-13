@@ -1304,7 +1304,6 @@
   .chromatogram-card-pro .gg-viewer-toolbar,
   .chromatogram-card-pro .gg-sequence-label,
   .chromatogram-card-pro .gg-search-label,
-  .chromatogram-card-pro .gg-signal-label,
   .chromatogram-card-pro .gg-direction-control,
   .chromatogram-card-pro .gg-sequence-row,
   .chromatogram-card-pro .gg-search-row {
@@ -1320,11 +1319,6 @@
   .chromatogram-card-pro .gg-search-row input {
     flex: 1;
     width: 0;
-    min-width: 0;
-  }
-
-  .chromatogram-card-pro .gg-signal-label select {
-    width: 100%;
     min-width: 0;
   }
 

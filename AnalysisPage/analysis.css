@@ -570,9 +570,8 @@ body {
 .gg-viewer-toolbar {
   display: grid;
   grid-template-columns:
-    minmax(0, 1.55fr)
+    minmax(0, 1.65fr)
     minmax(0, .9fr)
-    minmax(0, 1.1fr)
     minmax(0, 1.15fr);
   gap: 10px;
   align-items: end;
@@ -639,39 +638,6 @@ body {
 
 .gg-sequence-status[data-state="error"] {
   color: #a23b3b;
-}
-
-.gg-signal-label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  position: relative;
-  color: #315a60;
-  font-size: 13px;
-  font-weight: 650;
-  min-width: 0;
-}
-
-.gg-signal-note {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 340px;
-  margin-top: 4px;
-  color: #6b8287;
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.gg-signal-label select {
-  width: 100%;
-  min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid #b9dedf;
-  border-radius: 10px;
-  background: #fff;
-  color: #123c40;
 }
 
 .gg-direction-control {
@@ -741,12 +707,6 @@ body {
     margin-top: 0;
   }
 
-  .gg-signal-note {
-    position: static;
-    width: auto;
-    min-height: 14px;
-    margin-top: 0;
-  }
 }
 
 .gg-trace-legend {
