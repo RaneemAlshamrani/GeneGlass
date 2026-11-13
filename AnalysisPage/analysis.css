@@ -645,10 +645,23 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  position: relative;
   color: #315a60;
   font-size: 13px;
   font-weight: 650;
   min-width: 0;
+}
+
+.gg-signal-note {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 340px;
+  margin-top: 4px;
+  color: #6b8287;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .gg-signal-label select {
@@ -725,6 +738,13 @@ body {
   .gg-sequence-status {
     position: static;
     min-height: 16px;
+    margin-top: 0;
+  }
+
+  .gg-signal-note {
+    position: static;
+    width: auto;
+    min-height: 14px;
     margin-top: 0;
   }
 }
