@@ -1,0 +1,47 @@
+{
+  "model_name": "GeneGlass Noise QC Random Forest",
+  "model_type": "binary_trace_quality_gate",
+  "classes": {
+    "0": "acceptable",
+    "1": "noise"
+  },
+  "noise_probability_threshold": 0.278248,
+  "review_probability_threshold": 0.016265,
+  "features": [
+    "sequence_length",
+    "mean_phred",
+    "median_phred",
+    "phred_p10",
+    "low_phred_fraction",
+    "very_low_phred_fraction",
+    "central_mean_phred",
+    "central_low_phred_fraction",
+    "primary_peak_median",
+    "primary_peak_p10",
+    "primary_peak_p99",
+    "primary_peak_cv",
+    "secondary_ratio_mean",
+    "secondary_ratio_median",
+    "secondary_ratio_p90",
+    "secondary_ratio_p95",
+    "secondary_ratio_gt_0_20_fraction",
+    "secondary_ratio_gt_0_33_fraction",
+    "tertiary_ratio_mean",
+    "peak_spacing_mean",
+    "peak_spacing_cv",
+    "nonpositive_spacing_fraction",
+    "ambiguous_base_fraction"
+  ],
+  "random_seed": 20261114,
+  "training_samples": 133,
+  "test_samples": 47,
+  "research_use_only": true,
+  "model_sha256": "c0916dd06d719c3c5930e437db5b1ff52bb09b9e53ccadd604b7ac84bb3fb903",
+  "evaluation_file": "noise_qc_evaluation.json",
+  "limitations": [
+    "Research-only proof of concept; not clinically validated.",
+    "Noise labels are inherited from the source folder and require specialist audit.",
+    "The independent noise test set is small, so confidence intervals are wide.",
+    "A low-risk prediction does not prove that an AB1 trace is clinically acceptable."
+  ]
+}

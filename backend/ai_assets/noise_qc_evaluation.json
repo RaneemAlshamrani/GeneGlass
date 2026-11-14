@@ -1,0 +1,593 @@
+{
+  "generated_at": "2026-11-14T16:17:42.111924+00:00",
+  "source_zip_sha256": "7b1c4634d8a6e0dbdd0640a24a30103d72912653d2867af9a0ef3d0a8b170e2b",
+  "random_seed": 20261114,
+  "split_strategy": "StratifiedGroupKFold 4-way holdout; groups derived from specimen token",
+  "cross_validation": "5-fold StratifiedGroupKFold on training split",
+  "counts": {
+    "source_eligible": {
+      "acceptable": 121,
+      "noise": 59
+    },
+    "excluded": {
+      "acat not found": 8,
+      "homo": 2,
+      "needs_review": 1
+    },
+    "training": {
+      "acceptable": 90,
+      "noise": 43
+    },
+    "testing": {
+      "acceptable": 31,
+      "noise": 16
+    },
+    "training_groups": 101,
+    "testing_groups": 39
+  },
+  "oof_training_metrics": {
+    "threshold": 0.278248,
+    "accuracy": 0.8271,
+    "balanced_accuracy": 0.8601,
+    "noise_precision": 0.6613,
+    "noise_recall": 0.9535,
+    "noise_recall_wilson_95_ci": [
+      0.8454,
+      0.9872
+    ],
+    "acceptable_specificity": 0.7667,
+    "acceptable_specificity_wilson_95_ci": [
+      0.6695,
+      0.842
+    ],
+    "noise_f1": 0.781,
+    "roc_auc": 0.9214,
+    "average_precision": 0.8666,
+    "confusion_matrix": {
+      "tn": 69,
+      "fp": 21,
+      "fn": 2,
+      "tp": 41
+    }
+  },
+  "independent_test_metrics": {
+    "threshold": 0.278248,
+    "accuracy": 0.8511,
+    "balanced_accuracy": 0.8569,
+    "noise_precision": 0.7368,
+    "noise_recall": 0.875,
+    "noise_recall_wilson_95_ci": [
+      0.6398,
+      0.965
+    ],
+    "acceptable_specificity": 0.8387,
+    "acceptable_specificity_wilson_95_ci": [
+      0.6737,
+      0.9291
+    ],
+    "noise_f1": 0.8,
+    "roc_auc": 0.9637,
+    "average_precision": 0.9458,
+    "confusion_matrix": {
+      "tn": 26,
+      "fp": 5,
+      "fn": 2,
+      "tp": 14
+    }
+  },
+  "conservative_review_operating_point": {
+    "threshold": 0.016265,
+    "accuracy": 0.4681,
+    "balanced_accuracy": 0.5968,
+    "noise_precision": 0.3902,
+    "noise_recall": 1.0,
+    "noise_recall_wilson_95_ci": [
+      0.8064,
+      1.0
+    ],
+    "acceptable_specificity": 0.1935,
+    "acceptable_specificity_wilson_95_ci": [
+      0.0919,
+      0.3628
+    ],
+    "noise_f1": 0.5614,
+    "roc_auc": 0.9637,
+    "average_precision": 0.9458,
+    "confusion_matrix": {
+      "tn": 6,
+      "fp": 25,
+      "fn": 0,
+      "tp": 16
+    }
+  },
+  "independent_test_triage": {
+    "acceptable": {
+      "pass": 6,
+      "needs_review": 20,
+      "high_noise": 5
+    },
+    "noise": {
+      "pass": 0,
+      "needs_review": 2,
+      "high_noise": 14
+    }
+  },
+  "feature_importance": [
+    {
+      "feature": "secondary_ratio_p90",
+      "importance": 0.144408
+    },
+    {
+      "feature": "secondary_ratio_median",
+      "importance": 0.086092
+    },
+    {
+      "feature": "secondary_ratio_mean",
+      "importance": 0.085942
+    },
+    {
+      "feature": "central_mean_phred",
+      "importance": 0.073626
+    },
+    {
+      "feature": "secondary_ratio_gt_0_33_fraction",
+      "importance": 0.063991
+    },
+    {
+      "feature": "mean_phred",
+      "importance": 0.062508
+    },
+    {
+      "feature": "secondary_ratio_gt_0_20_fraction",
+      "importance": 0.061131
+    },
+    {
+      "feature": "median_phred",
+      "importance": 0.06101
+    },
+    {
+      "feature": "tertiary_ratio_mean",
+      "importance": 0.05514
+    },
+    {
+      "feature": "secondary_ratio_p95",
+      "importance": 0.049113
+    },
+    {
+      "feature": "central_low_phred_fraction",
+      "importance": 0.037018
+    },
+    {
+      "feature": "sequence_length",
+      "importance": 0.032064
+    },
+    {
+      "feature": "peak_spacing_cv",
+      "importance": 0.028928
+    },
+    {
+      "feature": "low_phred_fraction",
+      "importance": 0.026353
+    },
+    {
+      "feature": "primary_peak_p99",
+      "importance": 0.024182
+    },
+    {
+      "feature": "very_low_phred_fraction",
+      "importance": 0.020225
+    },
+    {
+      "feature": "primary_peak_median",
+      "importance": 0.019537
+    },
+    {
+      "feature": "primary_peak_cv",
+      "importance": 0.019344
+    },
+    {
+      "feature": "phred_p10",
+      "importance": 0.017436
+    },
+    {
+      "feature": "primary_peak_p10",
+      "importance": 0.016397
+    },
+    {
+      "feature": "peak_spacing_mean",
+      "importance": 0.014016
+    },
+    {
+      "feature": "ambiguous_base_fraction",
+      "importance": 0.00154
+    },
+    {
+      "feature": "nonpositive_spacing_fraction",
+      "importance": 0.0
+    }
+  ],
+  "independent_test_predictions": [
+    {
+      "sha256": "01c9649526cb0d07a3d76ffe8216ae3c1fd954b2b9666733fa87a96999374d75",
+      "group_hash": "a8d17156b3636d08ca7d",
+      "actual": "acceptable",
+      "noise_probability": 0.058513,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "03cd75774187dfc049097c1410ead6486c9a06d286d836f209b7253049e89773",
+      "group_hash": "c08ae526a027c1cf9d80",
+      "actual": "noise",
+      "noise_probability": 0.529841,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "0758ab8cdbd9b6c511d52ec26f597c22c4df1ed050f7f73101e157f675637145",
+      "group_hash": "2fbd686315b70fa831b4",
+      "actual": "noise",
+      "noise_probability": 0.714149,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "0928e686795ebe491ebc49e85aa0de97fda835d1344e8414da82f49946f3597a",
+      "group_hash": "6ee0f6a1cc1f1bb5b16c",
+      "actual": "acceptable",
+      "noise_probability": 0.022845,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "0d2ca46380b9ea24b1c0dd41b99e58dcbffd9b664a24dc2ecc08ae6fa8d07612",
+      "group_hash": "96f29434a0cdc5d56820",
+      "actual": "noise",
+      "noise_probability": 0.833922,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "0d7cb718c7905c980c55835205a813f76d658291e00f7e457d165961d4bfc242",
+      "group_hash": "94e2cb59200289c6cc5c",
+      "actual": "noise",
+      "noise_probability": 0.256481,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "2df4eb44fe10ae4cf302885c9cbe8ec1f2ae209de9a04a2d0f059d77ae035af2",
+      "group_hash": "4d6fafae203bfeecba8d",
+      "actual": "acceptable",
+      "noise_probability": 0.009933,
+      "predicted": "acceptable",
+      "triage": "pass"
+    },
+    {
+      "sha256": "3de3c81355a08fc7fcc0105df2156a2679ef63f8fab9036a5fd7a9e318e78678",
+      "group_hash": "494e158da4d40ec5d37d",
+      "actual": "acceptable",
+      "noise_probability": 0.255096,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "3fb7c5748e1b56b919d69227fb7ec397e05a38089a6ab1d646cfbbb6229e96ae",
+      "group_hash": "02de6aab0cf36f0d95b5",
+      "actual": "acceptable",
+      "noise_probability": 0.023522,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "42afe2dc67d705ec0ee2b6c65c836e114efcf442d0150fab81392d0bd41cfa86",
+      "group_hash": "11da72c8077637629d8d",
+      "actual": "acceptable",
+      "noise_probability": 0.06516,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "42ed94568f738d7e678b19f08c4f568ce8769844d0ce46d765062eeba4c9b08a",
+      "group_hash": "f1b19a7133d6b351edfc",
+      "actual": "acceptable",
+      "noise_probability": 0.043324,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "44ef7f35298b667bb5089e426bbc464f69d0192383d12568ca214470c5e4612f",
+      "group_hash": "0ec22a503daa4599c177",
+      "actual": "acceptable",
+      "noise_probability": 0.526756,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "4aaffe8702012fc3ed2d45884bde6c5725f869b39d2de7890a7961d67b18c477",
+      "group_hash": "65179ba4e3acafb101a2",
+      "actual": "acceptable",
+      "noise_probability": 0.051622,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "4c31f0df7abd6fcc0c897ca646a84f0a1175dc02ede71d6270474c3cce89eae5",
+      "group_hash": "19cdce7d5f57ce62c393",
+      "actual": "acceptable",
+      "noise_probability": 0.019822,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "577fc63977acc95634750d9bc53c4e5760654beb387073c8f6a05dd8cc37800d",
+      "group_hash": "9448fe04d1e15ce8a759",
+      "actual": "noise",
+      "noise_probability": 0.980436,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "5b7438ec8640c359f87341e7a1d01fcebe8a772b3a985e36ef7b6ce191abd3af",
+      "group_hash": "43bc4efc2e1f9d003608",
+      "actual": "noise",
+      "noise_probability": 0.980695,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "5ff3013e9fc1dbca2ff2e6a12ea0a322d17d7e4b8a0142ee26c69e52005a1f26",
+      "group_hash": "8e4bf2658303f8001ca2",
+      "actual": "acceptable",
+      "noise_probability": 0.020024,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "617823896349f39f693e3faffc28b7355e6375a2a1f1f4c9b0c382dd2fc2bb72",
+      "group_hash": "99c4193f3f450c856976",
+      "actual": "acceptable",
+      "noise_probability": 0.631356,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "6682d1f4adf746569aac5e7cd8ec42a177866f35fe68f975ad975e857de6e7d7",
+      "group_hash": "02f2aeff354dc78cb828",
+      "actual": "noise",
+      "noise_probability": 0.127903,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "66b845cea661130ae4bab1a0cf701af104fdc699c1593beb522eda96de2d120b",
+      "group_hash": "61fed2fbe79de3117233",
+      "actual": "acceptable",
+      "noise_probability": 0.038653,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "6a4acb9306a37833d168aba3d4ce4f4c0e906704e00b0e4bc21daef072fda4f9",
+      "group_hash": "99c4193f3f450c856976",
+      "actual": "noise",
+      "noise_probability": 0.909757,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "720e406be95e7b386ce03c6849cced57a3cff1d4b8583e65c61964f74b10ab52",
+      "group_hash": "0ec22a503daa4599c177",
+      "actual": "acceptable",
+      "noise_probability": 0.194925,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "779f133c6e24ce5687ac81e22968b6e8db78c58758cbd671d0ba71ac93ec9e01",
+      "group_hash": "189af189f18ee5680787",
+      "actual": "noise",
+      "noise_probability": 0.974817,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "79c6ce46f0c95c89e62f26ec48eabfd583a7c8175103c7228a7b083d65012cf9",
+      "group_hash": "7ba7df5fa6598516dec0",
+      "actual": "acceptable",
+      "noise_probability": 0.052377,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "7d87390692ec96e28b5715dae241873241e758cd41330823839ca89f0ee02d19",
+      "group_hash": "19cdce7d5f57ce62c393",
+      "actual": "acceptable",
+      "noise_probability": 0.019988,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "7fede8407bf48a5106fdbfe5d946bbaed2c117835ada659c9589992cdd23f8a5",
+      "group_hash": "14aa9b1d814096580927",
+      "actual": "acceptable",
+      "noise_probability": 0.376824,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "82b50a56f934f8bce9c3f75d571321c86727c356c9604c0cb05968c06d4d9c1b",
+      "group_hash": "f4d73aae266a0ae1d4df",
+      "actual": "acceptable",
+      "noise_probability": 0.012608,
+      "predicted": "acceptable",
+      "triage": "pass"
+    },
+    {
+      "sha256": "885d9a89b9435c6d8b17b3131e43c41d508d995d47dac4d260fd4ac63e1814eb",
+      "group_hash": "0b1873123e7bba4022cd",
+      "actual": "acceptable",
+      "noise_probability": 0.297626,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "932826c374f8543618821badaaa1a3cb000749228021e5e9f21f62a1631767ca",
+      "group_hash": "0b1873123e7bba4022cd",
+      "actual": "noise",
+      "noise_probability": 0.342308,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "94794f2421fa770a7b3e3412f6d7b4d1c8d06a54be838c0ddabd30551d90da58",
+      "group_hash": "0a2975ea10edfde83fdc",
+      "actual": "noise",
+      "noise_probability": 0.856786,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "a0364267a906cb00a95e9b4d566df62e7d8aa5e85ec58286d745cfab2cbdf0c8",
+      "group_hash": "919d56ba390fe546509c",
+      "actual": "acceptable",
+      "noise_probability": 0.004837,
+      "predicted": "acceptable",
+      "triage": "pass"
+    },
+    {
+      "sha256": "a9c50a9756da379845645bbca5ac662bd54a9f1b9b3bdbd3d3fdaf85d55fa3e0",
+      "group_hash": "e1633c1672c24d0faa7f",
+      "actual": "acceptable",
+      "noise_probability": 0.027083,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "aae56fb16c144ab083e93ef44f7f96929118a0a55f50430110492caf9bae7998",
+      "group_hash": "a0c7e5dbc34bdcac5c56",
+      "actual": "noise",
+      "noise_probability": 0.98988,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "af318a0e2c210d30f772f892e7b76d0762b886e5cfb3096dab11492239410411",
+      "group_hash": "41180f7b0f4d2fc3d847",
+      "actual": "acceptable",
+      "noise_probability": 0.037125,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "b1597545bca4935ab327b6ee5617ce54a6a889f6c791f1d1d0f73ffe24fb2e9e",
+      "group_hash": "c08ae526a027c1cf9d80",
+      "actual": "acceptable",
+      "noise_probability": 0.041222,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "b46ade05cde055a0af6819e6eee1a416f0ca5a63d4ea73d00e8612454317f3de",
+      "group_hash": "815fb5b7a6f5b1428a33",
+      "actual": "acceptable",
+      "noise_probability": 0.006829,
+      "predicted": "acceptable",
+      "triage": "pass"
+    },
+    {
+      "sha256": "c00ee192109c9ff637440786c15d74cb829d9efe63118c234cbe40bf35c02d0a",
+      "group_hash": "2aac4993cfff6f20d079",
+      "actual": "acceptable",
+      "noise_probability": 0.300616,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "c56283dc84071f78d500f63664de6caf2fc550be51d6838acd7bd7f07080d0ba",
+      "group_hash": "19cdce7d5f57ce62c393",
+      "actual": "acceptable",
+      "noise_probability": 0.001318,
+      "predicted": "acceptable",
+      "triage": "pass"
+    },
+    {
+      "sha256": "c7741ba28f9344872b7f761f71e0c8f69d91e7988f943e5c86421f43bdbcdcf5",
+      "group_hash": "d2b9fb41c83a5babfe81",
+      "actual": "acceptable",
+      "noise_probability": 0.053113,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "c922e8d4c5bea9072d0b48e7bb537ba6d4c03233283eb89e8fac9ea436af39e7",
+      "group_hash": "d7a19949f52236d5d1b7",
+      "actual": "acceptable",
+      "noise_probability": 0.007911,
+      "predicted": "acceptable",
+      "triage": "pass"
+    },
+    {
+      "sha256": "cf4c39d6489e4033020f1569ee847b0d2a35372bec9ea2d42143ffeff085bc3b",
+      "group_hash": "b6ed37fd0771ea0b9452",
+      "actual": "acceptable",
+      "noise_probability": 0.273517,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "d1da341cd0ad16636725c2edc93c020e8a0b90760775f29795865595dab31b0f",
+      "group_hash": "34a20ad0ec82514d83ba",
+      "actual": "noise",
+      "noise_probability": 0.713937,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "d85f4f6bd6a0a65074b9eaa32cee74543005ec488f760cf920ed978335595b40",
+      "group_hash": "4f8c975011e71131cbd6",
+      "actual": "acceptable",
+      "noise_probability": 0.061327,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "db70e3bd3205b3984ccace511939101ebdac99fdb2b3587c72f0a85f39e84b7d",
+      "group_hash": "346c463837e6763aac49",
+      "actual": "noise",
+      "noise_probability": 0.862412,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "ec8596c9a197b0af63693956276d0df87e46a8c4e230fcdcfb3a80cf56789ac6",
+      "group_hash": "8e4bf2658303f8001ca2",
+      "actual": "acceptable",
+      "noise_probability": 0.081356,
+      "predicted": "acceptable",
+      "triage": "needs_review"
+    },
+    {
+      "sha256": "f2a7a6f3ca4903ed59e7ff1fb05272cbb095c73f2c6f233368d7d16218ece5c7",
+      "group_hash": "96f29434a0cdc5d56820",
+      "actual": "noise",
+      "noise_probability": 0.736558,
+      "predicted": "noise",
+      "triage": "high_noise"
+    },
+    {
+      "sha256": "f57e6d2cf2a2e8d21f364646321fb898e8b63a5a7c7d5cf29280184f3d1e5575",
+      "group_hash": "eb419877c37d150ff8dd",
+      "actual": "noise",
+      "noise_probability": 0.860921,
+      "predicted": "noise",
+      "triage": "high_noise"
+    }
+  ],
+  "limitations": [
+    "Research-only proof of concept; not clinically validated.",
+    "Noise labels are inherited from the source folder and require specialist audit.",
+    "The independent noise test set is small, so confidence intervals are wide.",
+    "A low-risk prediction does not prove that an AB1 trace is clinically acceptable."
+  ]
+}
