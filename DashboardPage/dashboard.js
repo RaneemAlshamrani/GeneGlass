@@ -56,7 +56,6 @@ function updateStatCards(data) {
     resultElement.textContent =
       `${data.positive ?? 0} / ${data.negative ?? 0}`;
   }
-
 }
 
 /* =========================================================
@@ -72,9 +71,7 @@ function updateGeneChart(data) {
   }
 
   const distribution = data.gene_distribution || {};
-
   const jak2 = distribution.JAK2 ?? 0;
- 
 
   if (geneChart) {
     geneChart.destroy();
@@ -109,10 +106,7 @@ function updateGeneChart(data) {
     },
   });
 
-  updateText(
-    ".donut-center strong",
-    jak2
-  );
+  updateText(".donut-center strong", jak2);
 
   const geneValues = document.querySelectorAll(
     ".gene-list > div strong"
@@ -239,19 +233,41 @@ function updateRecentAnalyses(analyses) {
   analyses.forEach((analysis) => {
     const row = document.createElement("tr");
 
-    // File name
+    // File name - clickable link to analysis details
     const fileCell = document.createElement("td");
     fileCell.className = "file-name";
 
-    const fileIcon = document.createElement("i");
-    fileIcon.className = "fa-solid fa-file-lines";
+    if (analysis.id !== undefined && analysis.id !== null) {
+      const fileLink = document.createElement("a");
 
-    fileCell.appendChild(fileIcon);
-    fileCell.appendChild(
-      document.createTextNode(
-        ` ${analysis.file_name || "Unnamed file"}`
-      )
-    );
+      fileLink.href =
+        `../AnalysisDetailsPage/details.html?id=${encodeURIComponent(analysis.id)}`;
+
+      fileLink.style.textDecoration = "none";
+      fileLink.style.color = "inherit";
+      fileLink.style.cursor = "pointer";
+      fileLink.title = "Open analysis details";
+
+      const fileIcon = document.createElement("i");
+      fileIcon.className = "fa-solid fa-file-lines";
+
+      fileLink.appendChild(fileIcon);
+      fileLink.appendChild(
+        document.createTextNode(
+          ` ${analysis.file_name || "Unnamed file"}`
+        )
+      );
+
+      fileCell.appendChild(fileLink);
+    } else {
+      fileCell.textContent =
+        analysis.file_name || "Unnamed file";
+
+      console.error(
+        "Analysis ID is missing:",
+        analysis
+      );
+    }
 
     row.appendChild(fileCell);
 
@@ -265,6 +281,7 @@ function updateRecentAnalyses(analyses) {
 
     // Target position
     const targetCell = document.createElement("td");
+
     targetCell.textContent = analysis.target_variant || "—";
     row.appendChild(targetCell);
 
@@ -275,20 +292,27 @@ function updateRecentAnalyses(analyses) {
     resultBadge.className = "result";
 
     const modelResult = analysis.ai_prediction;
+
     if (modelResult?.prediction === "hetero") {
       resultBadge.classList.add("mutation-result");
       resultBadge.textContent = "Heterozygous Pattern";
-      resultBadge.title = "Research model output — not a clinical diagnosis";
+      resultBadge.title =
+        "Research model output — not a clinical diagnosis";
+
     } else if (modelResult?.prediction === "negative") {
       resultBadge.classList.add("normal-result");
       resultBadge.textContent = "No Heterozygous Pattern";
-      resultBadge.title = "Research model output — not a clinical diagnosis";
+      resultBadge.title =
+        "Research model output — not a clinical diagnosis";
+
     } else if (modelResult?.status === "Needs Review") {
       resultBadge.classList.add("review-result");
       resultBadge.textContent = "Needs Review";
+
     } else if (analysis.status === "failed") {
       resultBadge.classList.add("review-result");
       resultBadge.textContent = "Analysis Failed";
+
     } else {
       resultBadge.classList.add("review-result");
       resultBadge.textContent = "Model Pending";
@@ -308,12 +332,15 @@ function updateRecentAnalyses(analyses) {
     if (qcStatus === "passed") {
       qcBadge.classList.add("passed");
       qcBadge.textContent = "Passed";
+
     } else if (qcStatus === "needs_review") {
       qcBadge.classList.add("review");
       qcBadge.textContent = "Review";
+
     } else if (qcStatus === "failed") {
       qcBadge.classList.add("review");
       qcBadge.textContent = "Failed";
+
     } else {
       qcBadge.textContent = "Pending";
     }
@@ -323,13 +350,16 @@ function updateRecentAnalyses(analyses) {
 
     // Date
     const dateCell = document.createElement("td");
+
     dateCell.textContent = formatDate(analysis.created_at);
     row.appendChild(dateCell);
 
-    // Actions (not connected yet)
+    // Actions
     const actionsCell = document.createElement("td");
+
     actionsCell.className = "actions";
     actionsCell.textContent = "—";
+
     row.appendChild(actionsCell);
 
     tableBody.appendChild(row);
@@ -421,5 +451,3 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener("geneglass:auth-ready", () => {
   loadDashboardSummary();
 });
-
-
