@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GeneGlass | New Analysis</title>
-    <link rel="stylesheet" href="analysis.css?v=20261114-workflow1" />
+    <link rel="stylesheet" href="analysis.css?v=20261114-workflow2" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
@@ -13,7 +13,7 @@
     <script src="../assets/auth.js" defer></script>
     <script src="../assets/shap-explanation.js?v=20261113-1" defer></script>
     <script src="../assets/chromatogram-viewer.js?v=20261113-3" defer></script>
-    <script src="analysis.js?v=20261114-workflow1" defer></script>
+    <script src="analysis.js?v=20261114-workflow2" defer></script>
   </head>
 
   <body>
@@ -104,22 +104,22 @@
             </ol>
           </div>
 
-          <div id="workflowStageEvidence" class="workflow-stage" data-workflow-stage="1">
-            <section class="dashboard-card chromatogram-card" id="chromatogramSection" hidden>
-              <div class="workflow-section-heading">
-                <span>Original sequencing signal</span>
-                <h2>Chromatogram</h2>
-                <p>Inspect the mapped JAK2 target and surrounding peaks before reviewing quality.</p>
-              </div>
-              <canvas
-                id="chromatogramCanvas"
-                width="1200"
-                height="350"
-                aria-label="AB1 chromatogram"
-              ></canvas>
-              <p id="chromatogramDetail" class="chromatogram-detail"></p>
-            </section>
+          <section class="dashboard-card chromatogram-card workflow-chromatogram" id="chromatogramSection" hidden>
+            <div class="workflow-section-heading">
+              <span>Original sequencing signal</span>
+              <h2>Chromatogram</h2>
+              <p>Use the mapped JAK2 signal as a reference while reviewing quality, the AI result, and the specialist decision.</p>
+            </div>
+            <canvas
+              id="chromatogramCanvas"
+              width="1200"
+              height="350"
+              aria-label="AB1 chromatogram"
+            ></canvas>
+            <p id="chromatogramDetail" class="chromatogram-detail"></p>
+          </section>
 
+          <div id="workflowStageEvidence" class="workflow-stage" data-workflow-stage="1">
             <section class="dashboard-card initial-qc-card" id="initialQcCard" aria-labelledby="initialQcTitle" hidden>
           <div class="initial-qc-heading">
             <div>

@@ -66,6 +66,7 @@
 
   function showWorkflowStep(step, { focus = true } = {}) {
     const requested = Math.max(1, Math.min(4, Number(step) || 1));
+    section.hidden = requested === 4 || !activeTrace;
     for (const stage of workflowStages) {
       stage.hidden = Number(stage.dataset.workflowStage) !== requested;
     }
@@ -536,6 +537,7 @@
     const headers = authHeaders();
     if (!headers || !apiBaseUrl) throw new Error("Please sign in again; API configuration is unavailable.");
     activeAnalysisId = Number(analysisId);
+    activeTrace = null;
     workflow.hidden = false;
     showWorkflowStep(1, { focus: false });
     modelReady = false;

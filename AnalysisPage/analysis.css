@@ -1266,7 +1266,8 @@ body {
 .analysis-workflow .analysis-ai-result,
 .analysis-workflow .analysis-research-card,
 .analysis-workflow .workflow-card { margin-top: 0; }
-.analysis-workflow .initial-qc-card { margin-top: 20px; }
+.analysis-workflow .initial-qc-card { margin-top: 0; }
+.workflow-stage { margin-top: 20px; }
 #analysisAiResultMount:empty::before {
   content: "Loading the model result…";
   display: block;
