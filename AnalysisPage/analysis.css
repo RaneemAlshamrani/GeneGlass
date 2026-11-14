@@ -1207,3 +1207,36 @@ body {
  .initial-qc-actions { display:grid; }
  .initial-qc-actions button { width:100%; }
 }
+
+/* Clear post-decision follow-up for a specialist's Request Repeat. */
+.initial-qc-repeat-confirmation {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-top: 16px;
+  padding: 20px;
+  border-radius: 14px;
+  border: 1px solid #b9ddd4;
+  background: #f0faf7;
+  color: #174d45;
+}
+.initial-qc-repeat-confirmation[hidden] { display: none !important; }
+.initial-qc-confirmation-icon { font-size: 25px; color: #16856f; flex-shrink: 0; }
+.initial-qc-confirmation-content { min-width: 0; flex: 1; }
+.initial-qc-confirmation-content > strong { display: block; font-size: 18px; margin-bottom: 6px; }
+.initial-qc-confirmation-content p { margin: 0 0 14px; color: #3f6460; line-height: 1.55; }
+.initial-qc-followup-links { display: flex; flex-wrap: wrap; gap: 10px; }
+.initial-qc-followup-links a {
+  display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+  padding: 11px 15px; border-radius: 10px; font-size: 14px;
+  font-weight: 750; text-decoration: none;
+}
+.initial-qc-new-upload { background: #008f96; color: white; }
+.initial-qc-new-upload:hover { background: #087a80; color: white; }
+.initial-qc-view-history { color: #176b69; border: 1px solid #a5d3cf; background: white; }
+.initial-qc-view-history:hover { background: #e7f6f3; }
+@media (max-width: 600px) {
+  .initial-qc-repeat-confirmation { padding: 15px; gap: 11px; }
+  .initial-qc-followup-links { flex-direction: column; }
+  .initial-qc-followup-links a { width: 100%; box-sizing: border-box; }
+}

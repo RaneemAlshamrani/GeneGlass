@@ -9,7 +9,7 @@
 
   <link rel="stylesheet" href="../DashboardPage/dashboard.css">
 <link rel="stylesheet" href="../AnalysisPage/analysis.css?v=20261113-10">
-<link rel="stylesheet" href="details.css?v=20261114-qc1">
+<link rel="stylesheet" href="details.css?v=20261114-hq3">
 
   <link rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -19,7 +19,7 @@
 <script src="../assets/auth.js" defer></script>
 <script src="../assets/shap-explanation.js?v=20261113-1" defer></script>
 <script src="../assets/chromatogram-viewer.js?v=20261113-3" defer></script>
-<script src="details.js?v=20261114-qc1" defer></script>
+<script src="details.js?v=20261114-hq3" defer></script>
 
 </head>
 
@@ -133,7 +133,7 @@
         </div>
         <p id="detailsQcMessage" role="status"></p>
         <p id="detailsQcNote" class="details-qc-note"></p>
-        <a id="detailsQcLink" href="#">Open initial QC in New Analysis</a>
+        <a id="detailsQcLink" href="#" hidden>Complete pending QC review</a>
       </section>
 
       <section class="dashboard-card details-card evidence-card">
@@ -207,7 +207,10 @@
           <span id="auditCount" class="audit-count">0 events</span>
         </div>
         <p id="auditStatus" role="status">Loading audit trail…</p>
-        <div id="auditTimeline" class="audit-timeline"></div>
+        <details class="audit-disclosure">
+          <summary>View full audit history (read-only)</summary>
+          <div id="auditTimeline" class="audit-timeline"></div>
+        </details>
       </section>
 
       <section class="dashboard-card details-card research-card">

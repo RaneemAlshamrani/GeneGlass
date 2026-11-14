@@ -173,6 +173,14 @@ function makeGeneGlassNoiseNotice(noise) {
     const status = notFound ? "Target Not Found" : result.needs_review ? "Needs review" : "Technical evidence available";
     evidenceBadge.textContent = status;
     evidenceBadge.dataset.status = notFound || result.needs_review ? "review" : "ready";
+    if (notFound) {
+      jak2Summary.replaceChildren();
+      const note = document.createElement("p");
+      note.className = "evidence-unavailable";
+      note.textContent = "The JAK2 V617F target was not reliably mapped. No AI classification is available.";
+      jak2Summary.appendChild(note);
+      return;
+    }
     const items = [
       ["Target", result.genomic_position ? `NC_000009.12:g.${result.genomic_position}` : "JAK2 V617F"],
       ["Read base", `${result.observed_base || "N/A"} · Q${result.quality_score ?? "N/A"}`],
@@ -328,6 +336,8 @@ function makeGeneGlassNoiseNotice(noise) {
   function renderInitialQcState(qc, details) {
     detailsQcCard.hidden = false;
     detailsQcLink.href = `../AnalysisPage/analysis.html?id=${analysisId}`;
+    detailsQcLink.hidden = qc.target_found !== true || qc.decision !== "pending";
+    detailsQcLink.textContent = "Complete pending QC review";
     detailsQcBadge.dataset.state = qc.target_found !== true ? "target_not_found" : qc.decision;
     detailsQcBadge.textContent = qc.target_found !== true ? "Target Not Found"
       : qc.decision === "continue_analysis" ? "Continue approved"
@@ -344,6 +354,21 @@ function makeGeneGlassNoiseNotice(noise) {
       : qc.decision === "pending" && details.ai_prediction
         ? "This analysis has a historical AI output saved before the new QC approval workflow."
         : "Technical quality measurements are descriptive, not a validated Noise classifier.";
+    const blocked = qc.target_found !== true || qc.decision === "request_repeat";
+    if (qc.target_found !== true) {
+      evidenceBadge.textContent = "Target Not Found";
+      evidenceBadge.dataset.status = "review";
+    }
+    // No unapproved molecular report can be completed for a blocked sample.
+    if (blocked && savedReport?.status !== "finalized") {
+      reportBadge.textContent = "Unavailable";
+      reportArchiveTitle.textContent = "No report available";
+      reportArchiveMessage.textContent = qc.target_found !== true
+        ? "Target Not Found: AI-based reporting is unavailable for this read."
+        : "A repeat was requested. AI-based reporting is blocked for this read.";
+      downloadReportButton.hidden = true;
+      continueReportLink.hidden = true;
+    }
   }
 
   function renderAiGateNotice(title, messageText) {
@@ -517,6 +542,9 @@ function makeGeneGlassNoiseNotice(noise) {
       : "Not reviewed";
     latestReviewBadge.dataset.decision = data.latest_decision || "none";
 
+    if (!reviews.length && ["target_not_found", "request_repeat"].includes(detailsQcBadge.dataset.state)) {
+      latestReviewBadge.textContent = "Not applicable";
+    }
     if (!reviews.length) {
       const empty = document.createElement("p");
       empty.className = "review-empty";
@@ -735,9 +763,11 @@ try {
     renderEvidenceSummary(result);
     // Display quality advice immediately after the AI card, outside collapsed technical details.
     document.getElementById("geneglassNoiseDetails")?.remove();
-    const signalNotice = makeGeneGlassNoiseNotice(result.noise_assessment);
-    aiPrediction.insertAdjacentElement("afterend", signalNotice);
-    showUnsupportedTargetAdvisory(result.unsupported_target_pattern);
+    if (result.found === true) {
+      const signalNotice = makeGeneGlassNoiseNotice(result.noise_assessment);
+      aiPrediction.insertAdjacentElement("afterend", signalNotice);
+      showUnsupportedTargetAdvisory(result.unsupported_target_pattern);
+    }
     showCards(jak2Details, [
       ["AB1 Position", result.ab1_base_number],
       ["Genomic Coordinate", result.genomic_position
@@ -777,7 +807,15 @@ try {
       jak2Details.append(referenceCard);
     }
   } else {
-    jak2Details.textContent = "JAK2 target analysis could not be loaded.";
+    // A failed target endpoint should not leave a misleading 'Loading' message.
+    evidenceBadge.textContent = "Evidence unavailable";
+    evidenceBadge.dataset.status = "review";
+    jak2Summary.replaceChildren();
+    const unavailable = document.createElement("p");
+    unavailable.className = "evidence-unavailable";
+    unavailable.textContent = "Target evidence could not be loaded. Refer to the Initial QC decision for target-mapping status.";
+    jak2Summary.appendChild(unavailable);
+    jak2Details.textContent = "No mapped JAK2 V617F target evidence available.";
   }
 
   if (!traceResponse.ok) throw new Error("Unable to load chromatogram.");

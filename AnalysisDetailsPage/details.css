@@ -1396,3 +1396,12 @@
 .details-qc-note { font-size:13px; }
 .details-qc-card a { display:inline-flex; padding:10px 14px; border-radius:10px; background:#008f96; color:white; font-size:13px; font-weight:700; text-decoration:none; }
 @media (max-width:650px) { .details-qc-heading { align-items:flex-start; flex-direction:column; } }
+
+/* Compact read-only QC and saved evidence. */
+#detailsQcLink[hidden], .details-card [hidden] { display: none !important; }
+.evidence-summary:has(.evidence-unavailable) { display: block; border: 0; background: transparent; overflow: visible; }
+.evidence-unavailable { display:block; margin:0; padding:15px 16px; border:1px solid #efdbce; background:#fff8f2; border-radius:12px; color:#8c4d2b; font-size:14px; line-height:1.55; }
+.audit-disclosure { border:1px solid #dbe9e9; border-radius:13px; background:#fbfefe; margin-top:12px; }
+.audit-disclosure > summary { cursor:pointer; padding:14px 16px; color:#116e73; font-size:14px; font-weight:700; }
+.audit-disclosure .audit-timeline { padding:14px 20px; border-top:1px solid #e0eeee; margin:0; }
+.audit-disclosure:not([open]) .audit-timeline { display:none; }

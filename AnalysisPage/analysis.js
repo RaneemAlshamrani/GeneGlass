@@ -13,6 +13,7 @@
   const initialQcContinue = document.getElementById("initialQcContinue");
   const initialQcRepeat = document.getElementById("initialQcRepeat");
   const initialQcMessage = document.getElementById("initialQcMessage");
+  const initialQcRepeatConfirmation = document.getElementById("initialQcRepeatConfirmation");
   const finalizationWorkspace = document.getElementById("finalizationWorkspace");
   const reviewForm = document.getElementById("analysisReviewForm");
   const reviewTemplate = document.getElementById("analysisReviewTemplate");
@@ -420,12 +421,15 @@
         ? Number(noise.mean_flank_secondary_ratio).toFixed(3) : "N/A");
     }
     initialQcComment.value = qc.comment || "";
+    const repeatRequested = qc.decision === "request_repeat";
     initialQcContinue.disabled = !readableTarget;
-    initialQcRepeat.disabled = false;
+    initialQcRepeat.disabled = repeatRequested;
+    initialQcRepeat.title = repeatRequested ? "Repeat request already saved" : "Request another sequencing run";
+    initialQcRepeatConfirmation.hidden = !repeatRequested;
     initialQcMessage.textContent = qc.decision === "continue_analysis"
       ? "Specialist permission is recorded. Research-only AI analysis may run."
-      : qc.decision === "request_repeat"
-        ? "Repeat was requested. AI prediction remains blocked; the saved decision is auditable."
+      : repeatRequested
+        ? "QC decision recorded in the audit trail."
         : "No AI prediction will be generated until Continue Analysis is selected.";
     if (qc.decision === "pending" && details.ai_prediction && readableTarget) {
       initialQcMessage.textContent = "Historical AI result detected (created before the QC approval step). A new AI run still requires your decision.";
@@ -447,6 +451,8 @@
 
   async function saveQcChoice(decision) {
     if (!activeAnalysisId || !currentQc || qcSaving) return;
+    // Prevent duplicate repeat requests from repeated clicks.
+    if (decision === "request_repeat" && currentQc.decision === "request_repeat") return;
     const mapped = currentQc.target_found === true && currentTarget?.found === true;
     if (decision === "continue_analysis" && !mapped) {
       initialQcMessage.textContent = "Target Not Found or mapping unavailable. AI analysis cannot continue.";
@@ -471,14 +477,15 @@
         body: JSON.stringify({ decision, comment }),
       });
       await responseJson(response, "Could not save the QC decision.");
+      // The refreshed QC state displays a persistent confirmation for repeat requests.
       await loadAnalysis(activeAnalysisId);
-      initialQcMessage.textContent = decision === "continue_analysis"
-        ? "Continue Analysis was saved. AI prediction and SHAP are now available when generated."
-        : "Request Repeat was saved. AI prediction is blocked.";
+      if (decision === "continue_analysis") {
+        initialQcMessage.textContent = "Continue Analysis was saved. AI prediction and SHAP are now available when generated.";
+      }
     } catch (error) {
       initialQcMessage.textContent = error.message || "Could not save the QC decision.";
       initialQcContinue.disabled = !(currentQc.target_found === true && currentTarget?.found === true);
-      initialQcRepeat.disabled = false;
+      initialQcRepeat.disabled = currentQc.decision === "request_repeat";
     } finally {
       qcSaving = false;
     }
@@ -521,16 +528,16 @@
     const qcResponse = await fetch(`${apiBaseUrl}/analyses/${activeAnalysisId}/preliminary-qc-decision`, { headers });
     const qc = await responseJson(qcResponse, "Preliminary QC decision could not be loaded.");
     showQcState(qc, details, targetResult, targetLoadError);
+    // Repeat decisions are communicated by the QC confirmation instead of an extra AI card.
+    if (qc.decision === "request_repeat") {
+      return;
+    }
     if (qc.target_found !== true) {
       renderAiNotice("Target Not Found", "JAK2 V617F could not be mapped. A Negative/Hetero result cannot be generated.");
       return;
     }
     if (targetResult?.found !== true) {
       renderAiNotice("Target evidence unavailable", "The mapped target could not be inspected. AI classification remains unavailable.");
-      return;
-    }
-    if (qc.decision === "request_repeat") {
-      renderAiNotice("Request Repeat", "The specialist requested another sequencing run. AI classification is not displayed.");
       return;
     }
     const historical = qc.decision === "pending" && Boolean(details.ai_prediction);
