@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GeneGlass | New Analysis</title>
-    <link rel="stylesheet" href="analysis.css?v=20261114-repeat2" />
+    <link rel="stylesheet" href="analysis.css?v=20261114-workflow1" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
@@ -13,7 +13,7 @@
     <script src="../assets/auth.js" defer></script>
     <script src="../assets/shap-explanation.js?v=20261113-1" defer></script>
     <script src="../assets/chromatogram-viewer.js?v=20261113-3" defer></script>
-    <script src="analysis.js?v=20261114-repeat2" defer></script>
+    <script src="analysis.js?v=20261114-workflow1" defer></script>
   </head>
 
   <body>
@@ -89,26 +89,42 @@
           </div>
           <p id="message" class="message" role="status"></p>
         </section>
-        <section
-          class="dashboard-card chromatogram-card"
-          id="chromatogramSection"
-          hidden
-        >
-          <h2>Chromatogram Viewer</h2>
-          <canvas
-            id="chromatogramCanvas"
-            width="1200"
-            height="350"
-            aria-label="AB1 chromatogram"
-          ></canvas>
-          <p id="chromatogramDetail" class="chromatogram-detail"></p>
-        </section>
+        <section id="analysisWorkflow" class="analysis-workflow" aria-labelledby="workflowTitle" hidden>
+          <div class="workflow-progress-card">
+            <div class="workflow-progress-copy">
+              <span>Analysis workflow</span>
+              <h2 id="workflowTitle">Review one step at a time</h2>
+              <p id="workflowProgressStatus" aria-live="polite">Step 1 of 4 · Signal &amp; QC</p>
+            </div>
+            <ol class="workflow-progress" aria-label="Analysis progress">
+              <li data-workflow-indicator="1" class="is-active"><span>1</span><strong>Signal &amp; QC</strong></li>
+              <li data-workflow-indicator="2"><span>2</span><strong>AI Result</strong></li>
+              <li data-workflow-indicator="3"><span>3</span><strong>Specialist Decision</strong></li>
+              <li data-workflow-indicator="4"><span>4</span><strong>PDF Report</strong></li>
+            </ol>
+          </div>
 
-        <section class="dashboard-card initial-qc-card" id="initialQcCard" aria-labelledby="initialQcTitle" hidden>
+          <div id="workflowStageEvidence" class="workflow-stage" data-workflow-stage="1">
+            <section class="dashboard-card chromatogram-card" id="chromatogramSection" hidden>
+              <div class="workflow-section-heading">
+                <span>Original sequencing signal</span>
+                <h2>Chromatogram</h2>
+                <p>Inspect the mapped JAK2 target and surrounding peaks before reviewing quality.</p>
+              </div>
+              <canvas
+                id="chromatogramCanvas"
+                width="1200"
+                height="350"
+                aria-label="AB1 chromatogram"
+              ></canvas>
+              <p id="chromatogramDetail" class="chromatogram-detail"></p>
+            </section>
+
+            <section class="dashboard-card initial-qc-card" id="initialQcCard" aria-labelledby="initialQcTitle" hidden>
           <div class="initial-qc-heading">
             <div>
-              <span class="initial-qc-step">Step 1 · Before AI prediction</span>
-              <h2 id="initialQcTitle"><i class="fa-solid fa-shield-heart"></i> Initial QC — Specialist Decision</h2>
+              <span class="initial-qc-step">Quality checkpoint</span>
+              <h2 id="initialQcTitle"><i class="fa-solid fa-shield-heart"></i> Initial QC</h2>
               <p>Inspect the chromatogram and signal measurements before deciding whether to continue.</p>
             </div>
             <strong class="initial-qc-badge" id="initialQcBadge">Pending decision</strong>
@@ -121,7 +137,7 @@
             <textarea id="initialQcComment" rows="3" maxlength="2000" placeholder="Required for Request Repeat or for continuing despite a QC flag."></textarea>
           </label>
           <div class="initial-qc-actions">
-            <button id="initialQcContinue" type="button"><i class="fa-solid fa-arrow-right"></i> Continue Analysis</button>
+            <button id="initialQcContinue" type="button">Continue <i class="fa-solid fa-arrow-right"></i></button>
             <button id="initialQcRepeat" class="initial-qc-repeat" type="button"><i class="fa-solid fa-rotate-left"></i> Request Repeat</button>
           </div>
           <p id="initialQcMessage" class="initial-qc-message" role="status"></p>
@@ -136,13 +152,53 @@
               </div>
             </div>
           </div>
-        </section>
+            </section>
+          </div>
+
+          <div id="workflowStageModel" class="workflow-stage" data-workflow-stage="2" hidden>
+            <div id="analysisAiResultMount"></div>
+
+            <section id="analysisResearchCard" class="dashboard-card analysis-research-card" hidden>
+              <details class="analysis-research-disclosure">
+                <summary>
+                  <span class="analysis-research-icon"><i class="fa-solid fa-database"></i></span>
+                  <span>
+                    <strong>Research Databases</strong>
+                    <small>Optional external evidence · research use only</small>
+                  </span>
+                  <span id="analysisResearchBadge" class="analysis-research-badge">Not searched</span>
+                </summary>
+                <div class="analysis-research-panel">
+                  <div class="analysis-source-dashboard">
+                    <article class="analysis-source-card primary">
+                      <div><i class="fa-solid fa-shield-halved"></i><span><strong>NCBI ClinVar</strong><small>Exact HGVS matches only</small></span></div>
+                      <p>Checks eligible variants within the JAK2 region covered by this AB1 read.</p>
+                      <button id="analysisResearchLookup" type="button">Search ClinVar</button>
+                    </article>
+                    <article class="analysis-source-card">
+                      <div><i class="fa-solid fa-arrow-up-right-from-square"></i><span><strong>Genovate</strong><small>Independent research workspace</small></span></div>
+                      <p>Opens externally. GeneGlass does not send patient or sequence data.</p>
+                      <a href="https://genovate-variant-validation-system-921860441860.us-west1.run.app/" target="_blank" rel="noopener noreferrer">Open Genovate</a>
+                    </article>
+                  </div>
+                  <p id="analysisResearchStatus" class="analysis-research-status" role="status">No ClinVar search has been requested.</p>
+                  <div id="analysisResearchResults" class="analysis-research-results"></div>
+                  <p class="analysis-research-footnote"><i class="fa-solid fa-circle-info"></i> External results support research review and do not replace specialist interpretation.</p>
+                </div>
+              </details>
+            </section>
+
+            <div class="workflow-navigation">
+              <button id="modelBack" class="workflow-back" type="button"><i class="fa-solid fa-arrow-left"></i> Back</button>
+              <button id="modelNext" class="workflow-primary" type="button" disabled>Next <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+          </div>
 
         <div id="finalizationWorkspace" class="analysis-finalization" hidden>
-          <section class="dashboard-card workflow-card">
+          <section id="workflowStageReview" class="dashboard-card workflow-card workflow-stage" data-workflow-stage="3" hidden>
             <div class="workflow-heading">
               <div>
-                <span>Step 2</span>
+                <span>Human validation</span>
                 <h2>Specialist Review</h2>
                 <p>Record the final JAK2 V617F decision before preparing the report.</p>
               </div>
@@ -167,14 +223,18 @@
                 <button id="analysisReviewSubmit" type="submit"><i class="fa-solid fa-check"></i> Save decision</button>
               </div>
             </form>
+            <div class="workflow-navigation">
+              <button id="reviewBack" class="workflow-back" type="button"><i class="fa-solid fa-arrow-left"></i> Back</button>
+              <button id="openReportStep" class="workflow-primary" type="button" disabled><i class="fa-solid fa-file-pdf"></i> Generate PDF</button>
+            </div>
           </section>
 
-          <section class="dashboard-card workflow-card">
+          <section id="workflowStageReport" class="dashboard-card workflow-card workflow-stage" data-workflow-stage="4" hidden>
             <div class="workflow-heading">
               <div>
-                <span>Step 3</span>
+                <span>Final document</span>
                 <h2>Molecular Report</h2>
-                <p>Create the PDF here. History will keep only the finalized file for download.</p>
+                <p>Complete the patient information, then finalize the PDF for History.</p>
               </div>
               <strong id="analysisReportBadge" class="workflow-badge">Locked</strong>
             </div>
@@ -209,40 +269,14 @@
               <label class="analysis-report-wide"><span>Interpretation <small>Editable</small></span><textarea id="analysisReportInterpretation" name="interpretation" rows="3" required></textarea></label>
               <div class="workflow-footer">
                 <p id="analysisReportStatus" role="status"></p>
-                <button id="analysisGenerateReport" type="submit"><i class="fa-solid fa-file-pdf"></i> Generate PDF</button>
+                <button id="analysisGenerateReport" type="submit"><i class="fa-solid fa-file-pdf"></i> Finalize &amp; Open PDF</button>
               </div>
             </form>
+            <div class="workflow-navigation workflow-navigation-report">
+              <button id="reportBack" class="workflow-back" type="button"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            </div>
           </section>
         </div>
-
-        <section id="analysisResearchCard" class="dashboard-card analysis-research-card" hidden>
-          <details class="analysis-research-disclosure">
-            <summary>
-              <span class="analysis-research-icon"><i class="fa-solid fa-database"></i></span>
-              <span>
-                <strong>Research Databases</strong>
-                <small>Optional external evidence · research use only</small>
-              </span>
-              <span id="analysisResearchBadge" class="analysis-research-badge">Not searched</span>
-            </summary>
-            <div class="analysis-research-panel">
-              <div class="analysis-source-dashboard">
-                <article class="analysis-source-card primary">
-                  <div><i class="fa-solid fa-shield-halved"></i><span><strong>NCBI ClinVar</strong><small>Exact HGVS matches only</small></span></div>
-                  <p>Checks eligible variants within the JAK2 region covered by this AB1 read.</p>
-                  <button id="analysisResearchLookup" type="button">Search ClinVar</button>
-                </article>
-                <article class="analysis-source-card">
-                  <div><i class="fa-solid fa-arrow-up-right-from-square"></i><span><strong>Genovate</strong><small>Independent research workspace</small></span></div>
-                  <p>Opens externally. GeneGlass does not send patient or sequence data.</p>
-                  <a href="https://genovate-variant-validation-system-921860441860.us-west1.run.app/" target="_blank" rel="noopener noreferrer">Open Genovate</a>
-                </article>
-              </div>
-              <p id="analysisResearchStatus" class="analysis-research-status" role="status">No ClinVar search has been requested.</p>
-              <div id="analysisResearchResults" class="analysis-research-results"></div>
-              <p class="analysis-research-footnote"><i class="fa-solid fa-circle-info"></i> External results support research review and do not replace specialist interpretation.</p>
-            </div>
-          </details>
         </section>
       </main>
     </div>

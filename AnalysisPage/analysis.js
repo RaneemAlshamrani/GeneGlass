@@ -3,6 +3,10 @@
   const fileInfo = document.getElementById("fileInfo");
   const button = document.getElementById("analyze");
   const message = document.getElementById("message");
+  const workflow = document.getElementById("analysisWorkflow");
+  const workflowProgressStatus = document.getElementById("workflowProgressStatus");
+  const workflowStages = [...document.querySelectorAll("[data-workflow-stage]")];
+  const workflowIndicators = [...document.querySelectorAll("[data-workflow-indicator]")];
   const section = document.getElementById("chromatogramSection");
   const uploadCard = document.querySelector(".upload-card");
   const initialQcCard = document.getElementById("initialQcCard");
@@ -14,6 +18,12 @@
   const initialQcRepeat = document.getElementById("initialQcRepeat");
   const initialQcMessage = document.getElementById("initialQcMessage");
   const initialQcRepeatConfirmation = document.getElementById("initialQcRepeatConfirmation");
+  const aiResultMount = document.getElementById("analysisAiResultMount");
+  const modelBack = document.getElementById("modelBack");
+  const modelNext = document.getElementById("modelNext");
+  const reviewBack = document.getElementById("reviewBack");
+  const openReportStep = document.getElementById("openReportStep");
+  const reportBack = document.getElementById("reportBack");
   const finalizationWorkspace = document.getElementById("finalizationWorkspace");
   const reviewForm = document.getElementById("analysisReviewForm");
   const reviewTemplate = document.getElementById("analysisReviewTemplate");
@@ -45,6 +55,33 @@
   let currentQc = null;
   let currentTarget = null;
   let qcSaving = false;
+  let modelReady = false;
+
+  const WORKFLOW_LABELS = {
+    1: "Signal & QC",
+    2: "AI Result",
+    3: "Specialist Decision",
+    4: "PDF Report",
+  };
+
+  function showWorkflowStep(step, { focus = true } = {}) {
+    const requested = Math.max(1, Math.min(4, Number(step) || 1));
+    for (const stage of workflowStages) {
+      stage.hidden = Number(stage.dataset.workflowStage) !== requested;
+    }
+    finalizationWorkspace.hidden = requested < 3;
+    for (const indicator of workflowIndicators) {
+      const indicatorStep = Number(indicator.dataset.workflowIndicator);
+      indicator.classList.toggle("is-active", indicatorStep === requested);
+      indicator.classList.toggle("is-complete", indicatorStep < requested);
+      if (indicatorStep === requested) indicator.setAttribute("aria-current", "step");
+      else indicator.removeAttribute("aria-current");
+    }
+    workflowProgressStatus.textContent = `Step ${requested} of 4 · ${WORKFLOW_LABELS[requested]}`;
+    if (focus) {
+      workflow.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
 
   const REVIEW_NOTES = {
     positive: [
@@ -138,6 +175,7 @@
       : '<i class="fa-solid fa-lock"></i><span>Save a Positive or Negative Specialist Review first.</span>';
     reportForm.hidden = reportIsCurrent;
     existingReportActions.hidden = !reportIsCurrent;
+    openReportStep.disabled = !decisionIsFinal;
     for (const control of reportForm.elements) {
       control.disabled = !decisionIsFinal || reportIsCurrent;
     }
@@ -176,7 +214,6 @@
   async function loadWorkflowState(analysisId) {
     const headers = authHeaders();
     if (!headers) return;
-    finalizationWorkspace.hidden = false;
     const [reviewsResponse, reportResponse] = await Promise.all([
       fetch(`${apiBaseUrl}/analyses/${analysisId}/reviews`, { headers }),
       fetch(`${apiBaseUrl}/analyses/${analysisId}/report`, { headers }),
@@ -268,7 +305,9 @@
     notice.textContent = "Research use only; not a clinical diagnosis. The model was trained on Negative and Hetero, not Homo or Noise. These scores are not clinical certainty.";
     panel.append(notice);
     // The chromatogram already marks the mapped target with targetBase.
-    initialQcCard.insertAdjacentElement("afterend", panel);
+    aiResultMount.replaceChildren(panel);
+    modelReady = true;
+    modelNext.disabled = false;
   }
 
   function appendResearchField(container, label, value) {
@@ -446,7 +485,9 @@
     const note = document.createElement("p");
     note.textContent = content;
     panel.append(heading, note);
-    initialQcCard.insertAdjacentElement("afterend", panel);
+    aiResultMount.replaceChildren(panel);
+    modelReady = false;
+    modelNext.disabled = true;
   }
 
   async function saveQcChoice(decision) {
@@ -478,9 +519,9 @@
       });
       await responseJson(response, "Could not save the QC decision.");
       // The refreshed QC state displays a persistent confirmation for repeat requests.
-      await loadAnalysis(activeAnalysisId);
+      await loadAnalysis(activeAnalysisId, null, decision === "continue_analysis" ? 2 : 1);
       if (decision === "continue_analysis") {
-        initialQcMessage.textContent = "Continue Analysis was saved. AI prediction and SHAP are now available when generated.";
+        initialQcMessage.textContent = "QC approval saved.";
       }
     } catch (error) {
       initialQcMessage.textContent = error.message || "Could not save the QC decision.";
@@ -491,10 +532,14 @@
     }
   }
 
-  async function loadAnalysis(analysisId, uploadResult = null) {
+  async function loadAnalysis(analysisId, uploadResult = null, requestedStep = 1) {
     const headers = authHeaders();
     if (!headers || !apiBaseUrl) throw new Error("Please sign in again; API configuration is unavailable.");
     activeAnalysisId = Number(analysisId);
+    workflow.hidden = false;
+    showWorkflowStep(1, { focus: false });
+    modelReady = false;
+    modelNext.disabled = true;
     const [detailsResponse, traceResponse] = await Promise.all([
       fetch(`${apiBaseUrl}/analyses/${activeAnalysisId}`, { headers }),
       fetch(`${apiBaseUrl}/analyses/${activeAnalysisId}/chromatogram`, { headers }),
@@ -530,19 +575,23 @@
     showQcState(qc, details, targetResult, targetLoadError);
     // Repeat decisions are communicated by the QC confirmation instead of an extra AI card.
     if (qc.decision === "request_repeat") {
+      showWorkflowStep(1, { focus: requestedStep !== 1 });
       return;
     }
     if (qc.target_found !== true) {
       renderAiNotice("Target Not Found", "JAK2 V617F could not be mapped. A Negative/Hetero result cannot be generated.");
+      showWorkflowStep(1, { focus: false });
       return;
     }
     if (targetResult?.found !== true) {
       renderAiNotice("Target evidence unavailable", "The mapped target could not be inspected. AI classification remains unavailable.");
+      showWorkflowStep(1, { focus: false });
       return;
     }
     const historical = qc.decision === "pending" && Boolean(details.ai_prediction);
     if (qc.decision !== "continue_analysis" && !historical) {
       renderAiNotice("Awaiting Initial QC Decision", "Review the original signal above, then select Continue Analysis or Request Repeat.");
+      showWorkflowStep(1, { focus: false });
       return;
     }
 
@@ -561,6 +610,7 @@
       }
     } catch (error) {
       renderAiNotice("AI prediction unavailable", error.message || "Model output could not be loaded.");
+      showWorkflowStep(qc.decision === "continue_analysis" ? 2 : 1, { focus: false });
       return;
     }
     if (qc.decision === "continue_analysis") {
@@ -568,6 +618,7 @@
       await loadSavedResearchResults();
       await loadWorkflowState(activeAnalysisId);
     }
+    showWorkflowStep(requestedStep, { focus: requestedStep !== 1 });
   }
 
   async function saveReview(event) {
@@ -676,6 +727,7 @@
     button.disabled = true;
     message.textContent = "Analyzing file...";
     section.hidden = true;
+    workflow.hidden = true;
     initialQcCard.hidden = true;
     finalizationWorkspace.hidden = true;
     researchCard.hidden = true;
@@ -696,8 +748,23 @@
     }
   });
 
-  initialQcContinue.addEventListener("click", () => saveQcChoice("continue_analysis"));
+  initialQcContinue.addEventListener("click", () => {
+    if (currentQc?.decision === "continue_analysis") {
+      showWorkflowStep(2);
+      return;
+    }
+    saveQcChoice("continue_analysis");
+  });
   initialQcRepeat.addEventListener("click", () => saveQcChoice("request_repeat"));
+  modelBack.addEventListener("click", () => showWorkflowStep(1));
+  modelNext.addEventListener("click", () => {
+    if (modelReady) showWorkflowStep(3);
+  });
+  reviewBack.addEventListener("click", () => showWorkflowStep(2));
+  openReportStep.addEventListener("click", () => {
+    if (["positive", "negative"].includes(latestReviewDecision)) showWorkflowStep(4);
+  });
+  reportBack.addEventListener("click", () => showWorkflowStep(3));
 
   reviewForm.addEventListener("change", (event) => {
     if (event.target.name === "reviewDecision") populateReviewTemplates(event.target.value);

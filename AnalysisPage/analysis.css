@@ -1058,9 +1058,7 @@ body {
 .analysis-research-footnote { display: flex; gap: 8px; margin: 16px 0 0; color: #71858a; }
 
 .analysis-finalization {
-  display: grid;
-  gap: 22px;
-  margin-top: 22px;
+  display: block;
 }
 
 .analysis-finalization[hidden] { display: none; }
@@ -1172,6 +1170,154 @@ body {
   .analysis-research-panel { padding: 0 18px 20px; }
   .workflow-footer button,
   .existing-report-actions button { width: 100%; }
+}
+
+/* Guided New Analysis workflow. Only the active stage occupies the workspace. */
+.analysis-workflow {
+  position: relative;
+  z-index: 2;
+  margin-top: 24px;
+}
+.analysis-workflow[hidden],
+.workflow-stage[hidden] { display: none !important; }
+.workflow-progress-card {
+  display: grid;
+  grid-template-columns: minmax(220px, .8fr) minmax(520px, 1.7fr);
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 20px;
+  padding: 22px 26px;
+  border: 1px solid #dcebec;
+  border-radius: 18px;
+  background: rgba(255,255,255,.95);
+  box-shadow: 0 14px 34px rgba(17,80,87,.07);
+}
+.workflow-progress-copy > span,
+.workflow-section-heading > span {
+  color: #008f96;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.workflow-progress-copy h2 { margin: 5px 0 4px; color: #12363b; font-size: 20px; }
+.workflow-progress-copy p { margin: 0; color: #6c8387; font-size: 13px; }
+.workflow-progress {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.workflow-progress li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  color: #7a8d91;
+  text-align: center;
+  font-size: 11px;
+}
+.workflow-progress li::before {
+  content: "";
+  position: absolute;
+  top: 16px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: #d8e7e8;
+  z-index: 0;
+}
+.workflow-progress li:first-child::before { display: none; }
+.workflow-progress li > span {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #ccdddf;
+  border-radius: 50%;
+  background: #fff;
+  color: #698085;
+  font-weight: 850;
+}
+.workflow-progress li strong { font-weight: 750; line-height: 1.25; }
+.workflow-progress li.is-active { color: #006f76; }
+.workflow-progress li.is-active > span {
+  border-color: #008f96;
+  background: #008f96;
+  color: #fff;
+  box-shadow: 0 0 0 5px rgba(0,143,150,.1);
+}
+.workflow-progress li.is-complete { color: #26786f; }
+.workflow-progress li.is-complete::before { background: #71bbb6; }
+.workflow-progress li.is-complete > span {
+  border-color: #8bcac5;
+  background: #e8f7f4;
+  color: #087569;
+}
+.workflow-section-heading { margin-bottom: 16px; }
+.workflow-section-heading h2 { margin: 4px 0 5px; color: #12363b; font-size: 21px; }
+.workflow-section-heading p { margin: 0; color: #6c8387; }
+.analysis-workflow .chromatogram-card,
+.analysis-workflow .initial-qc-card,
+.analysis-workflow .analysis-ai-result,
+.analysis-workflow .analysis-research-card,
+.analysis-workflow .workflow-card { margin-top: 0; }
+.analysis-workflow .initial-qc-card { margin-top: 20px; }
+#analysisAiResultMount:empty::before {
+  content: "Loading the model result…";
+  display: block;
+  padding: 28px;
+  border: 1px solid #dcebec;
+  border-radius: 18px;
+  background: #fff;
+  color: #617b80;
+}
+.workflow-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 16px 2px 2px;
+  border-top: 1px solid #dcebec;
+}
+.workflow-navigation button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 46px;
+  padding: 11px 20px;
+  border-radius: 11px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.workflow-navigation .workflow-back {
+  border: 1px solid #b9d9db;
+  background: #fff;
+  color: #296067;
+}
+.workflow-navigation .workflow-primary {
+  border: 1px solid #008f96;
+  background: #008f96;
+  color: #fff;
+}
+.workflow-navigation button:disabled { opacity: .5; cursor: not-allowed; }
+.workflow-navigation-report { justify-content: flex-start; }
+
+@media (max-width: 1000px) {
+  .workflow-progress-card { grid-template-columns: 1fr; gap: 20px; }
+}
+@media (max-width: 650px) {
+  .workflow-progress-card { padding: 20px 16px; }
+  .workflow-progress li strong { display: none; }
+  .workflow-navigation { align-items: stretch; flex-direction: column-reverse; }
+  .workflow-navigation button { width: 100%; }
 }
 
 /* Preliminary QC approval gate: independent from the later specialist result review. */
