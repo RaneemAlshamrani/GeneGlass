@@ -21,29 +21,15 @@ function reverseComplement(sequence) {
   return [...sequence].reverse().map((base) => DNA_COMPLEMENT[base] || "").join("");
 }
 
-function findSequenceMatches(readSequence, query) {
+function findSequenceMatches(readSequence, query, direction) {
+  // Search the sequence currently displayed, not both strand orientations.
   const pattern = [...query].map((base) => `[${DNA_IUPAC[base]}]`).join("");
-  const find = (candidate, orientation) => {
-    const regex = new RegExp(`(?=(${pattern}))`, "g");
-    return [...readSequence.matchAll(regex)].map((match) => ({
-      start: match.index,
-      end: match.index + candidate.length - 1,
-      orientation
-    }));
-  };
-  const direct = find(query, "Forward");
-  const reverse = reverseComplement(query);
-  const reverseMatches = reverse === query ? [] : (() => {
-    const reversePattern = [...reverse]
-      .map((base) => `[${DNA_IUPAC[base]}]`).join("");
-    const regex = new RegExp(`(?=(${reversePattern}))`, "g");
-    return [...readSequence.matchAll(regex)].map((match) => ({
-      start: match.index,
-      end: match.index + reverse.length - 1,
-      orientation: "Reverse complement"
-    }));
-  })();
-  return [...direct, ...reverseMatches].sort((a, b) => a.start - b.start);
+  const regex = new RegExp(`(?=(${pattern}))`, "g");
+  return [...readSequence.matchAll(regex)].map((match) => ({
+    start: match.index,
+    end: match.index + query.length - 1,
+    orientation: direction
+  }));
 }
 
 window.GeneGlassChromatogram = {
@@ -246,7 +232,7 @@ window.GeneGlassChromatogram = {
         return;
       }
       if (query !== lastSequenceQuery) {
-        sequenceMatches = findSequenceMatches(sequence, query);
+        sequenceMatches = findSequenceMatches(sequence, query, displayDirection);
         sequenceMatchIndex = -1;
         lastSequenceQuery = query;
       }
@@ -462,9 +448,6 @@ window.GeneGlassChromatogram = {
         highlightEnd = n - 1 - previousStart;
       }
       const normalizedSearch = normalizeDnaQuery(sequenceInput.value);
-      if (normalizedSearch && [...normalizedSearch].every((base) => DNA_IUPAC[base])) {
-        sequenceInput.value = reverseComplement(normalizedSearch);
-      }
       first = clampFirst(n - 1 - previousCenter - Math.floor(count / 2));
       lastSequenceQuery = "";
       sequenceMatches = [];
@@ -472,7 +455,14 @@ window.GeneGlassChromatogram = {
       sequenceStatus.textContent = "";
       sequenceStatus.dataset.state = "";
       updateDirectionButton();
-      draw();
+      if (normalizedSearch.length >= 3 &&
+          [...normalizedSearch].every((base) => DNA_IUPAC[base])) {
+        hasHighlight = false;
+        draw();
+        runSequenceSearch();
+      } else {
+        draw();
+      }
     };
 
     horizontalSlider.oninput = () => {
