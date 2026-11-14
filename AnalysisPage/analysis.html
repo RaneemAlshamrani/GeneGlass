@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GeneGlass | New Analysis</title>
-    <link rel="stylesheet" href="analysis.css?v=20261113-10" />
+    <link rel="stylesheet" href="analysis.css?v=20261114-qc1" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
@@ -13,7 +13,7 @@
     <script src="../assets/auth.js" defer></script>
     <script src="../assets/shap-explanation.js?v=20261113-1" defer></script>
     <script src="../assets/chromatogram-viewer.js?v=20261113-3" defer></script>
-    <script src="analysis.js?v=20261113-8" defer></script>
+    <script src="analysis.js?v=20261114-qc1" defer></script>
   </head>
 
   <body>
@@ -102,6 +102,29 @@
             aria-label="AB1 chromatogram"
           ></canvas>
           <p id="chromatogramDetail" class="chromatogram-detail"></p>
+        </section>
+
+        <section class="dashboard-card initial-qc-card" id="initialQcCard" aria-labelledby="initialQcTitle" hidden>
+          <div class="initial-qc-heading">
+            <div>
+              <span class="initial-qc-step">Step 1 · Before AI prediction</span>
+              <h2 id="initialQcTitle"><i class="fa-solid fa-shield-heart"></i> Initial QC — Specialist Decision</h2>
+              <p>Inspect the chromatogram and signal measurements before deciding whether to continue.</p>
+            </div>
+            <strong class="initial-qc-badge" id="initialQcBadge">Pending decision</strong>
+          </div>
+          <p id="initialQcTarget" class="initial-qc-target" role="status">Checking target mapping...</p>
+          <div class="initial-qc-metrics" id="initialQcMetrics"></div>
+          <p class="initial-qc-disclaimer">These quality measurements are preliminary and do not automatically detect or exclude Noise. SHAP explains the AI model, not sample validity.</p>
+          <label class="initial-qc-reason" for="initialQcComment">
+            <span>Specialist reason / note</span>
+            <textarea id="initialQcComment" rows="3" maxlength="2000" placeholder="Required for Request Repeat or for continuing despite a QC flag."></textarea>
+          </label>
+          <div class="initial-qc-actions">
+            <button id="initialQcContinue" type="button"><i class="fa-solid fa-arrow-right"></i> Continue Analysis</button>
+            <button id="initialQcRepeat" class="initial-qc-repeat" type="button"><i class="fa-solid fa-rotate-left"></i> Request Repeat</button>
+          </div>
+          <p id="initialQcMessage" class="initial-qc-message" role="status"></p>
         </section>
 
         <div id="finalizationWorkspace" class="analysis-finalization" hidden>

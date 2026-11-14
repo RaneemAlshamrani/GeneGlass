@@ -14,6 +14,7 @@ class AuditAction(StrEnum):
     PROFILE_UPDATED = "user.profile_updated"
     PASSWORD_CHANGED = "auth.password_changed"
     ANALYSIS_UPLOADED = "analysis.uploaded"
+    QC_DECISION_RECORDED = "analysis.qc_decision_recorded"
     ANALYSIS_RECALCULATED = "analysis.preliminary_evidence_recalculated"
     AI_PREDICTION_CREATED = "analysis.ai_prediction_created"
     ANALYSIS_DELETED = "analysis.deleted"

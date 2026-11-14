@@ -28,6 +28,8 @@ from app.models.model_prediction import ModelPrediction
 from app.models.molecular_report import MolecularReport
 from app.models.research_variant import CandidateVariant, ExternalAnnotation
 from app.models.review import Review, ReviewDecision
+from app.models.preliminary_qc_decision import PreliminaryQCDecision, QCDecision
+from pydantic import BaseModel, Field
 from app.models.user import User
 from app.schemas.analysis import AnalysisListItem, AnalysisListResponse
 from app.services.ab1_reader import read_ab1_file
@@ -433,22 +435,8 @@ async def upload_analysis(
                 "qc_status": analysis.qc_status.value,
             },
         )
-        prediction_record = record_prediction(session, analysis)
         analysis.status = AnalysisStatus.COMPLETED
         analysis.completed_at = datetime.now(UTC)
-        add_audit_event(
-            session,
-            actor_id=current_user.id,
-            analysis_id=analysis.id,
-            action=AuditAction.AI_PREDICTION_CREATED,
-            details={
-                "prediction_id": prediction_record.id,
-                "status": prediction_record.status,
-                "prediction": prediction_record.prediction,
-                "model_version": prediction_record.model_version,
-                "research_use_only": True,
-            },
-        )
         session.commit()
         session.refresh(analysis)
 
@@ -481,10 +469,10 @@ async def upload_analysis(
             "quality_assessment": analysis.quality_assessment,
         },
         "preliminary_target_analysis": preliminary_result,
-        "ai_prediction": serialize_prediction(prediction_record),
+        "ai_prediction": None,
         "message": (
-            "File uploaded, technical evidence generated, and a "
-            "research-only model prediction recorded."
+            "File uploaded and preliminary QC generated. "
+            "Awaiting specialist QC decision before AI prediction."
         ),
     }
 
@@ -1062,6 +1050,11 @@ def get_ai_prediction(
     if not analysis.stored_file_path:
         raise HTTPException(status_code=422, detail="AB1 file path unavailable")
 
+    # Show an existing historical result without recalculating it.
+    # New uploads have no prediction until specialist QC approval.
+    previous = require_preliminary_qc_approval(session, analysis, allow_saved_legacy=True)
+    if previous is not None:
+        return serialize_prediction(previous)
     record, created = get_or_record_current_prediction(session, analysis)
     if created:
         add_audit_event(
@@ -1106,6 +1099,7 @@ def refresh_ai_prediction(
     if not analysis.stored_file_path:
         raise HTTPException(status_code=422, detail="AB1 file path unavailable")
 
+    require_preliminary_qc_approval(session, analysis)
     record = record_prediction(session, analysis)
     add_audit_event(
         session,
@@ -1124,3 +1118,142 @@ def refresh_ai_prediction(
     session.commit()
     session.refresh(record)
     return serialize_prediction(record)
+
+# Preliminary specialist QC approval is independent from AI result review.
+class PreliminaryQCDecisionInput(BaseModel):
+    decision: QCDecision
+    comment: str | None = Field(default=None, max_length=2000)
+
+
+def get_latest_preliminary_qc_decision(
+    session: Session, analysis_id: int,
+) -> PreliminaryQCDecision | None:
+    return session.scalar(
+        select(PreliminaryQCDecision)
+        .where(PreliminaryQCDecision.analysis_id == analysis_id)
+        .order_by(PreliminaryQCDecision.id.desc())
+        .limit(1)
+    )
+
+
+def _qc_target_found(analysis: Analysis) -> bool:
+    try:
+        preliminary = json.loads(analysis.preliminary_result_json or "{}")
+    except (ValueError, TypeError):
+        return False
+    return isinstance(preliminary, dict) and preliminary.get("found") is True
+
+
+def require_preliminary_qc_approval(
+    session: Session,
+    analysis: Analysis,
+    *,
+    allow_saved_legacy: bool = False,
+) -> ModelPrediction | None:
+    if not _qc_target_found(analysis):
+        raise HTTPException(
+            status_code=409, detail="Target Not Found. AI prediction unavailable."
+        )
+    decision = get_latest_preliminary_qc_decision(session, analysis.id)
+    if decision is None:
+        if allow_saved_legacy:
+            existing = session.scalar(
+                select(ModelPrediction)
+                .where(ModelPrediction.analysis_id == analysis.id)
+                .order_by(ModelPrediction.id.desc())
+                .limit(1)
+            )
+            if existing is not None:
+                return existing  # Read-only access; no new inference.
+        raise HTTPException(
+            status_code=409, detail="Initial QC review is pending."
+        )
+    if decision.decision != QCDecision.CONTINUE_ANALYSIS:
+        raise HTTPException(
+            status_code=409, detail="Request Repeat selected. AI prediction blocked."
+        )
+    return None
+
+
+@analyses_router.get("/{analysis_id}/preliminary-qc-decision")
+def get_preliminary_qc_decision(
+    analysis_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_db)],
+) -> dict:
+    analysis = session.scalar(
+        select(Analysis).where(
+            Analysis.id == analysis_id, Analysis.user_id == current_user.id
+        )
+    )
+    if analysis is None:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    latest = get_latest_preliminary_qc_decision(session, analysis.id)
+    return {
+        "analysis_id": analysis.id,
+        "target_found": _qc_target_found(analysis),
+        "preliminary_qc_status": analysis.qc_status.value,
+        "decision": latest.decision.value if latest else "pending",
+        "comment": latest.comment if latest else None,
+        "decided_at": latest.created_at.isoformat() if latest else None,
+    }
+
+
+@analyses_router.post("/{analysis_id}/preliminary-qc-decision")
+def save_preliminary_qc_decision(
+    analysis_id: int,
+    payload: PreliminaryQCDecisionInput,
+    current_user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_db)],
+) -> dict:
+    analysis = session.scalar(
+        select(Analysis).where(
+            Analysis.id == analysis_id, Analysis.user_id == current_user.id
+        )
+    )
+    if analysis is None:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    if payload.decision == QCDecision.CONTINUE_ANALYSIS and not _qc_target_found(analysis):
+        raise HTTPException(
+            status_code=409, detail="Target Not Found. AI analysis cannot continue."
+        )
+    comment = (payload.comment or "").strip()
+    if (
+        payload.decision == QCDecision.REQUEST_REPEAT
+        or (
+            payload.decision == QCDecision.CONTINUE_ANALYSIS
+            and analysis.qc_status != QCStatus.PASSED
+        )
+    ) and not comment:
+        raise HTTPException(
+            status_code=422, detail="A reason is required for this QC decision."
+        )
+    record = PreliminaryQCDecision(
+        analysis_id=analysis.id,
+        reviewer_id=current_user.id,
+        decision=payload.decision,
+        comment=comment or None,
+    )
+    session.add(record)
+    session.flush()
+    add_audit_event(
+        session,
+        actor_id=current_user.id,
+        analysis_id=analysis.id,
+        action=AuditAction.QC_DECISION_RECORDED,
+        details={
+            "decision_id": record.id,
+            "decision": record.decision.value,
+            "qc_status_at_decision": analysis.qc_status.value,
+            "reason_provided": bool(comment),
+        },
+    )
+    session.commit()
+    session.refresh(record)
+    return {
+        "id": record.id,
+        "analysis_id": record.analysis_id,
+        "decision": record.decision.value,
+        "comment": record.comment,
+        "created_at": record.created_at.isoformat(),
+    }

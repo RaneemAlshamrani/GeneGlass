@@ -56,6 +56,7 @@ def test_ai_prediction_returns_owner_scoped_research_result(
             qc_status=QCStatus.PASSED,
             gene="JAK2",
             target_variant="V617F",
+            preliminary_result_json='{"found":true}',
         )
         session.add(analysis)
         session.commit()
@@ -122,6 +123,15 @@ def test_ai_prediction_returns_owner_scoped_research_result(
             owner_headers = {
                 "Authorization": f"Bearer {owner_login.json()['access_token']}"
             }
+            pending_response = client.get(
+                f"/api/analyses/{analysis_id}/ai-prediction",
+                headers=owner_headers,
+            )
+            qc_decision_response = client.post(
+                f"/api/analyses/{analysis_id}/preliminary-qc-decision",
+                headers=owner_headers,
+                json={"decision": "continue_analysis"},
+            )
             response = client.get(
                 f"/api/analyses/{analysis_id}/ai-prediction",
                 headers=owner_headers,
@@ -153,6 +163,10 @@ def test_ai_prediction_returns_owner_scoped_research_result(
                 },
             )
 
+        assert pending_response.status_code == 409
+        assert "pending" in pending_response.json()["detail"].lower()
+        assert qc_decision_response.status_code == 200
+        assert qc_decision_response.json()["decision"] == "continue_analysis"
         assert response.status_code == 200
         payload = response.json()
         assert payload["analysis_id"] == analysis_id

@@ -1384,3 +1384,15 @@
 /* Compact summary cards: file/date and target position/direction/review. */
 #fileDetails { grid-template-columns: minmax(0, 2fr) repeat(2, minmax(140px, .6fr)); }
 @media (max-width: 600px) { #fileDetails { grid-template-columns: 1fr; } }
+
+/* Read-only Initial QC state on saved analysis details. */
+.details-qc-card[hidden] { display:none!important; }
+.details-qc-heading { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+.details-qc-heading h2 { font-size:21px; color:#173a40; margin:6px 0; }
+.details-qc-badge { border-radius:999px; padding:9px 13px; font-size:12px; background:#fff1dc; color:#89521e; }
+.details-qc-badge[data-state="continue_analysis"] { background:#e6f6f0; color:#166759; }
+.details-qc-badge[data-state="request_repeat"], .details-qc-badge[data-state="target_not_found"] { background:#fff0e5; color:#934d29; }
+.details-qc-card p { color:#5b777b; line-height:1.55; }
+.details-qc-note { font-size:13px; }
+.details-qc-card a { display:inline-flex; padding:10px 14px; border-radius:10px; background:#008f96; color:white; font-size:13px; font-weight:700; text-decoration:none; }
+@media (max-width:650px) { .details-qc-heading { align-items:flex-start; flex-direction:column; } }

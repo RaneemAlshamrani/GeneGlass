@@ -9,7 +9,7 @@
 
   <link rel="stylesheet" href="../DashboardPage/dashboard.css">
 <link rel="stylesheet" href="../AnalysisPage/analysis.css?v=20261113-10">
-<link rel="stylesheet" href="details.css?v=20261113-5">
+<link rel="stylesheet" href="details.css?v=20261114-qc1">
 
   <link rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -19,7 +19,7 @@
 <script src="../assets/auth.js" defer></script>
 <script src="../assets/shap-explanation.js?v=20261113-1" defer></script>
 <script src="../assets/chromatogram-viewer.js?v=20261113-3" defer></script>
-<script src="details.js?v=20261113-7" defer></script>
+<script src="details.js?v=20261114-qc1" defer></script>
 
 </head>
 
@@ -121,6 +121,19 @@
   </p>
 </div>
 
+      </section>
+
+      <section class="dashboard-card details-card details-qc-card" id="detailsQcCard" hidden>
+        <div class="details-qc-heading">
+          <div>
+            <span class="section-kicker">Before AI prediction</span>
+            <h2>Initial QC Decision</h2>
+          </div>
+          <strong id="detailsQcBadge" class="details-qc-badge">Checking</strong>
+        </div>
+        <p id="detailsQcMessage" role="status"></p>
+        <p id="detailsQcNote" class="details-qc-note"></p>
+        <a id="detailsQcLink" href="#">Open initial QC in New Analysis</a>
       </section>
 
       <section class="dashboard-card details-card evidence-card">

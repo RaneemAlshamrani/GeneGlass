@@ -7,6 +7,7 @@ from app.models.molecular_report import MolecularReport
 from app.models.research_variant import CandidateVariant, ExternalAnnotation
 from app.models.review import Review, ReviewDecision
 from app.models.user import User, UserRole
+from app.models.preliminary_qc_decision import PreliminaryQCDecision, QCDecision
 
 __all__ = [
     "Analysis",
@@ -21,4 +22,6 @@ __all__ = [
     "ReviewDecision",
     "User",
     "UserRole",
+       "PreliminaryQCDecision",
+       "QCDecision",
 ]

@@ -8,6 +8,11 @@
   const evidenceBadge = document.getElementById("evidenceBadge");
   const aiPrediction = document.getElementById("aiPrediction");
   const message = document.getElementById("detailsMessage");
+  const detailsQcCard = document.getElementById("detailsQcCard");
+  const detailsQcBadge = document.getElementById("detailsQcBadge");
+  const detailsQcMessage = document.getElementById("detailsQcMessage");
+  const detailsQcNote = document.getElementById("detailsQcNote");
+  const detailsQcLink = document.getElementById("detailsQcLink");
   const researchButton = document.getElementById("researchLookupButton");
   const researchStatus = document.getElementById("researchStatus");
   const researchResults = document.getElementById("researchResults");
@@ -164,9 +169,10 @@ function makeGeneGlassNoiseNotice(noise) {
   }
 
   function renderEvidenceSummary(result) {
-    const status = result.needs_review ? "Needs review" : "Technical evidence available";
+    const notFound = result.found === false;
+    const status = notFound ? "Target Not Found" : result.needs_review ? "Needs review" : "Technical evidence available";
     evidenceBadge.textContent = status;
-    evidenceBadge.dataset.status = result.needs_review ? "review" : "ready";
+    evidenceBadge.dataset.status = notFound || result.needs_review ? "review" : "ready";
     const items = [
       ["Target", result.genomic_position ? `NC_000009.12:g.${result.genomic_position}` : "JAK2 V617F"],
       ["Read base", `${result.observed_base || "N/A"} · Q${result.quality_score ?? "N/A"}`],
@@ -318,6 +324,38 @@ function makeGeneGlassNoiseNotice(noise) {
     }
   }
 
+
+  function renderInitialQcState(qc, details) {
+    detailsQcCard.hidden = false;
+    detailsQcLink.href = `../AnalysisPage/analysis.html?id=${analysisId}`;
+    detailsQcBadge.dataset.state = qc.target_found !== true ? "target_not_found" : qc.decision;
+    detailsQcBadge.textContent = qc.target_found !== true ? "Target Not Found"
+      : qc.decision === "continue_analysis" ? "Continue approved"
+      : qc.decision === "request_repeat" ? "Repeat requested" : "Pending decision";
+    detailsQcMessage.textContent = qc.target_found !== true
+      ? "Target Not Found — AI classification is unavailable because JAK2 V617F could not be mapped."
+      : qc.decision === "continue_analysis"
+        ? "The specialist authorized AI analysis after examining the original chromatogram."
+        : qc.decision === "request_repeat"
+          ? "A repeat was requested. New AI classification is blocked."
+          : "Initial QC is awaiting the specialist's Continue Analysis or Request Repeat decision.";
+    detailsQcNote.textContent = qc.comment
+      ? `Specialist note: ${qc.comment}`
+      : qc.decision === "pending" && details.ai_prediction
+        ? "This analysis has a historical AI output saved before the new QC approval workflow."
+        : "Technical quality measurements are descriptive, not a validated Noise classifier.";
+  }
+
+  function renderAiGateNotice(title, messageText) {
+    aiPrediction.replaceChildren();
+    aiPrediction.setAttribute("aria-busy", "false");
+    const titleNode = document.createElement("strong");
+    titleNode.textContent = title;
+    const note = document.createElement("p");
+    note.textContent = messageText;
+    aiPrediction.append(titleNode, note);
+  }
+
   function renderSavedReport(report) {
     savedReport = report;
     continueReportLink.href = `../AnalysisPage/analysis.html?id=${analysisId}`;
@@ -403,6 +441,7 @@ function makeGeneGlassNoiseNotice(noise) {
     "analysis.uploaded": "Analysis uploaded",
     "analysis.preliminary_evidence_recalculated": "JAK2 evidence recalculated",
     "analysis.review_created": "Specialist review recorded",
+    "analysis.qc_decision_recorded": "Initial QC decision recorded",
     "analysis.clinvar_refreshed": "ClinVar research lookup completed",
   };
 
@@ -410,7 +449,8 @@ function makeGeneGlassNoiseNotice(noise) {
     if (!details || typeof details !== "object") return "";
     const readable = [];
     if (details.decision) {
-      readable.push(`Decision: ${reviewLabels[details.decision] || details.decision}`);
+      const qcLabels = { continue_analysis: "Continue Analysis", request_repeat: "Request Repeat" };
+      readable.push(`Decision: ${qcLabels[details.decision] || reviewLabels[details.decision] || details.decision}`);
     }
     if (Number.isInteger(details.screened_candidate_count)) {
       readable.push(`Candidates screened: ${details.screened_candidate_count}`);
@@ -716,7 +756,7 @@ try {
       ["Primary Peak", peaks.primary_base],
       ["Secondary Peak", peaks.secondary_base],
       ["Secondary / Primary", formatRatio(peaks.overlap_ratio)],
-      ["Target QC Review", result.needs_review ? "Needs Review" : "No target QC flag"],
+      ["Target QC Review", result.found === false ? "Target Not Found" : result.needs_review ? "Needs Review" : "No target QC flag"],
       ["Target QC Reason", reasons || "No target mapping or peak review reason"],
       ["Pipeline Version", result.pipeline_version]
     ]);
@@ -762,9 +802,23 @@ try {
 
 
 
+      const qcResponse = await fetch(`${apiBaseUrl}/analyses/${analysisId}/preliminary-qc-decision`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!qcResponse.ok) throw new Error("Unable to load Initial QC decision.");
+      const qc = await qcResponse.json();
+      renderInitialQcState(qc, details);
+      if (qc.target_found !== true) {
+        renderAiGateNotice("Target Not Found", "AI prediction and SHAP are unavailable without mapped JAK2 V617F target evidence.");
+      } else if (qc.decision === "request_repeat") {
+        renderAiGateNotice("Request Repeat", "A specialist requested a new sequencing run. AI classification is not displayed.");
+      } else if (qc.decision === "pending" && !details.ai_prediction) {
+        renderAiGateNotice("Awaiting Initial QC Decision", "Open New Analysis to inspect the signal and choose Continue Analysis or Request Repeat.");
+      } else {
+        await loadAiPrediction(token);
+      }
       message.textContent = "";
       await Promise.all([
-        loadAiPrediction(token),
         loadSavedResearchResults(token),
         loadReviewHistory(token),
         loadAuditTrail(token),

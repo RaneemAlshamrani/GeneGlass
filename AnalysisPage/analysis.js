@@ -5,6 +5,14 @@
   const message = document.getElementById("message");
   const section = document.getElementById("chromatogramSection");
   const uploadCard = document.querySelector(".upload-card");
+  const initialQcCard = document.getElementById("initialQcCard");
+  const initialQcBadge = document.getElementById("initialQcBadge");
+  const initialQcTarget = document.getElementById("initialQcTarget");
+  const initialQcMetrics = document.getElementById("initialQcMetrics");
+  const initialQcComment = document.getElementById("initialQcComment");
+  const initialQcContinue = document.getElementById("initialQcContinue");
+  const initialQcRepeat = document.getElementById("initialQcRepeat");
+  const initialQcMessage = document.getElementById("initialQcMessage");
   const finalizationWorkspace = document.getElementById("finalizationWorkspace");
   const reviewForm = document.getElementById("analysisReviewForm");
   const reviewTemplate = document.getElementById("analysisReviewTemplate");
@@ -33,6 +41,9 @@
   let activeTrace = null;
   let latestReviewDecision = null;
   let savedReport = null;
+  let currentQc = null;
+  let currentTarget = null;
+  let qcSaving = false;
 
   const REVIEW_NOTES = {
     positive: [
@@ -256,7 +267,7 @@
     notice.textContent = "Research use only; not a clinical diagnosis. The model was trained on Negative and Hetero, not Homo or Noise. These scores are not clinical certainty.";
     panel.append(notice);
     // The chromatogram already marks the mapped target with targetBase.
-    section.insertAdjacentElement("afterend", panel);
+    initialQcCard.insertAdjacentElement("afterend", panel);
   }
 
   function appendResearchField(container, label, value) {
@@ -364,6 +375,115 @@
     }
   }
 
+
+  function qcMetric(label, value) {
+    const item = document.createElement("div");
+    item.className = "initial-qc-metric";
+    const name = document.createElement("span");
+    name.textContent = label;
+    const data = document.createElement("strong");
+    data.textContent = value == null || value === "" ? "N/A" : String(value);
+    item.append(name, data);
+    initialQcMetrics.append(item);
+  }
+
+  function showQcState(qc, details, targetResult, targetLoadError = null) {
+    currentQc = qc;
+    const mapped = qc.target_found === true;
+    // Do not enable continuation if the target evidence could not be retrieved.
+    const readableTarget = mapped && targetResult?.found === true;
+    initialQcCard.hidden = false;
+    initialQcBadge.dataset.state = !mapped ? "target_not_found" : qc.decision;
+    initialQcBadge.textContent = !mapped ? "Target Not Found"
+      : qc.decision === "continue_analysis" ? "Continue approved"
+      : qc.decision === "request_repeat" ? "Repeat requested" : "Pending specialist decision";
+    initialQcTarget.dataset.state = readableTarget ? "found" : "missing";
+    initialQcTarget.textContent = !mapped
+      ? "Target Not Found — JAK2 V617F could not be reliably located; AI classification is blocked."
+      : !readableTarget
+        ? `Target evidence unavailable — ${targetLoadError || "check target mapping before continuing"}.`
+        : "Target Found — examine signal quality before authorizing AI analysis.";
+
+    initialQcMetrics.replaceChildren();
+    const quality = details.quality_control || {};
+    qcMetric("Preliminary quality indicator", String(quality.quality_assessment || "unavailable").replaceAll("_", " "));
+    qcMetric("Average Phred", Number.isFinite(Number(quality.average_quality)) && quality.average_quality != null
+      ? Number(quality.average_quality).toFixed(1) : "N/A");
+    qcMetric("Low-quality bases", quality.low_quality_percentage != null
+      ? `${Number(quality.low_quality_percentage).toFixed(1)}%` : "N/A");
+    qcMetric("Retained bases", quality.retained_percentage != null
+      ? `${Number(quality.retained_percentage).toFixed(1)}%` : "N/A");
+    const noise = targetResult?.noise_assessment;
+    if (noise?.available === true) {
+      qcMetric("Lowest neighboring Phred", noise.min_flank_phred != null ? `Q${noise.min_flank_phred}` : "N/A");
+      qcMetric("Mean secondary/primary peak", noise.mean_flank_secondary_ratio != null
+        ? Number(noise.mean_flank_secondary_ratio).toFixed(3) : "N/A");
+    }
+    initialQcComment.value = qc.comment || "";
+    initialQcContinue.disabled = !readableTarget;
+    initialQcRepeat.disabled = false;
+    initialQcMessage.textContent = qc.decision === "continue_analysis"
+      ? "Specialist permission is recorded. Research-only AI analysis may run."
+      : qc.decision === "request_repeat"
+        ? "Repeat was requested. AI prediction remains blocked; the saved decision is auditable."
+        : "No AI prediction will be generated until Continue Analysis is selected.";
+    if (qc.decision === "pending" && details.ai_prediction && readableTarget) {
+      initialQcMessage.textContent = "Historical AI result detected (created before the QC approval step). A new AI run still requires your decision.";
+    }
+  }
+
+  function renderAiNotice(title, content) {
+    document.getElementById("analysisAiResult")?.remove();
+    const panel = document.createElement("section");
+    panel.className = "dashboard-card analysis-ai-result";
+    panel.id = "analysisAiResult";
+    const heading = document.createElement("h3");
+    heading.textContent = title;
+    const note = document.createElement("p");
+    note.textContent = content;
+    panel.append(heading, note);
+    initialQcCard.insertAdjacentElement("afterend", panel);
+  }
+
+  async function saveQcChoice(decision) {
+    if (!activeAnalysisId || !currentQc || qcSaving) return;
+    const mapped = currentQc.target_found === true && currentTarget?.found === true;
+    if (decision === "continue_analysis" && !mapped) {
+      initialQcMessage.textContent = "Target Not Found or mapping unavailable. AI analysis cannot continue.";
+      return;
+    }
+    const comment = initialQcComment.value.trim();
+    const needsReason = decision === "request_repeat"
+      || (decision === "continue_analysis" && currentQc.preliminary_qc_status !== "passed");
+    if (needsReason && !comment) {
+      initialQcMessage.textContent = "Enter a specialist reason before saving this decision.";
+      initialQcComment.focus();
+      return;
+    }
+    qcSaving = true;
+    initialQcContinue.disabled = true;
+    initialQcRepeat.disabled = true;
+    initialQcMessage.textContent = "Saving specialist QC decision...";
+    try {
+      const response = await fetch(`${apiBaseUrl}/analyses/${activeAnalysisId}/preliminary-qc-decision`, {
+        method: "POST",
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ decision, comment }),
+      });
+      await responseJson(response, "Could not save the QC decision.");
+      await loadAnalysis(activeAnalysisId);
+      initialQcMessage.textContent = decision === "continue_analysis"
+        ? "Continue Analysis was saved. AI prediction and SHAP are now available when generated."
+        : "Request Repeat was saved. AI prediction is blocked.";
+    } catch (error) {
+      initialQcMessage.textContent = error.message || "Could not save the QC decision.";
+      initialQcContinue.disabled = !(currentQc.target_found === true && currentTarget?.found === true);
+      initialQcRepeat.disabled = false;
+    } finally {
+      qcSaving = false;
+    }
+  }
+
   async function loadAnalysis(analysisId, uploadResult = null) {
     const headers = authHeaders();
     if (!headers || !apiBaseUrl) throw new Error("Please sign in again; API configuration is unavailable.");
@@ -372,41 +492,75 @@
       fetch(`${apiBaseUrl}/analyses/${activeAnalysisId}`, { headers }),
       fetch(`${apiBaseUrl}/analyses/${activeAnalysisId}/chromatogram`, { headers }),
     ]);
-    await responseJson(detailsResponse, "Analysis could not be loaded.");
+    const details = await responseJson(detailsResponse, "Analysis could not be loaded.");
     activeTrace = await responseJson(traceResponse, "Chromatogram could not be loaded.");
     section.hidden = false;
     uploadCard.hidden = true;
+    finalizationWorkspace.hidden = true;
+    researchCard.hidden = true;
+    document.getElementById("analysisAiResult")?.remove();
+    document.getElementById("jak2TargetError")?.remove();
     window.GeneGlassChromatogram.render(activeTrace, chromatogramOptions(activeTrace));
 
+    let targetResult = null;
+    let targetLoadError = null;
     try {
       const targetResponse = await fetch(`${apiBaseUrl}/analyses/${activeAnalysisId}/jak2-target`, { headers });
       const targetData = await responseJson(targetResponse, "Target analysis unavailable.");
-      const targetBase = Number(targetData.result?.ab1_base_number);
-      const readDirection = targetData.result?.direction || "Forward";
+      targetResult = targetData.result || null;
+      const targetBase = Number(targetResult?.ab1_base_number);
       window.GeneGlassChromatogram.render(
         activeTrace,
-        chromatogramOptions(activeTrace, targetBase, readDirection),
+        chromatogramOptions(activeTrace, targetBase, targetResult?.direction || "Forward"),
       );
     } catch (error) {
-      const note = document.createElement("p");
-      note.id = "jak2TargetError";
-      note.textContent = "JAK2 target analysis unavailable. No mutation conclusion can be made.";
-      section.after(note);
+      targetLoadError = error.message || "Target evidence unavailable";
+    }
+    currentTarget = targetResult;
+
+    const qcResponse = await fetch(`${apiBaseUrl}/analyses/${activeAnalysisId}/preliminary-qc-decision`, { headers });
+    const qc = await responseJson(qcResponse, "Preliminary QC decision could not be loaded.");
+    showQcState(qc, details, targetResult, targetLoadError);
+    if (qc.target_found !== true) {
+      renderAiNotice("Target Not Found", "JAK2 V617F could not be mapped. A Negative/Hetero result cannot be generated.");
+      return;
+    }
+    if (targetResult?.found !== true) {
+      renderAiNotice("Target evidence unavailable", "The mapped target could not be inspected. AI classification remains unavailable.");
+      return;
+    }
+    if (qc.decision === "request_repeat") {
+      renderAiNotice("Request Repeat", "The specialist requested another sequencing run. AI classification is not displayed.");
+      return;
+    }
+    const historical = qc.decision === "pending" && Boolean(details.ai_prediction);
+    if (qc.decision !== "continue_analysis" && !historical) {
+      renderAiNotice("Awaiting Initial QC Decision", "Review the original signal above, then select Continue Analysis or Request Repeat.");
+      return;
     }
 
     try {
-      let prediction = uploadResult?.ai_prediction;
+      let prediction = qc.decision === "continue_analysis" ? uploadResult?.ai_prediction : null;
       if (!prediction) {
         const predictionResponse = await fetch(`${apiBaseUrl}/analyses/${activeAnalysisId}/ai-prediction`, { headers });
         prediction = await responseJson(predictionResponse, "AI prediction is unavailable.");
       }
       renderAiResult(prediction);
+      if (historical) {
+        const note = document.createElement("p");
+        note.className = "analysis-ai-disclaimer";
+        note.textContent = "Historical model output — saved before the Initial QC approval workflow. No new model run is permitted until specialist approval.";
+        document.getElementById("analysisAiResult").append(note);
+      }
     } catch (error) {
-      renderAiResult({ status: "Needs Review", reason: `AI result unavailable: ${error.message || "Unknown error"}` });
+      renderAiNotice("AI prediction unavailable", error.message || "Model output could not be loaded.");
+      return;
     }
-    researchCard.hidden = false;
-    await loadSavedResearchResults();
-    await loadWorkflowState(activeAnalysisId);
+    if (qc.decision === "continue_analysis") {
+      researchCard.hidden = false;
+      await loadSavedResearchResults();
+      await loadWorkflowState(activeAnalysisId);
+    }
   }
 
   async function saveReview(event) {
@@ -515,6 +669,9 @@
     button.disabled = true;
     message.textContent = "Analyzing file...";
     section.hidden = true;
+    initialQcCard.hidden = true;
+    finalizationWorkspace.hidden = true;
+    researchCard.hidden = true;
     document.getElementById("jak2TargetError")?.remove();
     document.getElementById("analysisAiResult")?.remove();
     try {
@@ -531,6 +688,9 @@
       button.disabled = false;
     }
   });
+
+  initialQcContinue.addEventListener("click", () => saveQcChoice("continue_analysis"));
+  initialQcRepeat.addEventListener("click", () => saveQcChoice("request_repeat"));
 
   reviewForm.addEventListener("change", (event) => {
     if (event.target.name === "reviewDecision") populateReviewTemplates(event.target.value);
