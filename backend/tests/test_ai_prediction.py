@@ -140,6 +140,18 @@ def test_ai_prediction_returns_owner_scoped_research_result(
                 f"/api/analyses/{analysis_id}/ai-prediction",
                 headers=owner_headers,
             )
+            with sessions() as session:
+                saved = session.get(
+                    ModelPrediction,
+                    repeated_response.json()["prediction_id"],
+                )
+                assert saved is not None
+                saved.explanation_json = None
+                session.commit()
+            shap_upgrade_response = client.get(
+                f"/api/analyses/{analysis_id}/ai-prediction",
+                headers=owner_headers,
+            )
             list_response = client.get("/api/analyses", headers=owner_headers)
             dashboard_response = client.get(
                 "/api/dashboard/summary", headers=owner_headers
@@ -177,6 +189,9 @@ def test_ai_prediction_returns_owner_scoped_research_result(
         assert payload["explanation"]["method"] == "Tree SHAP"
         assert payload["explanation"]["output_value"] == 0.88
         assert repeated_response.json()["prediction_id"] == payload["prediction_id"]
+        assert shap_upgrade_response.status_code == 200
+        assert shap_upgrade_response.json()["prediction_id"] != payload["prediction_id"]
+        assert shap_upgrade_response.json()["explanation"]["available"] is True
         list_prediction = list_response.json()["items"][0]["ai_prediction"]
         assert list_prediction["prediction"] == "hetero"
         assert dashboard_response.json()["positive"] == 1
@@ -188,7 +203,7 @@ def test_ai_prediction_returns_owner_scoped_research_result(
         assert observed == {"file_path": str(ab1_path), "qc_passed": True}
         assert other_response.status_code == 404
         with sessions() as session:
-            assert len(session.query(ModelPrediction).all()) == 2
+            assert len(session.query(ModelPrediction).all()) == 3
     finally:
         app.dependency_overrides.clear()
         engine.dispose()

@@ -1053,7 +1053,7 @@ def get_ai_prediction(
     # Show an existing historical result without recalculating it.
     # New uploads have no prediction until specialist QC approval.
     previous = require_preliminary_qc_approval(session, analysis, allow_saved_legacy=True)
-    if previous is not None:
+    if previous is not None and previous.explanation_json is not None:
         return serialize_prediction(previous)
     record, created = get_or_record_current_prediction(session, analysis)
     if created:
@@ -1068,6 +1068,7 @@ def get_ai_prediction(
                 "prediction": record.prediction,
                 "model_version": record.model_version,
                 "research_use_only": True,
+                "shap_upgrade": previous is not None,
             },
         )
         session.commit()

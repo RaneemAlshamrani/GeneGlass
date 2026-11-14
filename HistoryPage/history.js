@@ -115,6 +115,28 @@
 
     .insertAdjacentElement("afterend", pagination);
 
+  const shapDialog = document.createElement("dialog");
+  shapDialog.className = "history-shap-dialog";
+  shapDialog.setAttribute("aria-labelledby", "historyShapTitle");
+  shapDialog.innerHTML = `
+    <div class="history-shap-dialog-header">
+      <div>
+        <span>MODEL EXPLANATION</span>
+        <h2 id="historyShapTitle">SHAP Explanation</h2>
+        <p class="history-shap-file"></p>
+      </div>
+      <button class="history-shap-close" type="button" aria-label="Close SHAP explanation">×</button>
+    </div>
+    <div class="history-shap-dialog-body"></div>
+  `;
+  document.body.appendChild(shapDialog);
+  shapDialog.querySelector(".history-shap-close").addEventListener("click", () => {
+    shapDialog.close();
+  });
+  shapDialog.addEventListener("click", (event) => {
+    if (event.target === shapDialog) shapDialog.close();
+  });
+
 
 
   function getToken() {
@@ -255,6 +277,86 @@
 
     return td;
 
+  }
+
+  async function showShapExplanation(analysis, button) {
+    const token = getToken();
+    if (!token) return;
+
+    const dialogBody = shapDialog.querySelector(".history-shap-dialog-body");
+    const fileLabel = shapDialog.querySelector(".history-shap-file");
+    fileLabel.textContent = analysis.original_file_name || `Analysis #${analysis.id}`;
+    dialogBody.replaceChildren();
+    const loading = document.createElement("p");
+    loading.className = "history-shap-loading";
+    loading.textContent = "Loading the saved model explanation...";
+    dialogBody.appendChild(loading);
+    shapDialog.showModal();
+
+    button.disabled = true;
+    try {
+      const response = await fetch(`${API_URL}/${analysis.id}/ai-prediction`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.detail || "The SHAP explanation could not be loaded.");
+      }
+
+      dialogBody.replaceChildren();
+      const result = document.createElement("div");
+      result.className = "history-shap-result";
+      const label = data.prediction === "hetero"
+        ? "Heterozygous pattern"
+        : data.prediction === "negative"
+          ? "No heterozygous pattern detected"
+          : "Model result needs review";
+      result.textContent = `Model output: ${label}`;
+      dialogBody.appendChild(result);
+
+      const explanation = window.GeneGlassShapExplanation?.create(
+        data.explanation
+      );
+      if (explanation) {
+        explanation.open = true;
+        dialogBody.appendChild(explanation);
+      } else {
+        const unavailable = document.createElement("p");
+        unavailable.className = "history-shap-unavailable";
+        unavailable.textContent = data.explanation?.reason
+          || "No SHAP attribution is stored for this model result.";
+        dialogBody.appendChild(unavailable);
+      }
+    } catch (error) {
+      dialogBody.replaceChildren();
+      const errorMessage = document.createElement("p");
+      errorMessage.className = "history-shap-unavailable";
+      errorMessage.textContent = error.message;
+      dialogBody.appendChild(errorMessage);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  function createShapCell(analysis) {
+    const td = document.createElement("td");
+    td.className = "history-shap-cell";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "history-shap-btn";
+    button.innerHTML = '<i class="fa-solid fa-chart-bar" aria-hidden="true"></i> Explain';
+
+    if (!analysis.ai_prediction) {
+      button.disabled = true;
+      button.title = "Available after QC approval and model prediction.";
+      button.textContent = "Pending";
+    } else {
+      button.addEventListener("click", () => {
+        showShapExplanation(analysis, button);
+      });
+    }
+    td.appendChild(button);
+    return td;
   }
 
 
@@ -588,6 +690,8 @@ message.appendChild(detailsCard);
         createCell(formatDate(analysis.created_at)),
 
         createReportCell(analysis),
+
+        createShapCell(analysis),
 
       );
 
