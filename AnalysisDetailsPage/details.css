@@ -1415,3 +1415,81 @@
 .audit-disclosure .audit-timeline { padding:14px 20px; border-top:1px solid #e0eeee; margin:0; }
 .audit-disclosure:not([open]) .audit-timeline { display:none; }
 
+
+/* 2026-11-15: readable saved QC and technical evidence. */
+.details-qc-card {
+  padding: 24px 28px;
+}
+.details-qc-card .details-qc-heading { margin-bottom: 14px; }
+.details-qc-card .details-qc-heading h2 { margin: 5px 0 0; }
+.details-qc-card .details-qc-message {
+  margin: 0 0 10px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  background: #f0f8f8;
+  border: 1px solid #dbe9e9;
+  color: #214c52;
+  line-height: 1.6;
+  font-size: 14px;
+}
+.details-qc-card:has(.details-qc-badge[data-state="request_repeat"]) .details-qc-message,
+.details-qc-card:has(.details-qc-badge[data-state="target_not_found"]) .details-qc-message {
+  background: #fff6f0;
+  border-color: #efd9c9;
+  color: #864c32;
+}
+.details-qc-card .details-qc-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.details-qc-card #detailsQcLink:not([hidden]) { margin-top: 12px; }
+.evidence-card .evidence-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+.evidence-card .evidence-summary-item {
+  padding: 15px 16px;
+  border-radius: 13px;
+  border: 1px solid #dbe9e9;
+  background: #f8fcfc;
+  gap: 9px;
+}
+.evidence-card .evidence-summary-item span { font-size: 12px; }
+.evidence-card .evidence-summary-item strong { font-size: 15px; line-height: 1.4; }
+.evidence-card .evidence-summary:has(.evidence-unavailable) {
+  display: block;
+  border: 0;
+}
+.evidence-card .ai-prediction.ai-gate-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 16px 18px;
+  background: #f4fafa;
+  border: 1px solid #d8e8e8;
+  color: #365e63;
+  line-height: 1.55;
+}
+.evidence-card .ai-prediction.ai-gate-notice > strong {
+  font-size: 15px;
+  color: #21474e;
+}
+.evidence-card .ai-prediction.ai-gate-notice > p {
+  margin: 0;
+  font-size: 13px;
+  color: #658186;
+}
+.report-archive-copy { min-width: 0; }
+@media (max-width: 900px) {
+  .evidence-card .evidence-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .details-qc-card { padding: 19px 17px; }
+  .evidence-card .evidence-summary { grid-template-columns: 1fr; }
+}

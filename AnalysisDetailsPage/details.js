@@ -82,68 +82,6 @@
     return best ? { startBase: best.start + 1, endBase: best.start + motif.length } : null;
   }
 
-  function makeGeneGlassNoiseNotice(noise) {
-    const node = document.createElement("section");
-    node.id = "geneglassNoiseDetails";
-    node.className = "geneglass-noise-notice";
-    node.setAttribute("role", "note");
-
-    node.style.cssText =
-      "border:1px solid #d4e6e6;" +
-      "border-left:5px solid #76a8aa;" +
-      "border-radius:12px;" +
-      "padding:15px 18px;" +
-      "margin:12px 0 18px;" +
-      "background:#f5fbfb;" +
-      "color:#29464a;";
-
-    const heading = document.createElement("strong");
-    const text = document.createElement("p");
-    text.style.margin = "9px 0 0";
-
-    if (noise?.available !== true) {
-      heading.textContent =
-        "Local Signal Quality — Data Unavailable";
-
-      text.textContent =
-        "Local signal measurements are unavailable. " +
-        "Review the original chromatogram and target mapping.";
-    } else {
-      const minQ = noise.min_flank_phred;
-      const ratio = noise.mean_flank_secondary_ratio;
-
-      const target = Array.isArray(noise.points)
-        ? noise.points.find(point => point.is_target)
-        : null;
-
-      const targetQ = target?.phred ?? "N/A";
-
-      const ratioText = ratio == null
-        ? "N/A"
-        : Number(ratio).toFixed(3);
-
-      const windowText =
-        `Bases ${noise.window_start_ab1_base_number}` +
-        `–${noise.window_end_ab1_base_number}`;
-
-      heading.textContent =
-        "Local Signal Quality — Research Measurements";
-
-      text.textContent =
-        `${windowText}: Target Q${targetQ}; ` +
-        `lowest neighboring Phred Q${minQ ?? "N/A"}; ` +
-        `mean secondary/primary peak ratio ${ratioText}. ` +
-        "These measurements are descriptive only. " +
-        "A low Phred score or overlapping peaks alone " +
-        "cannot establish that the sample is Noise or " +
-        "requires a repeat. Specialist interpretation " +
-        "and validated quality criteria are required.";
-    }
-
-    node.append(heading, text);
-    return node;
-  }
-
   function showUnsupportedTargetAdvisory(pattern) {
     document.getElementById("geneglassUnsupportedNotice")?.remove();
     if (!pattern?.review_recommended) return;
@@ -166,9 +104,7 @@
 
     box.append(title, explanation);
 
-    const noise = document.getElementById("geneglassNoiseDetails");
-    if (noise) noise.insertAdjacentElement("afterend", box);
-    else aiPrediction.insertAdjacentElement("afterend", box);
+    aiPrediction.insertAdjacentElement("afterend", box);
 
     // This is a visual review recommendation, NOT a stored QC or review decision.
     evidenceBadge.textContent = "Specialist review recommended";
@@ -245,6 +181,7 @@
   }
 
   function renderAiPrediction(data) {
+    aiPrediction.classList.remove("ai-gate-notice");
     aiPrediction.replaceChildren();
     aiPrediction.setAttribute("aria-busy", "false");
 
@@ -392,7 +329,7 @@
       ? `Specialist note: ${qc.comment}`
       : qc.decision === "pending" && details.ai_prediction
         ? "This analysis has a historical AI output saved before the new QC approval workflow."
-        : "Technical quality measurements are descriptive, not a validated Noise classifier.";
+        : "";
 
     const blocked = qc.target_found !== true || qc.decision === "request_repeat";
 
@@ -415,6 +352,7 @@
   }
 
   function renderAiGateNotice(title, messageText) {
+    aiPrediction.classList.add("ai-gate-notice");
     aiPrediction.replaceChildren();
     aiPrediction.setAttribute("aria-busy", "false");
 
@@ -889,12 +827,8 @@
 
           renderEvidenceSummary(result);
 
-          // Display quality advice immediately after the AI card, outside collapsed technical details.
-          document.getElementById("geneglassNoiseDetails")?.remove();
-
+          document.getElementById("geneglassUnsupportedNotice")?.remove();
           if (result.found === true) {
-            const signalNotice = makeGeneGlassNoiseNotice(result.noise_assessment);
-            aiPrediction.insertAdjacentElement("afterend", signalNotice);
             showUnsupportedTargetAdvisory(result.unsupported_target_pattern);
           }
 

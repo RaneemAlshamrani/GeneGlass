@@ -9,7 +9,7 @@
 
   <link rel="stylesheet" href="../DashboardPage/dashboard.css">
 <link rel="stylesheet" href="../AnalysisPage/analysis.css?v=20261113-10">
-<link rel="stylesheet" href="details.css?v=20261115-2">
+<link rel="stylesheet" href="details.css?v=20261115-qcsummary2">
 
   <link rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -19,7 +19,7 @@
 <script src="../assets/auth.js" defer></script>
 <script src="../assets/shap-explanation.js?v=20261113-1" defer></script>
 <script src="../assets/chromatogram-viewer.js?v=20261113-3" defer></script>
-<script src="details.js?v=20261114-hq3" defer></script>
+<script src="details.js?v=20261115-qcsummary2" defer></script>
 
 </head>
 
@@ -131,7 +131,7 @@
           </div>
           <strong id="detailsQcBadge" class="details-qc-badge">Checking</strong>
         </div>
-        <p id="detailsQcMessage" role="status"></p>
+        <p id="detailsQcMessage" class="details-qc-message" role="status"></p>
         <p id="detailsQcNote" class="details-qc-note"></p>
         <a id="detailsQcLink" href="#" hidden>Complete pending QC review</a>
       </section>
@@ -184,22 +184,21 @@
         </div>
 
         <div id="reportArchiveState" class="report-archive-state">
-          <div>
+          <div class="report-archive-copy">
             <strong id="reportArchiveTitle">No finalized report</strong>
             <p id="reportArchiveMessage">Complete the decision and report from New Analysis.</p>
+          </div>
           <div class="report-archive-actions">
-  <button id="downloadReportButton" type="button" hidden>
-    <i class="fa-solid fa-file-pdf"></i> Download PDF
-  </button>
-
-  <button id="editReportButton" type="button" hidden>
-    <i class="fa-solid fa-pen-to-square"></i> Edit Report
-  </button>
-
-  <a id="continueReportLink" href="#">
-    <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in New Analysis
-  </a>
-</div>
+            <button id="downloadReportButton" type="button" hidden>
+              <i class="fa-solid fa-file-pdf"></i> Download PDF
+            </button>
+            <button id="editReportButton" type="button" hidden>
+              <i class="fa-solid fa-pen-to-square"></i> Edit Report
+            </button>
+            <a id="continueReportLink" href="#">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in New Analysis
+            </a>
+          </div>
         </div>
       </section>
 
