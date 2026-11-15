@@ -27,6 +27,7 @@
   const reportArchiveTitle = document.getElementById("reportArchiveTitle");
   const reportArchiveMessage = document.getElementById("reportArchiveMessage");
   const downloadReportButton = document.getElementById("downloadReportButton");
+  const editReportButton = document.getElementById("editReportButton");
   const continueReportLink = document.getElementById("continueReportLink");
   let savedReport = null;
 
@@ -71,87 +72,90 @@
     const to = Math.min(normalized.length, targetIndex + 16);
     let best = null;
     let index = normalized.indexOf(motif, from);
+
     while (index !== -1 && index < to) {
       const distance = Math.abs(index - targetIndex);
       if (!best || distance < best.distance) best = { start: index, distance };
       index = normalized.indexOf(motif, index + 1);
     }
+
     return best ? { startBase: best.start + 1, endBase: best.start + motif.length } : null;
   }
 
-  
-function makeGeneGlassNoiseNotice(noise) {
-  const node = document.createElement("section");
-  node.id = "geneglassNoiseDetails";
-  node.className = "geneglass-noise-notice";
-  node.setAttribute("role", "note");
+  function makeGeneGlassNoiseNotice(noise) {
+    const node = document.createElement("section");
+    node.id = "geneglassNoiseDetails";
+    node.className = "geneglass-noise-notice";
+    node.setAttribute("role", "note");
 
-  node.style.cssText =
-    "border:1px solid #d4e6e6;" +
-    "border-left:5px solid #76a8aa;" +
-    "border-radius:12px;" +
-    "padding:15px 18px;" +
-    "margin:12px 0 18px;" +
-    "background:#f5fbfb;" +
-    "color:#29464a;";
+    node.style.cssText =
+      "border:1px solid #d4e6e6;" +
+      "border-left:5px solid #76a8aa;" +
+      "border-radius:12px;" +
+      "padding:15px 18px;" +
+      "margin:12px 0 18px;" +
+      "background:#f5fbfb;" +
+      "color:#29464a;";
 
-  const heading = document.createElement("strong");
-  const text = document.createElement("p");
-  text.style.margin = "9px 0 0";
+    const heading = document.createElement("strong");
+    const text = document.createElement("p");
+    text.style.margin = "9px 0 0";
 
-  if (noise?.available !== true) {
-    heading.textContent =
-      "Local Signal Quality — Data Unavailable";
+    if (noise?.available !== true) {
+      heading.textContent =
+        "Local Signal Quality — Data Unavailable";
 
-    text.textContent =
-      "Local signal measurements are unavailable. " +
-      "Review the original chromatogram and target mapping.";
-  } else {
-    const minQ = noise.min_flank_phred;
-    const ratio = noise.mean_flank_secondary_ratio;
+      text.textContent =
+        "Local signal measurements are unavailable. " +
+        "Review the original chromatogram and target mapping.";
+    } else {
+      const minQ = noise.min_flank_phred;
+      const ratio = noise.mean_flank_secondary_ratio;
 
-    const target = Array.isArray(noise.points)
-      ? noise.points.find(point => point.is_target)
-      : null;
+      const target = Array.isArray(noise.points)
+        ? noise.points.find(point => point.is_target)
+        : null;
 
-    const targetQ = target?.phred ?? "N/A";
+      const targetQ = target?.phred ?? "N/A";
 
-    const ratioText = ratio == null
-      ? "N/A"
-      : Number(ratio).toFixed(3);
+      const ratioText = ratio == null
+        ? "N/A"
+        : Number(ratio).toFixed(3);
 
-    const windowText =
-      `Bases ${noise.window_start_ab1_base_number}` +
-      `–${noise.window_end_ab1_base_number}`;
+      const windowText =
+        `Bases ${noise.window_start_ab1_base_number}` +
+        `–${noise.window_end_ab1_base_number}`;
 
-    heading.textContent =
-      "Local Signal Quality — Research Measurements";
+      heading.textContent =
+        "Local Signal Quality — Research Measurements";
 
-    text.textContent =
-      `${windowText}: Target Q${targetQ}; ` +
-      `lowest neighboring Phred Q${minQ ?? "N/A"}; ` +
-      `mean secondary/primary peak ratio ${ratioText}. ` +
-      "These measurements are descriptive only. " +
-      "A low Phred score or overlapping peaks alone " +
-      "cannot establish that the sample is Noise or " +
-      "requires a repeat. Specialist interpretation " +
-      "and validated quality criteria are required.";
+      text.textContent =
+        `${windowText}: Target Q${targetQ}; ` +
+        `lowest neighboring Phred Q${minQ ?? "N/A"}; ` +
+        `mean secondary/primary peak ratio ${ratioText}. ` +
+        "These measurements are descriptive only. " +
+        "A low Phred score or overlapping peaks alone " +
+        "cannot establish that the sample is Noise or " +
+        "requires a repeat. Specialist interpretation " +
+        "and validated quality criteria are required.";
+    }
+
+    node.append(heading, text);
+    return node;
   }
-
-  node.append(heading, text);
-  return node;
-}
-
 
   function showUnsupportedTargetAdvisory(pattern) {
     document.getElementById("geneglassUnsupportedNotice")?.remove();
     if (!pattern?.review_recommended) return;
+
     const box = document.createElement("section");
     box.id = "geneglassUnsupportedNotice";
     box.setAttribute("role", "alert");
     box.style.cssText = "border:1px solid #dfa74c;border-left:5px solid #bd7916;border-radius:12px;padding:15px 18px;margin:12px 0;background:#fff7e7;color:#443218;";
+
     const title = document.createElement("strong");
     title.textContent = "Possible Unsupported Target Pattern — Specialist Review Required";
+
     const explanation = document.createElement("p");
     explanation.style.margin = "8px 0 0";
     explanation.textContent = "Predominantly alternative signal at JAK2 V617F (raw "
@@ -159,10 +163,13 @@ function makeGeneGlassNoiseNotice(noise) {
       + "; other/alternative ratio " + Number(pattern.max_other_to_alternative_ratio).toFixed(3)
       + "). The binary AI model cannot establish a homozygous genotype. "
       + "Do not accept the Negative/Hetero prediction without specialist verification. Research advisory only.";
+
     box.append(title, explanation);
+
     const noise = document.getElementById("geneglassNoiseDetails");
     if (noise) noise.insertAdjacentElement("afterend", box);
     else aiPrediction.insertAdjacentElement("afterend", box);
+
     // This is a visual review recommendation, NOT a stored QC or review decision.
     evidenceBadge.textContent = "Specialist review recommended";
     evidenceBadge.dataset.status = "review";
@@ -171,8 +178,10 @@ function makeGeneGlassNoiseNotice(noise) {
   function renderEvidenceSummary(result) {
     const notFound = result.found === false;
     const status = notFound ? "Target Not Found" : result.needs_review ? "Needs review" : "Technical evidence available";
+
     evidenceBadge.textContent = status;
     evidenceBadge.dataset.status = notFound || result.needs_review ? "review" : "ready";
+
     if (notFound) {
       jak2Summary.replaceChildren();
       const note = document.createElement("p");
@@ -181,20 +190,26 @@ function makeGeneGlassNoiseNotice(noise) {
       jak2Summary.appendChild(note);
       return;
     }
+
     const items = [
       ["Target", result.genomic_position ? `NC_000009.12:g.${result.genomic_position}` : "JAK2 V617F"],
       ["Read base", `${result.observed_base || "N/A"} · Q${result.quality_score ?? "N/A"}`],
       ["Alignment", `${formatPercent(result.alignment_identity_percentage)} identity`],
       ["Coverage", formatPercent(result.alignment_coverage_percentage)],
     ];
+
     jak2Summary.replaceChildren();
+
     items.forEach(([label, value], index) => {
       const item = document.createElement("div");
       item.className = index === 0 ? "evidence-summary-item evidence-summary-target" : "evidence-summary-item";
+
       const name = document.createElement("span");
       name.textContent = label;
+
       const content = document.createElement("strong");
       content.textContent = value;
+
       item.append(name, content);
       jak2Summary.appendChild(item);
     });
@@ -212,16 +227,19 @@ function makeGeneGlassNoiseNotice(noise) {
     const heading = document.createElement("div");
     const name = document.createElement("span");
     const amount = document.createElement("strong");
+
     name.textContent = label;
     amount.textContent = probabilityLabel(value);
     heading.append(name, amount);
 
     const track = document.createElement("div");
     track.className = "prediction-meter";
+
     const fill = document.createElement("span");
     fill.className = `prediction-meter-fill ${tone}`;
     fill.style.width = `${Math.max(0, Math.min(100, Number(value) * 100 || 0))}%`;
-    track.appendChild(fill);
+
+    track.append(fill);
     metric.append(heading, track);
     return metric;
   }
@@ -234,6 +252,7 @@ function makeGeneGlassNoiseNotice(noise) {
     const normalized = status.toLowerCase().replaceAll(" ", "-");
     const isHetero = data.prediction === "hetero";
     const isNegative = data.prediction === "negative";
+
     const displayStatus = isHetero
       ? "Heterozygous pattern"
       : isNegative
@@ -242,18 +261,23 @@ function makeGeneGlassNoiseNotice(noise) {
 
     const header = document.createElement("div");
     header.className = "ai-prediction-header";
+
     const titleGroup = document.createElement("div");
     titleGroup.className = "ai-prediction-title";
+
     const icon = document.createElement("span");
     icon.className = "ai-model-icon";
     icon.innerHTML = '<i class="fa-solid fa-microchip" aria-hidden="true"></i>';
+
     const titleText = document.createElement("div");
     const title = document.createElement("strong");
     const model = document.createElement("small");
+
     title.textContent = "AI Prediction";
     model.textContent = data.model_version
       ? `${data.model_name || "GeneGlass research model"} · v${data.model_version}`
       : data.model_name || "GeneGlass research model";
+
     titleText.append(title, model);
     titleGroup.append(icon, titleText);
 
@@ -261,20 +285,26 @@ function makeGeneGlassNoiseNotice(noise) {
     badge.className = "ai-status-badge";
     badge.dataset.status = normalized;
     badge.textContent = displayStatus;
+
     header.append(titleGroup, badge);
 
     const body = document.createElement("div");
     body.className = "ai-prediction-body";
+
     const summary = document.createElement("div");
     summary.className = "ai-result-summary";
+
     const resultLabel = document.createElement("span");
     resultLabel.textContent = "Model output";
+
     const resultValue = document.createElement("strong");
     resultValue.textContent = displayStatus;
+
     const orientation = document.createElement("small");
     orientation.textContent = data.orientation
       ? `Read orientation: ${data.orientation}`
       : "Read orientation unavailable";
+
     summary.append(resultLabel, resultValue, orientation);
 
     if (data.reason) {
@@ -283,21 +313,25 @@ function makeGeneGlassNoiseNotice(noise) {
       reason.textContent = data.reason;
       summary.appendChild(reason);
     }
+
     body.appendChild(summary);
 
     if (data.probabilities) {
       const metrics = document.createElement("div");
       metrics.className = "prediction-metrics";
+
       metrics.append(
         createPredictionMetric("Heterozygous", data.probabilities.hetero, "hetero"),
         createPredictionMetric("Negative", data.probabilities.negative, "negative")
       );
+
       body.appendChild(metrics);
     }
 
     const explanation = window.GeneGlassShapExplanation?.create(
       data.explanation
     );
+
     if (explanation) body.appendChild(explanation);
 
     const notice = document.createElement("div");
@@ -321,10 +355,13 @@ function makeGeneGlassNoiseNotice(noise) {
       const response = await fetch(`${apiBaseUrl}/analyses/${analysisId}/ai-prediction`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       const data = await response.json();
+
       if (!response.ok) {
         throw new Error(data.detail || "Model prediction is currently unavailable.");
       }
+
       renderAiPrediction(data);
     } catch (error) {
       console.error("AI prediction error:", error);
@@ -332,16 +369,17 @@ function makeGeneGlassNoiseNotice(noise) {
     }
   }
 
-
   function renderInitialQcState(qc, details) {
     detailsQcCard.hidden = false;
     detailsQcLink.href = `../AnalysisPage/analysis.html?id=${analysisId}`;
     detailsQcLink.hidden = qc.target_found !== true || qc.decision !== "pending";
     detailsQcLink.textContent = "Complete pending QC review";
+
     detailsQcBadge.dataset.state = qc.target_found !== true ? "target_not_found" : qc.decision;
     detailsQcBadge.textContent = qc.target_found !== true ? "Target Not Found"
       : qc.decision === "continue_analysis" ? "Continue approved"
       : qc.decision === "request_repeat" ? "Repeat requested" : "Pending decision";
+
     detailsQcMessage.textContent = qc.target_found !== true
       ? "Target Not Found — AI classification is unavailable because JAK2 V617F could not be mapped."
       : qc.decision === "continue_analysis"
@@ -349,16 +387,20 @@ function makeGeneGlassNoiseNotice(noise) {
         : qc.decision === "request_repeat"
           ? "A repeat was requested. New AI classification is blocked."
           : "Initial QC is awaiting the specialist's Continue Analysis or Request Repeat decision.";
+
     detailsQcNote.textContent = qc.comment
       ? `Specialist note: ${qc.comment}`
       : qc.decision === "pending" && details.ai_prediction
         ? "This analysis has a historical AI output saved before the new QC approval workflow."
         : "Technical quality measurements are descriptive, not a validated Noise classifier.";
+
     const blocked = qc.target_found !== true || qc.decision === "request_repeat";
+
     if (qc.target_found !== true) {
       evidenceBadge.textContent = "Target Not Found";
       evidenceBadge.dataset.status = "review";
     }
+
     // No unapproved molecular report can be completed for a blocked sample.
     if (blocked && savedReport?.status !== "finalized") {
       reportBadge.textContent = "Unavailable";
@@ -367,6 +409,7 @@ function makeGeneGlassNoiseNotice(noise) {
         ? "Target Not Found: AI-based reporting is unavailable for this read."
         : "A repeat was requested. AI-based reporting is blocked for this read.";
       downloadReportButton.hidden = true;
+      editReportButton.hidden = true;
       continueReportLink.hidden = true;
     }
   }
@@ -374,68 +417,87 @@ function makeGeneGlassNoiseNotice(noise) {
   function renderAiGateNotice(title, messageText) {
     aiPrediction.replaceChildren();
     aiPrediction.setAttribute("aria-busy", "false");
+
     const titleNode = document.createElement("strong");
     titleNode.textContent = title;
+
     const note = document.createElement("p");
     note.textContent = messageText;
+
     aiPrediction.append(titleNode, note);
   }
 
   function renderSavedReport(report) {
     savedReport = report;
     continueReportLink.href = `../AnalysisPage/analysis.html?id=${analysisId}`;
+
     if (report?.status === "needs_update") {
       reportBadge.textContent = "Update required";
       reportBadge.dataset.decision = report.decision || "pending";
       reportArchiveTitle.textContent = "PDF decision is outdated";
       reportArchiveMessage.textContent = "The Specialist Review decision changed. Open New Analysis to generate a new PDF version.";
       downloadReportButton.hidden = true;
+      editReportButton.hidden = true;
       continueReportLink.hidden = false;
       continueReportLink.innerHTML = '<i class="fa-solid fa-rotate"></i> Update PDF';
       return;
     }
+
     if (!report || report.status !== "finalized") {
       reportBadge.textContent = "Not created";
       reportBadge.dataset.decision = "pending";
       reportArchiveTitle.textContent = "No finalized report";
       reportArchiveMessage.textContent = "Open this analysis in New Analysis to complete the specialist decision and report.";
       downloadReportButton.hidden = true;
+      editReportButton.hidden = true;
       continueReportLink.hidden = false;
       continueReportLink.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> Open in New Analysis';
       return;
     }
+
     const storedDecision = report.final_decision || report.decision;
     const decision = storedDecision === "positive" ? "Positive" : "Negative";
+
     reportBadge.textContent = `Final · v${report.version}`;
     reportBadge.dataset.decision = storedDecision || "pending";
     reportArchiveTitle.textContent = `Final report · ${decision}`;
     reportArchiveMessage.textContent = "The finalized PDF is stored and ready to download.";
+
     downloadReportButton.hidden = false;
+    editReportButton.hidden = false;
     continueReportLink.hidden = true;
   }
 
   async function downloadSavedReport() {
     const token = window.GeneGlassAuth?.token;
     if (!token || !savedReport?.download_url) return;
+
     const previewWindow = window.open("", "_blank");
+
     downloadReportButton.disabled = true;
     downloadReportButton.textContent = "Opening...";
+
     try {
       const response = await fetch(
         `${apiBaseUrl}/analyses/${analysisId}/report.pdf?version=${savedReport.version}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       if (!response.ok) throw new Error("The saved report could not be downloaded.");
+
       const pdfUrl = URL.createObjectURL(await response.blob());
+
       if (previewWindow) {
         previewWindow.opener = null;
         previewWindow.location.href = pdfUrl;
       }
+
       window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 60000);
     } catch (error) {
       if (previewWindow && previewWindow.location.href === "about:blank") {
         previewWindow.close();
       }
+
       reportArchiveMessage.textContent = error.message;
     } finally {
       downloadReportButton.disabled = false;
@@ -446,10 +508,13 @@ function makeGeneGlassNoiseNotice(noise) {
   function appendResearchField(container, label, value) {
     const row = document.createElement("div");
     row.className = "research-field";
+
     const name = document.createElement("span");
     name.textContent = label;
+
     const content = document.createElement("strong");
     content.textContent = value || "N/A";
+
     row.append(name, content);
     container.appendChild(row);
   }
@@ -472,23 +537,30 @@ function makeGeneGlassNoiseNotice(noise) {
 
   function formatAuditDetails(details) {
     if (!details || typeof details !== "object") return "";
+
     const readable = [];
+
     if (details.decision) {
       const qcLabels = { continue_analysis: "Continue Analysis", request_repeat: "Request Repeat" };
       readable.push(`Decision: ${qcLabels[details.decision] || reviewLabels[details.decision] || details.decision}`);
     }
+
     if (Number.isInteger(details.screened_candidate_count)) {
       readable.push(`Candidates screened: ${details.screened_candidate_count}`);
     }
+
     if (Number.isInteger(details.matched_annotation_count)) {
       readable.push(`ClinVar matches: ${details.matched_annotation_count}`);
     }
+
     if (details.qc_status) readable.push(`QC: ${details.qc_status}`);
+
     return readable.join(" · ");
   }
 
   function renderAuditTrail(data) {
     const events = Array.isArray(data.events) ? data.events : [];
+
     auditTimeline.replaceChildren();
     auditCount.textContent = `${events.length} event${events.length === 1 ? "" : "s"}`;
     auditStatus.textContent = events.length
@@ -498,27 +570,37 @@ function makeGeneGlassNoiseNotice(noise) {
     events.forEach((event) => {
       const entry = document.createElement("article");
       entry.className = "audit-entry";
+
       const marker = document.createElement("span");
       marker.className = "audit-marker";
       marker.setAttribute("aria-hidden", "true");
+
       const content = document.createElement("div");
       const heading = document.createElement("div");
       heading.className = "audit-entry-heading";
+
       const action = document.createElement("strong");
       action.textContent = auditLabels[event.action] || event.action;
+
       const time = document.createElement("time");
       time.dateTime = event.created_at;
       time.textContent = new Date(event.created_at).toLocaleString();
+
       heading.append(action, time);
+
       const actor = document.createElement("p");
       actor.textContent = `${event.actor_name} · ${event.actor_role}`;
+
       content.append(heading, actor);
+
       const details = formatAuditDetails(event.details);
+
       if (details) {
         const detail = document.createElement("small");
         detail.textContent = details;
         content.appendChild(detail);
       }
+
       entry.append(marker, content);
       auditTimeline.appendChild(entry);
     });
@@ -529,22 +611,28 @@ function makeGeneGlassNoiseNotice(noise) {
       `${apiBaseUrl}/analyses/${analysisId}/audit-events`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
+
     if (!response.ok) throw new Error("Unable to load audit trail.");
+
     renderAuditTrail(await response.json());
   }
 
   function renderReviewHistory(data) {
     const reviews = Array.isArray(data.reviews) ? data.reviews : [];
+
     reviewHistory.replaceChildren();
     reviewHistoryCount.textContent = String(reviews.length);
+
     latestReviewBadge.textContent = data.latest_decision
       ? reviewLabels[data.latest_decision] || data.latest_decision
       : "Not reviewed";
+
     latestReviewBadge.dataset.decision = data.latest_decision || "none";
 
     if (!reviews.length && ["target_not_found", "request_repeat"].includes(detailsQcBadge.dataset.state)) {
       latestReviewBadge.textContent = "Not applicable";
     }
+
     if (!reviews.length) {
       const empty = document.createElement("p");
       empty.className = "review-empty";
@@ -556,19 +644,25 @@ function makeGeneGlassNoiseNotice(noise) {
     reviews.forEach((review) => {
       const entry = document.createElement("article");
       entry.className = "review-entry";
+
       const heading = document.createElement("div");
       heading.className = "review-entry-heading";
+
       const decision = document.createElement("strong");
       decision.textContent = reviewLabels[review.decision] || review.decision;
+
       const time = document.createElement("time");
       time.dateTime = review.created_at;
       time.textContent = new Date(review.created_at).toLocaleString();
+
       heading.append(decision, time);
 
       const comment = document.createElement("p");
       comment.textContent = review.comment;
+
       const reviewer = document.createElement("small");
       reviewer.textContent = `${review.reviewer_name} · ${review.reviewer_role}`;
+
       entry.append(heading, comment, reviewer);
       reviewHistory.appendChild(entry);
     });
@@ -579,26 +673,32 @@ function makeGeneGlassNoiseNotice(noise) {
       `${apiBaseUrl}/analyses/${analysisId}/reviews`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
+
     if (!response.ok) {
       throw new Error("Unable to load specialist review history.");
     }
+
     renderReviewHistory(await response.json());
   }
 
   function renderResearchResults(data) {
     researchResults.replaceChildren();
+
     const candidates = (Array.isArray(data.candidates) ? data.candidates : [])
       .filter((candidate) => (candidate.external_annotations || []).some(
         (item) => item.source === "NCBI ClinVar" && item.lookup_status === "matched"
       ));
+
     if (!candidates.length) {
       researchMatchBadge.textContent = "0 exact matches";
       researchMatchBadge.dataset.state = "empty";
+
       const empty = document.createElement("p");
       empty.className = "research-empty";
       empty.textContent =
         "No exact ClinVar-matched variants were found among the eligible candidates. " +
         "Unmatched and Needs Review candidates are not displayed as external results.";
+
       researchResults.appendChild(empty);
       return;
     }
@@ -606,10 +706,13 @@ function makeGeneGlassNoiseNotice(noise) {
     candidates.forEach((candidate) => {
       const card = document.createElement("article");
       card.className = "research-variant";
+
       const title = document.createElement("h3");
       title.textContent = candidate.hgvs;
       card.appendChild(title);
+
       appendResearchField(card, "AB1 base", String(candidate.ab1_base_number));
+
       if (candidate.genomic_position) {
         appendResearchField(
           card,
@@ -617,27 +720,36 @@ function makeGeneGlassNoiseNotice(noise) {
           `NC_000009.12:g.${candidate.genomic_position}`
         );
       }
+
       appendResearchField(card, "Read direction", candidate.direction);
       appendResearchField(card, "Raw AB1 change", candidate.raw_ab1_change);
+
       appendResearchField(
         card,
         "Reference-oriented change",
         candidate.reference_oriented_change
       );
+
       appendResearchField(card, "Phred", candidate.phred_quality == null
         ? "N/A" : `Q${candidate.phred_quality}`);
+
       appendResearchField(card, "Candidate status", candidate.review_status);
 
       const annotations = Array.isArray(candidate.external_annotations)
         ? candidate.external_annotations : [];
+
       const clinvar = annotations.find((item) => item.source === "NCBI ClinVar");
+
       if (clinvar?.lookup_status === "matched") {
         appendResearchField(card, "ClinVar accession", clinvar.accession_version || clinvar.accession);
+
         const classifications = (clinvar.classifications || []).map((item) =>
           `${item.type}: ${item.description}${item.review_status ? ` (${item.review_status})` : ""}`
         );
+
         appendResearchField(card, "Published classifications", classifications.join(" · "));
         appendResearchField(card, "Associated conditions", (clinvar.conditions || []).join("; "));
+
         if (clinvar.source_url) {
           const link = document.createElement("a");
           link.className = "research-source-link";
@@ -648,8 +760,10 @@ function makeGeneGlassNoiseNotice(noise) {
           card.appendChild(link);
         }
       }
+
       researchResults.appendChild(card);
     });
+
     researchMatchBadge.textContent = `${candidates.length} exact match${candidates.length === 1 ? "" : "es"}`;
     researchMatchBadge.dataset.state = "matched";
   }
@@ -659,24 +773,31 @@ function makeGeneGlassNoiseNotice(noise) {
       `${apiBaseUrl}/analyses/${analysisId}/research-variants`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
+
     if (!response.ok) return;
+
     const data = await response.json();
+
     researchStatus.textContent = data.candidate_count > 0
       ? `${data.candidate_count} saved ClinVar-matched variant(s). Research use only.`
       : "No exact ClinVar-matched variants are saved for this analysis.";
+
     researchMatchBadge.textContent = data.candidate_count > 0
       ? `${data.candidate_count} exact match${data.candidate_count === 1 ? "" : "es"}`
       : "Not searched";
+
     renderResearchResults(data);
   }
 
   async function refreshResearchResults() {
     const token = window.GeneGlassAuth?.token;
     if (!token || !analysisId) return;
+
     researchButton.disabled = true;
     researchButton.textContent = "Searching…";
     researchStatus.textContent =
       "Extracting eligible JAK2 base-call candidates and querying ClinVar by HGVS only…";
+
     try {
       const response = await fetch(
         `${apiBaseUrl}/analyses/${analysisId}/research-variants/refresh`,
@@ -685,13 +806,17 @@ function makeGeneGlassNoiseNotice(noise) {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
+
       const data = await response.json();
+
       if (!response.ok) {
         throw new Error(data.detail || "Research lookup failed.");
       }
+
       researchStatus.textContent = data.candidate_count
         ? `${data.candidate_count} candidate(s) displayed; eligible candidates were checked in ClinVar. Research use only.`
         : "No exact ClinVar-matched variants were found. Unmatched candidates are not displayed.";
+
       renderResearchResults(data);
     } catch (error) {
       researchStatus.textContent = error.message;
@@ -736,116 +861,135 @@ function makeGeneGlassNoiseNotice(noise) {
         ["QC status", String(details.qc_status || "pending").replaceAll("_", " ")],
       ]);
 
+      try {
+        const [traceResponse, jak2Response] = await Promise.all([
+          fetch(`${apiBaseUrl}/analyses/${analysisId}/chromatogram`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          fetch(`${apiBaseUrl}/analyses/${analysisId}/jak2-target`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
 
-     
-try {
-  const [traceResponse, jak2Response] = await Promise.all([
-    fetch(`${apiBaseUrl}/analyses/${analysisId}/chromatogram`, {
-      headers: { Authorization: `Bearer ${token}` }
-    }),
-    fetch(`${apiBaseUrl}/analyses/${analysisId}/jak2-target`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-  ]);
+        let targetBase = null;
+        let readDirection = "Forward";
 
-  let targetBase = null;
-  let readDirection = "Forward";
-  if (jak2Response.ok) {
-    const jak2Data = await jak2Response.json();
-    const result = jak2Data.result || {};
-    const peaks = result.peak_analysis || {};
-    const heights = peaks.peak_heights || {};
-    const reasons = Array.isArray(result.review_reasons)
-      ? result.review_reasons.filter(Boolean).join("; ")
-      : "";
-    targetBase = Number(result.ab1_base_number);
-    readDirection = result.direction || "Forward";
-    renderEvidenceSummary(result);
-    // Display quality advice immediately after the AI card, outside collapsed technical details.
-    document.getElementById("geneglassNoiseDetails")?.remove();
-    if (result.found === true) {
-      const signalNotice = makeGeneGlassNoiseNotice(result.noise_assessment);
-      aiPrediction.insertAdjacentElement("afterend", signalNotice);
-      showUnsupportedTargetAdvisory(result.unsupported_target_pattern);
-    }
-    showCards(jak2Details, [
-      ["AB1 Position", result.ab1_base_number],
-      ["Genomic Coordinate", result.genomic_position
-        ? `NC_000009.12:g.${result.genomic_position}` : "N/A"],
-      ["Transcript Coordinate", result.coding_position
-        ? `NM_004972.4:c.${result.coding_position}` : "N/A"],
-      ["Direction", result.direction],
-      ["Observed Base", result.observed_base],
-      ["Target Phred Quality", result.quality_score],
-      ["Alignment Identity", formatPercent(result.alignment_identity_percentage)],
-      ["Read Coverage", formatPercent(result.alignment_coverage_percentage)],
-      ["A Peak", heights.A],
-      ["C Peak", heights.C],
-      ["G Peak", heights.G],
-      ["T Peak", heights.T],
-      ["Primary Peak", peaks.primary_base],
-      ["Secondary Peak", peaks.secondary_base],
-      ["Secondary / Primary", formatRatio(peaks.overlap_ratio)],
-      ["Target QC Review", result.found === false ? "Target Not Found" : result.needs_review ? "Needs Review" : "No target QC flag"],
-      ["Target QC Reason", reasons || "No target mapping or peak review reason"],
-      ["Pipeline Version", result.pipeline_version]
-    ]);
-    const reference = result.reference_evidence;
-    if (reference?.url) {
-      const referenceCard = document.createElement("div");
-      referenceCard.className = "details-item";
-      const label = document.createElement("span");
-      label.className = "details-label";
-      label.textContent = "External Reference";
-      const link = document.createElement("a");
-      link.className = "details-value";
-      link.href = reference.url;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      link.textContent = `${reference.source}: ${reference.accession}`;
-      referenceCard.append(label, link);
-      jak2Details.append(referenceCard);
-    }
-  } else {
-    // A failed target endpoint should not leave a misleading 'Loading' message.
-    evidenceBadge.textContent = "Evidence unavailable";
-    evidenceBadge.dataset.status = "review";
-    jak2Summary.replaceChildren();
-    const unavailable = document.createElement("p");
-    unavailable.className = "evidence-unavailable";
-    unavailable.textContent = "Target evidence could not be loaded. Refer to the Initial QC decision for target-mapping status.";
-    jak2Summary.appendChild(unavailable);
-    jak2Details.textContent = "No mapped JAK2 V617F target evidence available.";
-  }
+        if (jak2Response.ok) {
+          const jak2Data = await jak2Response.json();
+          const result = jak2Data.result || {};
+          const peaks = result.peak_analysis || {};
+          const heights = peaks.peak_heights || {};
 
-  if (!traceResponse.ok) throw new Error("Unable to load chromatogram.");
-  const trace = await traceResponse.json();
-  if (!window.GeneGlassChromatogram) throw new Error("Chromatogram viewer script missing.");
-  const motifRange = findNearbyMotif(trace.sequence, targetBase, "ACAT");
-  await window.GeneGlassChromatogram.render(trace, {
-    targetBase: Number.isInteger(targetBase) && targetBase > 0 ? targetBase : undefined,
-    showTitle: false,
-    initialBaseCount: 9,
-    highlightRange: motifRange,
-    initialSequence: "ACAT",
-    readDirection,
-    compact: true
-  });
-  document.getElementById("chromatogramLoading").hidden = true;
-} catch (error) {
-  console.error("Chromatogram / JAK2 error:", error);
-  document.getElementById("chromatogramLoading").textContent =
-    "Chromatogram could not be loaded: " + error.message;
-}
+          const reasons = Array.isArray(result.review_reasons)
+            ? result.review_reasons.filter(Boolean).join("; ")
+            : "";
 
+          targetBase = Number(result.ab1_base_number);
+          readDirection = result.direction || "Forward";
 
+          renderEvidenceSummary(result);
+
+          // Display quality advice immediately after the AI card, outside collapsed technical details.
+          document.getElementById("geneglassNoiseDetails")?.remove();
+
+          if (result.found === true) {
+            const signalNotice = makeGeneGlassNoiseNotice(result.noise_assessment);
+            aiPrediction.insertAdjacentElement("afterend", signalNotice);
+            showUnsupportedTargetAdvisory(result.unsupported_target_pattern);
+          }
+
+          showCards(jak2Details, [
+            ["AB1 Position", result.ab1_base_number],
+            ["Genomic Coordinate", result.genomic_position
+              ? `NC_000009.12:g.${result.genomic_position}` : "N/A"],
+            ["Transcript Coordinate", result.coding_position
+              ? `NM_004972.4:c.${result.coding_position}` : "N/A"],
+            ["Direction", result.direction],
+            ["Observed Base", result.observed_base],
+            ["Target Phred Quality", result.quality_score],
+            ["Alignment Identity", formatPercent(result.alignment_identity_percentage)],
+            ["Read Coverage", formatPercent(result.alignment_coverage_percentage)],
+            ["A Peak", heights.A],
+            ["C Peak", heights.C],
+            ["G Peak", heights.G],
+            ["T Peak", heights.T],
+            ["Primary Peak", peaks.primary_base],
+            ["Secondary Peak", peaks.secondary_base],
+            ["Secondary / Primary", formatRatio(peaks.overlap_ratio)],
+            ["Target QC Review", result.found === false ? "Target Not Found" : result.needs_review ? "Needs Review" : "No target QC flag"],
+            ["Target QC Reason", reasons || "No target mapping or peak review reason"],
+            ["Pipeline Version", result.pipeline_version]
+          ]);
+
+          const reference = result.reference_evidence;
+
+          if (reference?.url) {
+            const referenceCard = document.createElement("div");
+            referenceCard.className = "details-item";
+
+            const label = document.createElement("span");
+            label.className = "details-label";
+            label.textContent = "External Reference";
+
+            const link = document.createElement("a");
+            link.className = "details-value";
+            link.href = reference.url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = `${reference.source}: ${reference.accession}`;
+
+            referenceCard.append(label, link);
+            jak2Details.append(referenceCard);
+          }
+        } else {
+          // A failed target endpoint should not leave a misleading 'Loading' message.
+          evidenceBadge.textContent = "Evidence unavailable";
+          evidenceBadge.dataset.status = "review";
+
+          jak2Summary.replaceChildren();
+
+          const unavailable = document.createElement("p");
+          unavailable.className = "evidence-unavailable";
+          unavailable.textContent = "Target evidence could not be loaded. Refer to the Initial QC decision for target-mapping status.";
+
+          jak2Summary.appendChild(unavailable);
+          jak2Details.textContent = "No mapped JAK2 V617F target evidence available.";
+        }
+
+        if (!traceResponse.ok) throw new Error("Unable to load chromatogram.");
+
+        const trace = await traceResponse.json();
+
+        if (!window.GeneGlassChromatogram) throw new Error("Chromatogram viewer script missing.");
+
+        const motifRange = findNearbyMotif(trace.sequence, targetBase, "ACAT");
+
+        await window.GeneGlassChromatogram.render(trace, {
+          targetBase: Number.isInteger(targetBase) && targetBase > 0 ? targetBase : undefined,
+          showTitle: false,
+          initialBaseCount: 9,
+          highlightRange: motifRange,
+          initialSequence: "ACAT",
+          readDirection,
+          compact: true
+        });
+
+        document.getElementById("chromatogramLoading").hidden = true;
+      } catch (error) {
+        console.error("Chromatogram / JAK2 error:", error);
+        document.getElementById("chromatogramLoading").textContent =
+          "Chromatogram could not be loaded: " + error.message;
+      }
 
       const qcResponse = await fetch(`${apiBaseUrl}/analyses/${analysisId}/preliminary-qc-decision`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       if (!qcResponse.ok) throw new Error("Unable to load Initial QC decision.");
+
       const qc = await qcResponse.json();
       renderInitialQcState(qc, details);
+
       if (qc.target_found !== true) {
         renderAiGateNotice("Target Not Found", "AI prediction and SHAP are unavailable without mapped JAK2 V617F target evidence.");
       } else if (qc.decision === "request_repeat") {
@@ -855,7 +999,9 @@ try {
       } else {
         await loadAiPrediction(token);
       }
+
       message.textContent = "";
+
       await Promise.all([
         loadSavedResearchResults(token),
         loadReviewHistory(token),
@@ -869,6 +1015,14 @@ try {
   document.addEventListener("geneglass:auth-ready", loadDetails);
   researchButton.addEventListener("click", refreshResearchResults);
   downloadReportButton.addEventListener("click", downloadSavedReport);
+
+  // Open the saved report in edit mode without starting a new analysis.
+  editReportButton.addEventListener("click", () => {
+    if (!savedReport || savedReport.status !== "finalized") return;
+
+    window.location.href =
+      `../AnalysisPage/analysis.html?id=${analysisId}&editReport=1`;
+  });
 
   if (window.GeneGlassAuth?.token) {
     loadDetails();

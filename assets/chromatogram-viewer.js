@@ -219,6 +219,95 @@ window.GeneGlassChromatogram = {
     let sequenceMatches = [];
     let sequenceMatchIndex = -1;
 
+    function showPatternNotFoundNotification() {
+      const existing = document.getElementById("gg-pattern-not-found");
+      if (existing) existing.remove();
+
+      if (!document.getElementById("gg-pattern-not-found-style")) {
+        const style = document.createElement("style");
+        style.id = "gg-pattern-not-found-style";
+        style.textContent = `
+#gg-pattern-not-found {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  width: min(360px, calc(100vw - 40px));
+  max-height: calc(100vh - 40px);
+  padding: 0;
+  border: 1px solid #d7e1e2;
+  border-radius: 8px;
+  color: #29484d;
+  box-shadow: 0 12px 35px rgba(20, 45, 50, .22);
+  font: 14px Arial, sans-serif;
+}
+          #gg-pattern-not-found::backdrop {
+            background: rgba(20, 35, 38, .28);
+          }
+          #gg-pattern-not-found .gg-notification-content {
+            padding: 18px 20px 16px;
+          }
+          #gg-pattern-not-found .gg-notification-title {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 14px;
+            font-size: 15px;
+            font-weight: 700;
+          }
+          #gg-pattern-not-found .gg-notification-title i {
+            color: #c58a20;
+          }
+          #gg-pattern-not-found p {
+            margin: 0 0 18px;
+            line-height: 1.5;
+            font-weight: 600;
+          }
+          #gg-pattern-not-found button {
+            display: block;
+            min-width: 76px;
+            margin-left: auto;
+            padding: 7px 18px;
+            border: 1px solid #aebfc1;
+            border-radius: 4px;
+            background: #f7faf9;
+            color: #29484d;
+            font-weight: 600;
+            cursor: pointer;
+          }
+          #gg-pattern-not-found button:hover {
+            background: #eaf2f1;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+
+      const dialog = document.createElement("dialog");
+      dialog.id = "gg-pattern-not-found";
+      dialog.innerHTML = `
+        <div class="gg-notification-content">
+          <div class="gg-notification-title">
+            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+            <span>GeneGlass</span>
+          </div>
+          <p>PATTERN NOT FOUND THROUGH END OF FILE</p>
+          <button type="button">OK</button>
+        </div>
+      `;
+      document.body.appendChild(dialog);
+      dialog.querySelector("button").addEventListener("click", () => dialog.close());
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) dialog.close();
+      });
+      dialog.addEventListener("close", () => dialog.remove(), { once: true });
+      if (typeof dialog.showModal === "function") {
+        dialog.showModal();
+      } else {
+        window.alert("PATTERN NOT FOUND THROUGH END OF FILE");
+        dialog.remove();
+      }
+    }
+
     function runSequenceSearch() {
       const query = normalizeDnaQuery(sequenceInput.value);
       if (query.length < 3) {
@@ -237,8 +326,9 @@ window.GeneGlassChromatogram = {
         lastSequenceQuery = query;
       }
       if (!sequenceMatches.length) {
-        sequenceStatus.textContent = "No matching sequence in this AB1 read.";
-        sequenceStatus.dataset.state = "error";
+        sequenceStatus.textContent = "";
+        sequenceStatus.dataset.state = "";
+        showPatternNotFoundNotification();
         return;
       }
       sequenceMatchIndex = (sequenceMatchIndex + 1) % sequenceMatches.length;
@@ -250,8 +340,10 @@ window.GeneGlassChromatogram = {
       const matchLength = match.end - match.start + 1;
       if (matchLength + 4 > count) count = Math.min(n, Math.max(9, matchLength + 4));
       first = clampFirst((match.start + match.end) / 2 - Math.floor(count / 2));
-      sequenceStatus.textContent = `Match ${sequenceMatchIndex + 1} of ${sequenceMatches.length} · ${match.orientation}`;
-      sequenceStatus.dataset.state = "found";
+      // Keep the search result visible on the chromatogram without showing
+      // the green "Match found" message under the primer field.
+      sequenceStatus.textContent = "";
+      sequenceStatus.dataset.state = "";
       draw();
     }
 
@@ -362,6 +454,7 @@ window.GeneGlassChromatogram = {
         ctx.fillText(String(label.index + 1), label.x, h - 18);
         lastRight = label.x + label.halfWidth;
       }
+
       // The selected base remains visible even when zoomed far out.
       if (selectedX !== null) {
         ctx.font = baseFont;
@@ -447,7 +540,10 @@ window.GeneGlassChromatogram = {
         highlightStart = n - 1 - highlightEnd;
         highlightEnd = n - 1 - previousStart;
       }
-      const normalizedSearch = normalizeDnaQuery(sequenceInput.value);
+      // The highlighted bases were mapped to their mirrored indices above.
+      // Keep that same physical region highlighted when switching strands;
+      // do not search the typed primer again, because its reverse complement
+      // may have a different letter sequence.
       first = clampFirst(n - 1 - previousCenter - Math.floor(count / 2));
       lastSequenceQuery = "";
       sequenceMatches = [];
@@ -455,14 +551,7 @@ window.GeneGlassChromatogram = {
       sequenceStatus.textContent = "";
       sequenceStatus.dataset.state = "";
       updateDirectionButton();
-      if (normalizedSearch.length >= 3 &&
-          [...normalizedSearch].every((base) => DNA_IUPAC[base])) {
-        hasHighlight = false;
-        draw();
-        runSequenceSearch();
-      } else {
-        draw();
-      }
+      draw();
     };
 
     horizontalSlider.oninput = () => {

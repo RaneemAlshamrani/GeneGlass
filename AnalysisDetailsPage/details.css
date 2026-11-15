@@ -316,14 +316,23 @@
 .report-heading p { margin: 0; color: #71858a; font-size: 13px; }
 
 .report-archive-state {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 20px;
   padding: 18px;
   border: 1px solid #d8e8e9;
   border-radius: 14px;
   background: #f7fbfb;
+}
+
+.report-archive-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  white-space: nowrap;
 }
 
 .report-archive-state strong { color: #17393e; }
@@ -1405,3 +1414,4 @@
 .audit-disclosure > summary { cursor:pointer; padding:14px 16px; color:#116e73; font-size:14px; font-weight:700; }
 .audit-disclosure .audit-timeline { padding:14px 20px; border-top:1px solid #e0eeee; margin:0; }
 .audit-disclosure:not([open]) .audit-timeline { display:none; }
+

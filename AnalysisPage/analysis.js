@@ -40,7 +40,9 @@
   const normalControl = document.getElementById("analysisNormalControl");
   const normalControlState = document.getElementById("analysisNormalControlState");
   const existingReportActions = document.getElementById("existingReportActions");
-  const downloadReportButton = document.getElementById("analysisDownloadReport");
+const downloadReportButton = document.getElementById("analysisDownloadReport");
+let editReportButton = null;
+let isEditingFinalizedReport = false;
   const researchCard = document.getElementById("analysisResearchCard");
   const researchButton = document.getElementById("analysisResearchLookup");
   const researchStatus = document.getElementById("analysisResearchStatus");
@@ -156,37 +158,54 @@
     }
   }
 
-  function setReportAvailability() {
-    const decisionIsFinal = ["positive", "negative"].includes(latestReviewDecision);
-    const reportIsCurrent = savedReport?.status === "finalized"
-      && savedReport.final_decision === latestReviewDecision;
-    const reportNeedsUpdate = savedReport?.status === "finalized"
-      && decisionIsFinal
-      && savedReport.final_decision !== latestReviewDecision;
-    reportBadge.textContent = reportIsCurrent
-      ? `Final · v${savedReport.version}`
-      : reportNeedsUpdate ? "Update required" : decisionIsFinal ? "Ready" : "Locked";
-    reportBadge.dataset.decision = reportIsCurrent
-      ? savedReport.final_decision : (latestReviewDecision || "pending");
-    reportDecision.classList.toggle("locked", !decisionIsFinal);
-    reportDecision.innerHTML = reportNeedsUpdate
-      ? `<i class="fa-solid fa-rotate"></i><span>The decision changed to <strong>${decisionLabel(latestReviewDecision)}</strong>. Generate a new PDF version.</span>`
-      : decisionIsFinal
-        ? `<i class="fa-solid fa-user-doctor"></i><span>Specialist decision: <strong>${decisionLabel(latestReviewDecision)}</strong></span>`
+function setReportAvailability() {
+  const decisionIsFinal = ["positive", "negative"].includes(latestReviewDecision);
+
+  const reportIsCurrent = savedReport?.status === "finalized"
+    && savedReport.final_decision === latestReviewDecision;
+
+  const showFinalizedReportActions = reportIsCurrent && !isEditingFinalizedReport;
+
+  const reportNeedsUpdate = savedReport?.status === "finalized"
+    && decisionIsFinal
+    && savedReport.final_decision !== latestReviewDecision;
+
+  reportBadge.textContent = reportIsCurrent
+    ? `Final · v${savedReport.version}`
+    : reportNeedsUpdate ? "Update required" : decisionIsFinal ? "Ready" : "Locked";
+
+  reportBadge.dataset.decision = reportIsCurrent
+    ? savedReport.final_decision : (latestReviewDecision || "pending");
+
+  reportDecision.classList.toggle("locked", !decisionIsFinal);
+
+  reportDecision.innerHTML = reportNeedsUpdate
+    ? `<i class="fa-solid fa-rotate"></i><span>The decision changed to <strong>${decisionLabel(latestReviewDecision)}</strong>. Generate a new PDF version.</span>`
+    : decisionIsFinal
+      ? `<i class="fa-solid fa-user-doctor"></i><span>Specialist decision: <strong>${decisionLabel(latestReviewDecision)}</strong></span>`
       : '<i class="fa-solid fa-lock"></i><span>Save a Positive or Negative Specialist Review first.</span>';
-    reportForm.hidden = reportIsCurrent;
-    existingReportActions.hidden = !reportIsCurrent;
-    openReportStep.disabled = !decisionIsFinal;
-    for (const control of reportForm.elements) {
-      control.disabled = !decisionIsFinal || reportIsCurrent;
-    }
-    if (decisionIsFinal) {
-      const defaults = Object.values(DEFAULT_INTERPRETATIONS);
-      if (!reportInterpretation.value.trim() || defaults.includes(reportInterpretation.value.trim())) {
-        reportInterpretation.value = DEFAULT_INTERPRETATIONS[latestReviewDecision];
-      }
+
+  reportForm.hidden = !decisionIsFinal || showFinalizedReportActions;
+  existingReportActions.hidden = !showFinalizedReportActions;
+
+  openReportStep.disabled = !decisionIsFinal;
+
+  for (const control of reportForm.elements) {
+    control.disabled = !decisionIsFinal || (reportIsCurrent && !isEditingFinalizedReport);
+  }
+
+  reportSubmit.innerHTML = isEditingFinalizedReport
+    ? '<i class="fa-solid fa-floppy-disk"></i> Save Changes &amp; Finalize New PDF'
+    : '<i class="fa-solid fa-file-pdf"></i> Finalize &amp; Open PDF';
+
+  if (decisionIsFinal) {
+    const defaults = Object.values(DEFAULT_INTERPRETATIONS);
+
+    if (!reportInterpretation.value.trim() || defaults.includes(reportInterpretation.value.trim())) {
+      reportInterpretation.value = DEFAULT_INTERPRETATIONS[latestReviewDecision];
     }
   }
+}
 
   function populateReportDraft(report) {
     if (!report) return;
@@ -675,6 +694,23 @@
     }
   }
 
+function editSavedReport() {
+  if (!savedReport || savedReport.status !== "finalized") return;
+
+  isEditingFinalizedReport = true;
+
+  populateReportDraft(savedReport);
+  setReportAvailability();
+
+  reportStatus.textContent =
+    "Editing a new version. The previously finalized PDF will remain unchanged.";
+
+  reportForm.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
   async function createReport(event) {
     event.preventDefault();
     if (!activeAnalysisId || !["positive", "negative"].includes(latestReviewDecision)) return;
@@ -697,6 +733,7 @@
       });
       const finalized = await responseJson(finalizeResponse, "The report could not be finalized.");
       savedReport = finalized.report || saved.report;
+      isEditingFinalizedReport = false;
       reportStatus.textContent = "Final report saved. Opening PDF...";
       setReportAvailability();
       const pdfResponse = await fetch(
@@ -782,21 +819,72 @@
   reviewForm.addEventListener("submit", saveReview);
   reportForm.addEventListener("submit", createReport);
   downloadReportButton.addEventListener("click", downloadSavedReport);
+  editReportButton = document.createElement("button");
+editReportButton.type = "button";
+editReportButton.id = "analysisEditReport";
+editReportButton.className = downloadReportButton.className;
+editReportButton.innerHTML =
+  '<i class="fa-solid fa-pen-to-square"></i> Edit Report';
+
+editReportButton.addEventListener("click", editSavedReport);
+
+existingReportActions.appendChild(editReportButton);
   researchButton.addEventListener("click", refreshResearchResults);
 
-  async function resumeFromUrl() {
-    const analysisId = Number(new URLSearchParams(window.location.search).get("id"));
-    if (!Number.isInteger(analysisId) || analysisId <= 0 || !window.GeneGlassAuth?.token) return;
-    message.textContent = "Loading saved analysis...";
-    try {
-      await loadAnalysis(analysisId);
-      message.textContent = "";
-    } catch (error) {
-      message.textContent = error.message;
-      uploadCard.hidden = false;
-    }
+
+async function resumeFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const analysisId = Number(params.get("id"));
+  const editReport = params.get("editReport") === "1";
+
+  if (
+    !Number.isInteger(analysisId) ||
+    analysisId <= 0 ||
+    !window.GeneGlassAuth?.token
+  ) {
+    return;
   }
 
-  document.addEventListener("geneglass:auth-ready", resumeFromUrl);
-  if (window.GeneGlassAuth?.token) resumeFromUrl();
+  message.textContent = "Loading saved analysis...";
+
+  try {
+    await loadAnalysis(analysisId, null, editReport ? 4 : 1);
+
+    if (editReport) {
+      if (
+        !savedReport ||
+        savedReport.status !== "finalized" ||
+        !["positive", "negative"].includes(latestReviewDecision)
+      ) {
+        throw new Error("A finalized report is not available for editing.");
+      }
+
+      isEditingFinalizedReport = true;
+
+      populateReportDraft(savedReport);
+      setReportAvailability();
+
+      reportStatus.textContent =
+        "Editing a new version. The previously finalized PDF will remain unchanged.";
+
+      showWorkflowStep(4);
+      reportForm.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+
+    message.textContent = "";
+  } catch (error) {
+    message.textContent = error.message;
+    uploadCard.hidden = false;
+  }
+}
+
+document.addEventListener("geneglass:auth-ready", resumeFromUrl);
+
+if (window.GeneGlassAuth?.token) {
+  resumeFromUrl();
+}
+
 })();
