@@ -23,6 +23,7 @@
   const modelNext = document.getElementById("modelNext");
   const reviewBack = document.getElementById("reviewBack");
   const openReportStep = document.getElementById("openReportStep");
+  const skipReportStep = document.getElementById("skipReportStep");
   const reportBack = document.getElementById("reportBack");
   const finalizationWorkspace = document.getElementById("finalizationWorkspace");
   const reviewForm = document.getElementById("analysisReviewForm");
@@ -189,6 +190,7 @@ function setReportAvailability() {
   existingReportActions.hidden = !showFinalizedReportActions;
 
   openReportStep.disabled = !decisionIsFinal;
+  skipReportStep.disabled = !latestReviewDecision;
 
   for (const control of reportForm.elements) {
     control.disabled = !decisionIsFinal || (reportIsCurrent && !isEditingFinalizedReport);
@@ -803,6 +805,10 @@ function editSavedReport() {
   openReportStep.addEventListener("click", () => {
     if (["positive", "negative"].includes(latestReviewDecision)) showWorkflowStep(4);
   });
+  skipReportStep.addEventListener("click", () => {
+    if (!latestReviewDecision) return;
+    window.location.href = "../HistoryPage/history.html";
+  });
   reportBack.addEventListener("click", () => showWorkflowStep(3));
 
   reviewForm.addEventListener("change", (event) => {
@@ -836,6 +842,7 @@ async function resumeFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const analysisId = Number(params.get("id"));
   const editReport = params.get("editReport") === "1";
+  const openReport = params.get("report") === "1";
 
   if (
     !Number.isInteger(analysisId) ||
@@ -848,7 +855,7 @@ async function resumeFromUrl() {
   message.textContent = "Loading saved analysis...";
 
   try {
-    await loadAnalysis(analysisId, null, editReport ? 4 : 1);
+    await loadAnalysis(analysisId, null, editReport || openReport ? 4 : 1);
 
     if (editReport) {
       if (
@@ -872,6 +879,23 @@ async function resumeFromUrl() {
         behavior: "smooth",
         block: "start"
       });
+    } else if (openReport && modelReady) {
+      if (["positive", "negative"].includes(latestReviewDecision)) {
+        showWorkflowStep(4);
+        reportForm.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      } else {
+        showWorkflowStep(3);
+        reviewStatus.textContent = latestReviewDecision === "needs_more_data"
+          ? "Change and save the decision as Positive or Negative before generating the PDF."
+          : "Save a Positive or Negative specialist decision before generating the PDF.";
+        reviewForm.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }
     }
 
     message.textContent = "";

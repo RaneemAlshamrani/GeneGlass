@@ -367,7 +367,7 @@
 
   function renderSavedReport(report) {
     savedReport = report;
-    continueReportLink.href = `../AnalysisPage/analysis.html?id=${analysisId}`;
+    continueReportLink.href = `../AnalysisPage/analysis.html?id=${analysisId}&report=1`;
 
     if (report?.status === "needs_update") {
       reportBadge.textContent = "Update required";

@@ -453,7 +453,7 @@
 
     const complete = document.createElement("a");
 
-    complete.href = `../AnalysisPage/analysis.html?id=${analysis.id}`;
+    complete.href = `../AnalysisPage/analysis.html?id=${analysis.id}&report=1`;
 
     complete.textContent = report.status === "needs_update" ? "Update PDF" : "Complete";
 

@@ -193,7 +193,7 @@ python -m alembic upgrade head
 - `POST /api/analyses/{id}/research-variants/refresh`: استخراج SNV candidates من الجزء المغطى والبحث الاختياري في ClinVar.
 - `GET /api/dashboard/summary`: إحصاءات المستخدم من قاعدة البيانات.
 
-التحليل والمودلات الحالية **للبحث ودعم المراجعة فقط وليست للتشخيص**. نتيجة مودل الطفرة الثنائية `negative/hetero` لا تدعم `homo` كفئة، ولا تستخدم Noise كتنبؤ جيني. يوجد مودل QC منفصل للـNoise موثق أدناه ولم يُربط بعد بمسار الرفع. الاحتمالات المعروضة ليست ثقة سريرية. تعرض History وDashboard أحدث نتيجة طفرة محفوظة فقط، بينما تبقى كل عمليات التشغيل السابقة في `model_predictions` وسجل التدقيق.
+التحليل والمودلات الحالية **للبحث ودعم المراجعة فقط وليست للتشخيص**. نتيجة مودل الطفرة الثنائية `negative/hetero` لا تدعم `homo` كفئة، ولا تستخدم Noise كتنبؤ جيني. الاحتمالات المعروضة ليست ثقة سريرية. تعرض History وDashboard أحدث نتيجة طفرة محفوظة فقط، بينما تبقى كل عمليات التشغيل السابقة في `model_predictions` وسجل التدقيق.
 
 بعد إضافة ميزة الحفظ إلى قاعدة بيانات تحتوي تحليلات سابقة، شغّل مرة واحدة:
 
@@ -202,29 +202,6 @@ python -m alembic upgrade head
 ```
 
 الأمر لا يستبدل نتيجة سابقة متوافقة مع نفس بصمة المودل وحالة QC.
-
-## مودل QC مستقل لكشف Noise
-
-المودل `ai_assets/noise_qc_random_forest.joblib` بوابة جودة مستقلة مبنية على 23 قياسًا من الإشارة الأصلية غير الملساء، مثل Phred وتوزيع القمم الثانوية وشدة الإشارة وتباعد القمم. لا يستخدم اسم الملف أو نتيجة `negative/hetero`.
-
-- المصدر: 121 ملفًا مقبولًا و59 ملف Noise من `GeneGlass_Corrected_191.zip`.
-- التدريب: 90 acceptable + 43 noise.
-- الاختبار المستقل: 31 acceptable + 16 noise.
-- التقسيم Group-aware حسب رمز العينة، وبصمات الملفات والمجموعات لا تتقاطع بين التدريب والاختبار.
-- عند حد High Noise البالغ `0.278248`: اكتشف 14/16 Noise، وأخطأ باعتبار 5/31 ملفات مقبولة High Noise؛ ROC-AUC=`0.9637`.
-- منطقة `Needs Review` المحافظة تمنع مرور 2/16 المتبقية كـPass، لكنها تحول 20 ملفًا مقبولًا إضافيًا للمراجعة. لذلك النسخة الحالية مناسبة للتنبيه ودعم المختص، وليست جاهزة لمنع التحليل تلقائيًا من دون مراجعة.
-
-التقرير الكامل موجود في `ai_assets/noise_qc_evaluation.json`، والـmanifest المنزوع الأسماء في `ai_assets/noise_qc_split_manifest.csv`. لإعادة التدريب وإنشاء ZIP محلي للتقسيم:
-
-```powershell
-.\.venv\Scripts\python.exe -m app.cli.train_noise_qc `
-  --source-zip "C:\path\to\GeneGlass_Corrected_191.zip" `
-  --artifacts-dir ai_assets `
-  --training-zip "C:\path\to\GeneGlass_Noise_QC_Training_AB1.zip" `
-  --testing-zip "C:\path\to\GeneGlass_Noise_QC_Testing_AB1.zip"
-```
-
-ملفات `ACAT NOT FOUND` و`homo` و`needs_review` مستبعدة لأنها حالات مختلفة عن تصنيف جودة الإشارة. تسميات Noise موروثة من مجلد المصدر وتحتاج مراجعة مختص قبل أي ادعاء تحقق سريري.
 
 ## تفسير المودل باستخدام Tree SHAP
 

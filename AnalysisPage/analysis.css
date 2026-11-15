@@ -1308,6 +1308,17 @@ body {
   background: #008f96;
   color: #fff;
 }
+.workflow-next-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.workflow-navigation .workflow-skip {
+  border: 1px solid #b9d9db;
+  background: #f7fbfb;
+  color: #296067;
+}
 .workflow-navigation button:disabled { opacity: .5; cursor: not-allowed; }
 .workflow-navigation-report { justify-content: flex-start; }
 
@@ -1318,6 +1329,7 @@ body {
   .workflow-progress-card { padding: 20px 16px; }
   .workflow-progress li strong { display: none; }
   .workflow-navigation { align-items: stretch; flex-direction: column-reverse; }
+  .workflow-next-actions { align-items: stretch; flex-direction: column-reverse; }
   .workflow-navigation button { width: 100%; }
 }
 
