@@ -385,7 +385,7 @@
       reportBadge.textContent = "Not created";
       reportBadge.dataset.decision = "pending";
       reportArchiveTitle.textContent = "No finalized report";
-      reportArchiveMessage.textContent = "Open this analysis in New Analysis to complete the specialist decision and report.";
+      reportArchiveMessage.textContent = "";
       downloadReportButton.hidden = true;
       editReportButton.hidden = true;
       continueReportLink.hidden = false;
@@ -502,7 +502,7 @@
     auditTimeline.replaceChildren();
     auditCount.textContent = `${events.length} event${events.length === 1 ? "" : "s"}`;
     auditStatus.textContent = events.length
-      ? "Audit records are read-only."
+      ? ""
       : "No audit events are recorded for this analysis yet.";
 
     events.forEach((event) => {

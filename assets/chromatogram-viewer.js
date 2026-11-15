@@ -207,7 +207,7 @@ window.GeneGlassChromatogram = {
 
     function updateDirectionButton() {
       const nextDirection = displayDirection === "Forward" ? "Reverse" : "Forward";
-      directionButton.textContent = `${displayDirection} → ${nextDirection}`;
+      directionButton.textContent = `Current: ${displayDirection} · Switch to ${nextDirection}`;
       directionButton.setAttribute(
         "aria-label",
         `Currently showing ${displayDirection}. Switch chromatogram to ${nextDirection}.`

@@ -1493,3 +1493,5 @@
   .details-qc-card { padding: 19px 17px; }
   .evidence-card .evidence-summary { grid-template-columns: 1fr; }
 }
+
+#reportArchiveMessage:empty, #auditStatus:empty { display: none; }
