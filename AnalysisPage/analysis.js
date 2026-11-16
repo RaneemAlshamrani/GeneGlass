@@ -232,10 +232,7 @@ let isEditingFinalizedReport = false;
     viewerSlot.append(section);
     inspection.append(measured, viewerSlot);
     layout.append(selector, inspection);
-    const caution = document.createElement("p");
-    caution.className = "gg-evidence-caution";
-    caution.textContent = "SHAP explains the model estimate, not a confirmed mutation. Related peak measurements must not be counted as independent evidence.";
-    frame.append(header, layout, caution);
+    frame.append(header, layout);
     dialog.append(frame);
     originalParent.append(dialog);
 
@@ -511,14 +508,6 @@ function setReportAvailability() {
       (shapData, trigger) => openShapInspector(shapData, trigger)
     );
     if (explanation) panel.append(explanation);
-    const meta = document.createElement("p");
-    meta.className = "analysis-ai-metadata";
-    meta.textContent = `Model: ${data?.model_name || "GeneGlass"} · Version: ${data?.model_version || "Unavailable"} · Orientation: ${data?.orientation || "Unavailable"}`;
-    panel.append(meta);
-    const notice = document.createElement("p");
-    notice.className = "analysis-ai-disclaimer";
-    notice.textContent = "Research use only; not a clinical diagnosis. The model was trained on Negative and Hetero, not Homo or Noise. These scores are not clinical certainty.";
-    panel.append(notice);
     // The chromatogram already marks the mapped target with targetBase.
     aiResultMount.replaceChildren(panel);
     modelReady = true;
@@ -579,7 +568,7 @@ function setReportAvailability() {
       ? "Specialist permission is recorded. Research-only AI analysis may run."
       : repeatRequested
         ? "QC decision recorded in the audit trail."
-        : "No AI prediction will be generated until Continue Analysis is selected.";
+        : "";
     if (qc.decision === "pending" && details.ai_prediction && readableTarget) {
       initialQcMessage.textContent = "Historical AI result detected (created before the QC approval step). A new AI run still requires your decision.";
     }

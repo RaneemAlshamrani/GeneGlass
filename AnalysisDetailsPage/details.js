@@ -157,10 +157,7 @@
     viewerSlot.append(chromatogram);
     inspection.append(measured, viewerSlot);
     layout.append(selector, inspection);
-    const caution = document.createElement("p");
-    caution.className = "gg-evidence-caution";
-    caution.textContent = "SHAP explains the model estimate, not a confirmed mutation. Related peak measurements must not be counted as independent evidence.";
-    frame.append(header, layout, caution);
+    frame.append(header, layout);
     dialog.append(frame);
     originalParent.append(dialog);
 
@@ -395,14 +392,9 @@
 
     const titleText = document.createElement("div");
     const title = document.createElement("strong");
-    const model = document.createElement("small");
 
     title.textContent = "AI Prediction";
-    model.textContent = data.model_version
-      ? `${data.model_name || "GeneGlass research model"} · v${data.model_version}`
-      : data.model_name || "GeneGlass research model";
-
-    titleText.append(title, model);
+    titleText.append(title);
     titleGroup.append(icon, titleText);
 
     const badge = document.createElement("span");
@@ -459,11 +451,7 @@
 
     if (explanation) body.appendChild(explanation);
 
-    const notice = document.createElement("div");
-    notice.className = "ai-research-notice";
-    notice.innerHTML = '<i class="fa-solid fa-flask" aria-hidden="true"></i><span><strong>Research use only</strong><small>This model output supports specialist review and is not a clinical diagnosis.</small></span>';
-
-    aiPrediction.append(header, body, notice);
+    aiPrediction.append(header, body);
   }
 
   function renderAiPredictionError(messageText) {

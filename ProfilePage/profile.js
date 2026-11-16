@@ -185,7 +185,7 @@ async function loadProfileStatistics() {
     completedCount.textContent = result.completed_analyses;
     reviewCount.textContent = result.needs_review;
 
-    statisticsMessage.textContent = "Statistics are up to date.";
+    statisticsMessage.textContent = "";
   } catch (error) {
     statisticsMessage.textContent =
       error.message || "Could not load your analysis statistics.";

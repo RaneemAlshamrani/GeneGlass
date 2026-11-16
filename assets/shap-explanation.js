@@ -40,20 +40,15 @@
     const text = document.createElement("span");
     const strong = document.createElement("strong");
     strong.textContent = "Why did the model produce this result?";
-    const small = document.createElement("small");
-    small.textContent = "Understand the AI estimate; inspect the actual signals only when needed";
-    text.append(strong, small);
+    text.append(strong);
     title.append(icon, text);
-    const badge = document.createElement("span");
-    badge.className = "shap-method-badge";
-    badge.textContent = explanation.method || "SHAP";
-    summary.append(title, badge);
+    summary.append(title);
 
     const body = document.createElement("div");
     body.className = "shap-explanation-body";
     const overview = document.createElement("p");
     overview.className = "shap-overview";
-    overview.textContent = `Model's Heterozygous estimate: ${percent(explanation.output_value)}. The bars below explain the estimate, not a confirmed mutation.`;
+    overview.textContent = `Model's Heterozygous estimate: ${percent(explanation.output_value)}.`;
     body.appendChild(overview);
 
     if (typeof onInspect === "function") {
@@ -122,10 +117,6 @@
     technical.append(provenance, list);
     body.append(technical);
 
-    const caution = document.createElement("p");
-    caution.className = "shap-caution";
-    caution.innerHTML = '<i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>SHAP explains the model estimate, not biological causality or a clinical diagnosis. Signal features can be correlated.</span>';
-    body.append(caution);
 
     disclosure.append(summary, body);
     return disclosure;
