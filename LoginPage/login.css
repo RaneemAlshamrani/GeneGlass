@@ -1269,3 +1269,221 @@ body {
     }
 
 }
+
+/* =========================================================
+   GeneGlass responsive layout fix
+   Keeps the desktop split layout and prevents section overlap
+   on smaller screens or when browser zoom is increased.
+========================================================= */
+
+html, body {
+    min-height: 100%;
+}
+
+body {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.login-page {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: auto;
+    overflow: visible;
+    isolation: isolate;
+}
+
+.brand-section {
+    height: 100vh;
+    height: 100dvh;
+}
+
+.login-section {
+    inset: 0 0 0 48%;
+    width: 52%;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    padding: 24px clamp(20px, 3vw, 58px);
+    justify-content: center;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.login-card {
+    width: min(570px, 100%);
+    max-width: 100%;
+    flex-shrink: 0;
+    padding: clamp(24px, 3vw, 56px);
+}
+
+.brand-logo {
+    max-width: 100%;
+}
+
+.signal-area {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 35%;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.signal-area .signal-image {
+    max-width: none;
+}
+
+@media (min-width: 1001px) and (max-width: 1200px) {
+    .login-section {
+        inset: 0 0 0 46%;
+        width: 54%;
+    }
+    .login-card {
+        width: 100%;
+        padding: clamp(22px, 3vw, 42px);
+    }
+    .login-header h1 {
+        font-size: clamp(30px, 3vw, 44px);
+    }
+}
+
+@media (max-width: 1000px) {
+    .login-page {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        min-height: 100dvh;
+        height: auto;
+        overflow: visible;
+    }
+
+    .brand-section {
+        position: relative;
+        width: 100%;
+        height: clamp(250px, 36vh, 350px);
+        flex: 0 0 auto;
+        border-radius: 0 0 32px 32px;
+        animation: none;
+        overflow: hidden;
+    }
+
+    .brand-section::after {
+        display: none;
+    }
+
+    .brand-content {
+        width: min(440px, 86%);
+        transform: none;
+        animation: none;
+    }
+
+    .brand-logo {
+        width: min(330px, 90%);
+        max-width: 100%;
+    }
+
+    .brand-subtitle {
+        margin-top: 8px;
+        font-size: clamp(13px, 2vw, 16px);
+    }
+
+    .signal-area {
+        height: 42%;
+    }
+
+    .login-section {
+        position: relative;
+        inset: auto;
+        width: 100%;
+        height: auto;
+        min-height: 0;
+        padding: 32px 20px 50px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .login-card {
+        width: min(540px, 100%);
+        margin: 0 auto;
+        padding: clamp(22px, 5vw, 40px);
+        animation: none;
+    }
+
+    .dna-image {
+        max-width: none;
+        height: 100%;
+        width: auto;
+        right: -20%;
+        top: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-section {
+        height: 260px;
+    }
+
+    .login-section {
+        padding: 20px 14px 36px;
+    }
+
+    .login-card {
+        border-radius: 22px;
+        padding: 24px 20px;
+    }
+
+    .login-header {
+        margin-bottom: 26px;
+    }
+
+    .login-header h1 {
+        font-size: 30px;
+    }
+
+    .input-wrapper input {
+        height: 58px;
+        padding-left: 55px;
+        padding-right: 55px;
+    }
+
+    .login-options {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .login-button {
+        height: 58px;
+    }
+}
+
+@media (min-width: 1001px) and (max-height: 760px) {
+    .login-card {
+        padding-top: 24px;
+        padding-bottom: 24px;
+    }
+
+    .login-header {
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .input-wrapper input {
+        height: 56px;
+    }
+
+    .login-options {
+        margin-bottom: 18px;
+    }
+
+    .login-button {
+        height: 56px;
+    }
+}

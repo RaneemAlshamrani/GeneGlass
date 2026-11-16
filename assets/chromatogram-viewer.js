@@ -102,6 +102,9 @@ window.GeneGlassChromatogram = {
       n
     );
     let selected = rawTargetIndex;
+    let focusedFeature = null;
+    let focusedValue = null;
+    let beforeInspection = null;
     let highlightStart = Number(options.highlightRange?.startBase) - 1;
     let highlightEnd = Number(options.highlightRange?.endBase) - 1;
     let hasHighlight = Number.isInteger(highlightStart) &&
@@ -391,6 +394,7 @@ window.GeneGlassChromatogram = {
           ctx.fillStyle = "rgba(0, 132, 139, .10)";
           ctx.fillRect(px - 8, top, 16, bottom - top + 22);
           ctx.strokeStyle = "#00848b";
+          ctx.lineWidth = 1;
           ctx.setLineDash([4, 4]);
           ctx.beginPath();
           ctx.moveTo(px, top);
@@ -419,8 +423,90 @@ window.GeneGlassChromatogram = {
         ctx.globalAlpha = 1;
       }
 
+      const referenceBase = displayDirection === "Reverse" ? "C" : "G";
+      const alternativeBase = displayDirection === "Reverse" ? "A" : "T";
+      const highlightedSignals = focusedFeature === "alternative_peak"
+        ? [alternativeBase]
+        : focusedFeature === "reference_peak"
+          ? [referenceBase]
+          : ["alternative_ratio", "peak_overlap_score"].includes(focusedFeature)
+            ? [referenceBase, alternativeBase]
+            : null;
+
       for (const base of ["A", "C", "G", "T"]) {
-        drawTrace(channels[base], base, 1, 1.35);
+        const emphasized = !highlightedSignals || highlightedSignals.includes(base);
+        drawTrace(
+          channels[base], base,
+          emphasized ? 1 : 0.12,
+          highlightedSignals && emphasized ? 3.8 : 1.35
+        );
+      }
+
+      // GeneGlassSHAPTargetMarker: mark actual channel peaks near the mapped target.
+      if (focusedFeature && selected !== null && selected >= first && selected <= last) {
+        const targetSample = Math.round(positions[selected]);
+        ctx.save();
+        ctx.strokeStyle = "#b88219";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(x(targetSample), top);
+        ctx.lineTo(x(targetSample), bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        for (const base of (highlightedSignals || [])) {
+          const values = channels[base];
+          const center = Math.max(left, Math.min(right, targetSample));
+          let strongest = center;
+          for (let sample = Math.max(left, center - 3); sample <= Math.min(right, center + 3); sample++) {
+            if ((Number(values[sample]) || 0) > (Number(values[strongest]) || 0)) {
+              strongest = sample;
+            }
+          }
+          const px = x(strongest);
+          const py = y(values[strongest]);
+          ctx.beginPath();
+          ctx.arc(px, py, 7, 0, Math.PI * 2);
+          ctx.fillStyle = "#ffffff";
+          ctx.fill();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = colors[base];
+          ctx.stroke();
+
+          const label = `${base === alternativeBase ? "ALT" : "REF"} (${base})`;
+          ctx.font = "bold 12px Arial";
+          ctx.textAlign = "left";
+          const labelWidth = ctx.measureText(label).width;
+          const labelX = Math.max(6, Math.min(w - labelWidth - 6, px + 11));
+          const labelY = py > top + 30 ? py - 12 : py + 24;
+          ctx.fillStyle = colors[base];
+          ctx.fillText(label, labelX, Math.max(13, Math.min(bottom - 2, labelY)));
+        }
+        ctx.restore();
+      }
+
+      // Quality is attached to the base call, not to a particular colored peak.
+      // Noise is a local numerical summary: do not invent a noise threshold on the trace.
+      if (focusedFeature === "phred_quality" &&
+          selected !== null && selected >= first && selected <= last) {
+        const px = x(positions[selected]);
+        const label = focusedValue === null
+          ? `Base quality Q${quality[selected] ?? "N/A"}`
+          : `Base quality Q${Math.round(focusedValue)}`;
+        ctx.save();
+        ctx.strokeStyle = "#087e85";
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(px - 11, top, 22, bottom - top + 12);
+        ctx.font = "bold 12px Arial";
+        const boxWidth = Math.min(w - pad * 2, ctx.measureText(label).width + 20);
+        const boxX = Math.max(pad, Math.min(w - pad - boxWidth, px - boxWidth / 2));
+        ctx.fillStyle = "#087e85";
+        ctx.fillRect(boxX, top + 5, boxWidth, 25);
+        ctx.fillStyle = "#ffffff";
+        ctx.textAlign = "center";
+        ctx.fillText(label, boxX + boxWidth / 2, top + 22);
+        ctx.restore();
       }
 
       // Keep all original signal peaks. Only thin text labels when there is
@@ -617,5 +703,57 @@ window.GeneGlassChromatogram = {
     };
 
     draw();
+
+    return Object.freeze({
+      focusFeature(feature, value) {
+        if (rawTargetIndex === null) return false;
+        if (beforeInspection === null) {
+          beforeInspection = {
+            selected, first, count, hasHighlight, highlightStart, highlightEnd,
+            showingFlipped
+          };
+        }
+        focusedFeature = feature;
+        focusedValue = value === null || value === undefined ? null : Number(value);
+        if (!Number.isFinite(focusedValue)) focusedValue = null;
+        return this.focusTarget();
+      },
+      focusTarget() {
+        if (rawTargetIndex === null) return false;
+        selected = showingFlipped ? n - 1 - rawTargetIndex : rawTargetIndex;
+        highlightStart = selected;
+        highlightEnd = selected;
+        hasHighlight = true;
+        first = clampFirst(selected - Math.floor(count / 2));
+        draw();
+        return true;
+      },
+      clearEvidence() {
+        focusedFeature = null;
+        focusedValue = null;
+        if (beforeInspection !== null) {
+          const old = beforeInspection;
+          selected = old.selected;
+          first = old.first;
+          count = old.count;
+          hasHighlight = old.hasHighlight;
+          highlightStart = old.highlightStart;
+          highlightEnd = old.highlightEnd;
+          showingFlipped = old.showingFlipped;
+          const data = showingFlipped ? flippedData : rawData;
+          sequence = data.sequence;
+          positions = data.positions;
+          channels = data.channels;
+          quality = data.quality;
+          displayDirection = showingFlipped
+            ? (rawDirection === "Forward" ? "Reverse" : "Forward")
+            : rawDirection;
+          updateDirectionButton();
+          beforeInspection = null;
+        }
+        draw();
+      },
+      canInspect() { return rawTargetIndex !== null; }
+    });
   }
 };

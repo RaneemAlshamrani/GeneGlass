@@ -3,6 +3,7 @@
 (() => {
   const fileDetails = document.getElementById("fileDetails");
   const chromatogram = document.getElementById("detailsChromatogram");
+  let chromatogramController = null;
   const jak2Details = document.getElementById("jak2Details");
   const jak2Summary = document.getElementById("jak2Summary");
   const evidenceBadge = document.getElementById("evidenceBadge");
@@ -80,6 +81,188 @@
     }
 
     return best ? { startBase: best.start + 1, endBase: best.start + motif.length } : null;
+  }
+
+  function inspectValue(feature, value) {
+    if (value === null || value === undefined || !Number.isFinite(Number(value))) return "Unavailable";
+    const number = Number(value);
+    if (["peak_overlap_score", "alternative_ratio", "local_noise_ratio"].includes(feature)) {
+      return `${(number * 100).toFixed(1)}%`;
+    }
+    if (feature === "phred_quality") return `Q${Math.round(number)}`;
+    return number.toLocaleString(undefined, { maximumFractionDigits: 3 });
+  }
+
+  function openShapInspector(explanation, trigger) {
+    if (!chromatogramController?.canInspect?.() || !chromatogram?.isConnected ||
+        !Array.isArray(explanation?.contributions) || !explanation.contributions.length) {
+      return false;
+    }
+    if (document.querySelector(".gg-evidence-dialog")) return true;
+
+    const featureData = new Map(explanation.contributions.map(item => [item.feature, item]));
+    const peakFeature = featureData.get("peak_overlap_score") || featureData.get("alternative_ratio");
+    const qualityFeature = featureData.get("phred_quality");
+    if (!peakFeature && !qualityFeature) return false;
+
+    const placeholder = document.createComment("GeneGlass chromatogram location");
+    const originalParent = chromatogram.parentNode;
+    originalParent.insertBefore(placeholder, chromatogram);
+
+    const dialog = document.createElement("dialog");
+    dialog.className = "gg-evidence-dialog";
+    dialog.setAttribute("aria-label", "Inspect GeneGlass AI evidence");
+    const frame = document.createElement("div");
+    frame.className = "gg-evidence-frame";
+    const header = document.createElement("div");
+    header.className = "gg-evidence-header";
+    const heading = document.createElement("div");
+    const title = document.createElement("h2");
+    title.textContent = "Inspect AI evidence";
+    const subtitle = document.createElement("p");
+    subtitle.textContent = "Choose what to inspect on the original AB1 chromatogram.";
+    heading.append(title, subtitle);
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "gg-evidence-close";
+    close.textContent = "Close ×";
+    close.setAttribute("aria-label", "Close AI evidence inspector");
+    close.addEventListener("click", () => dialog.close());
+    header.append(heading, close);
+
+    const layout = document.createElement("div");
+    layout.className = "gg-evidence-layout";
+    const selector = document.createElement("nav");
+    selector.className = "gg-evidence-selector";
+    selector.setAttribute("aria-label", "Visual evidence options");
+    const chooserHeading = document.createElement("h3");
+    chooserHeading.textContent = "Inspect visually";
+    selector.append(chooserHeading);
+
+    const inspection = document.createElement("div");
+    inspection.className = "gg-evidence-inspection";
+    const measured = document.createElement("div");
+    measured.className = "gg-evidence-measurement";
+    const currentName = document.createElement("h3");
+    const currentValue = document.createElement("strong");
+    const currentImpact = document.createElement("span");
+    const currentNote = document.createElement("p");
+    measured.append(currentName, currentValue, currentImpact, currentNote);
+    const viewerSlot = document.createElement("div");
+    viewerSlot.className = "gg-evidence-viewer";
+    viewerSlot.append(chromatogram);
+    inspection.append(measured, viewerSlot);
+    layout.append(selector, inspection);
+    const caution = document.createElement("p");
+    caution.className = "gg-evidence-caution";
+    caution.textContent = "SHAP explains the model estimate, not a confirmed mutation. Related peak measurements must not be counted as independent evidence.";
+    frame.append(header, layout, caution);
+    dialog.append(frame);
+    originalParent.append(dialog);
+
+    const buttons = [];
+    function setActive(button) {
+      for (const candidate of buttons) {
+        const active = candidate === button;
+        candidate.classList.toggle("active", active);
+        candidate.setAttribute("aria-pressed", String(active));
+      }
+    }
+
+    function showPeaks(button) {
+      setActive(button);
+      const reference = featureData.get("reference_peak")?.value;
+      const alternative = featureData.get("alternative_peak")?.value;
+      const altPercent = featureData.get("alternative_ratio")?.value;
+      const overlap = featureData.get("peak_overlap_score")?.value;
+      currentName.textContent = "Target peak signals";
+      currentValue.textContent = `Reference: ${inspectValue("reference_peak", reference)}  |  Alternative: ${inspectValue("alternative_peak", alternative)}`;
+      currentImpact.textContent = "Four related model measurements from the SAME TWO peaks";
+      currentNote.textContent = `Alternative is ${inspectValue("alternative_ratio", altPercent)} of their combined intensity, and ${inspectValue("peak_overlap_score", overlap)} as strong as the reference. These are two ratios of the same signals, not separate peaks.`;
+      chromatogramController.focusFeature("peak_overlap_score", overlap);
+    }
+
+    function showQuality(button) {
+      setActive(button);
+      const item = featureData.get("phred_quality");
+      const impact = Number(item?.impact) || 0;
+      currentName.textContent = "Base reading quality";
+      currentValue.textContent = `Measured: ${inspectValue("phred_quality", item?.value)}`;
+      currentImpact.textContent = `${Math.abs(impact * 100).toFixed(1)} points ${impact >= 0 ? "raising" : "lowering"} the model's Heterozygous estimate`;
+      currentNote.textContent = "Phred quality describes reliability of the called base. It does not prove whether the alternative peak is a mutation or background noise.";
+      chromatogramController.focusFeature("phred_quality", item?.value);
+    }
+
+    function addChoice(title, subtitle, handler) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "gg-evidence-feature";
+      const name = document.createElement("strong");
+      name.textContent = title;
+      const note = document.createElement("small");
+      note.textContent = subtitle;
+      button.append(name, note);
+      button.setAttribute("aria-pressed", "false");
+      button.addEventListener("click", () => handler(button));
+      selector.append(button);
+      buttons.push(button);
+      return button;
+    }
+
+    let defaultButton = null;
+    if (peakFeature) {
+      defaultButton = addChoice("Target peak signals", "Reference, alternative and their ratios", showPeaks);
+    }
+    if (qualityFeature) {
+      const qualityButton = addChoice("Base reading quality", inspectValue("phred_quality", qualityFeature.value), showQuality);
+      if (!defaultButton) defaultButton = qualityButton;
+    }
+
+    const background = featureData.get("local_noise_ratio");
+    const alignment = featureData.get("alignment_score");
+    if (background || alignment) {
+      const extra = document.createElement("details");
+      extra.className = "gg-evidence-context";
+      const extraHeading = document.createElement("summary");
+      extraHeading.textContent = "Other model measurements (no single peak)";
+      extra.append(extraHeading);
+      for (const [feature, label, explanationText] of [
+        ["local_noise_ratio", "Background noise", "Summarizes nearby background signals; no specific peak is identified as noise."],
+        ["alignment_score", "Sequence alignment", "Measures sequence alignment against the reference; not an individual chromatogram peak."]
+      ]) {
+        const item = featureData.get(feature);
+        if (!item) continue;
+        const row = document.createElement("div");
+        row.className = "gg-evidence-context-item";
+        const name = document.createElement("strong");
+        name.textContent = `${label}: ${inspectValue(feature, item.value)}`;
+        const note = document.createElement("p");
+        note.textContent = explanationText;
+        row.append(name, note);
+        extra.append(row);
+      }
+      selector.append(extra);
+    }
+
+    dialog.addEventListener("close", () => {
+      chromatogramController.clearEvidence();
+      placeholder.replaceWith(chromatogram);
+      dialog.remove();
+      trigger?.focus();
+    }, { once: true });
+    dialog.addEventListener("click", event => {
+      if (event.target === dialog) dialog.close();
+    });
+    if (typeof dialog.showModal !== "function") {
+      placeholder.replaceWith(chromatogram);
+      dialog.remove();
+      return false;
+    }
+
+    dialog.showModal();
+    defaultButton.click();
+    close.focus();
+    return true;
   }
 
   function showUnsupportedTargetAdvisory(pattern) {
@@ -266,7 +449,8 @@
     }
 
     const explanation = window.GeneGlassShapExplanation?.create(
-      data.explanation
+      data.explanation,
+      (shapData, trigger) => openShapInspector(shapData, trigger)
     );
 
     if (explanation) body.appendChild(explanation);
@@ -898,7 +1082,7 @@
 
         const motifRange = findNearbyMotif(trace.sequence, targetBase, "ACAT");
 
-        await window.GeneGlassChromatogram.render(trace, {
+        chromatogramController = await window.GeneGlassChromatogram.render(trace, {
           targetBase: Number.isInteger(targetBase) && targetBase > 0 ? targetBase : undefined,
           showTitle: false,
           initialBaseCount: 9,

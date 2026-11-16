@@ -1495,3 +1495,159 @@
 }
 
 #reportArchiveMessage:empty, #auditStatus:empty { display: none; }
+
+/* GeneGlass: optional, user-invoked SHAP evidence inspector. */
+.gg-inspect-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 12px 0 16px;
+}
+.gg-open-inspector {
+  border: 1px solid #087f85;
+  background: #087f85;
+  color: #fff;
+  font: inherit;
+  font-weight: 750;
+  border-radius: 10px;
+  padding: 11px 16px;
+  cursor: pointer;
+}
+.gg-open-inspector:hover { background: #006c73; }
+.gg-open-inspector:focus-visible,
+.gg-evidence-dialog button:focus-visible {
+  outline: 3px solid #f4ab46;
+  outline-offset: 2px;
+}
+.gg-inspect-action-status { color: #8a5b00; font-size: 12px; }
+.gg-shap-technical {
+  margin-top: 12px;
+  color: #506c70;
+  font-size: 13px;
+}
+.gg-shap-technical summary { cursor: pointer; width: fit-content; }
+.gg-shap-technical .shap-provenance { margin-top: 8px; }
+
+.gg-evidence-dialog {
+  box-sizing: border-box;
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(1220px, 96vw);
+  max-width: none;
+  max-height: 92dvh;
+  overflow: auto;
+  padding: 0;
+  border: 1px solid #c6dfe0;
+  border-radius: 19px;
+  background: #fff;
+  color: #17393e;
+  box-shadow: 0 22px 80px rgba(13, 44, 49, .24);
+  font-family: Arial, Helvetica, sans-serif;
+}
+.gg-evidence-dialog::backdrop { background: rgba(10, 33, 39, .64); }
+.gg-evidence-frame { padding: 0 18px 16px; }
+.gg-evidence-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #fff;
+  border-bottom: 1px solid #e1eeee;
+  padding: 17px 3px;
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.gg-evidence-header h2 { margin: 0 0 3px; font-size: 21px; line-height: 1.25; }
+.gg-evidence-header p { margin: 0; font-size: 13px; color: #59777b; }
+.gg-evidence-close {
+  flex: 0 0 auto;
+  border: 1px solid #c5dadb;
+  background: #f5fafa;
+  color: #13444a;
+  padding: 9px 13px;
+  font: inherit;
+  font-weight: 700;
+  border-radius: 9px;
+  cursor: pointer;
+}
+.gg-evidence-layout {
+  display: grid;
+  grid-template-columns: minmax(205px, .65fr) minmax(0, 2.2fr);
+  gap: 20px;
+  align-items: start;
+  padding-top: 17px;
+}
+.gg-evidence-selector { display: flex; flex-direction: column; gap: 7px; }
+.gg-evidence-selector h3 { margin: 0 0 5px; font-size: 13px; color: #507277; }
+.gg-evidence-feature {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 4px;
+  text-align: left;
+  font-family: inherit;
+  border: 1px solid #d8e5e6;
+  border-radius: 9px;
+  background: #fff;
+  color: #173e43;
+  cursor: pointer;
+  padding: 10px 12px;
+}
+.gg-evidence-feature strong { font-size: 13px; font-weight: 700; }
+.gg-evidence-feature small { font-size: 12px; color: #59777b; }
+.gg-evidence-feature:hover { background: #f0f8f8; }
+.gg-evidence-feature.active {
+  border-color: #00858d;
+  background: #eaf8f7;
+  box-shadow: inset 3px 0 0 #00858d;
+}
+.gg-evidence-inspection { min-width: 0; }
+.gg-evidence-measurement {
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border: 1px solid #dceced;
+  border-radius: 11px;
+  background: #f7fbfb;
+  display: grid;
+  gap: 5px;
+}
+.gg-evidence-measurement h3 { font-size: 16px; margin: 0; }
+.gg-evidence-measurement > strong { font-size: 15px; }
+.gg-evidence-measurement > span { color: #087f85; font-size: 13px; font-weight: 700; }
+.gg-evidence-measurement p { margin: 2px 0 0; color: #547176; font-size: 13px; }
+.gg-evidence-viewer {
+  min-width: 0;
+  border: 1px solid #e1eeee;
+  border-radius: 11px;
+  padding: 10px;
+  background: #fff;
+}
+.gg-evidence-viewer #detailsChromatogram { min-width: 0; }
+.gg-evidence-dialog #chromatogramCanvas { display: block; width: 100%; max-width: 100%; height: auto; }
+.gg-evidence-caution { color: #547176; font-size: 12px; margin: 12px 0 0; }
+@media (max-width: 850px) {
+  .gg-evidence-layout { grid-template-columns: 1fr; gap: 12px; }
+  .gg-evidence-selector {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 2px 0 8px;
+  }
+  .gg-evidence-selector h3 { display: none; }
+  .gg-evidence-feature { flex: 0 0 160px; }
+  .gg-evidence-dialog { max-height: 96dvh; width: 98vw; }
+  .gg-evidence-header h2 { font-size: 17px; }
+}
+
+/* Simplified SHAP explanation and grouped evidence inspector. */
+.gg-shap-plain-note { margin: 6px 0 14px; color: #506f74; font-size: 13px; line-height: 1.5; }
+.gg-shap-technical .shap-contribution-list { margin-top: 12px; }
+.gg-evidence-context { margin-top: 10px; padding-top: 10px; border-top: 1px solid #dceced; color: #43666b; }
+.gg-evidence-context summary { cursor: pointer; font-size: 12px; font-weight: 700; line-height: 1.5; }
+.gg-evidence-context-item { display: grid; gap: 5px; padding: 10px 5px; border-bottom: 1px solid #edf3f3; }
+.gg-evidence-context-item strong { font-size: 12px; color: #17464b; }
+.gg-evidence-context-item p { font-size: 12px; margin: 0; line-height: 1.45; }
