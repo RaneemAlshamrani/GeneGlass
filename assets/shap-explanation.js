@@ -114,14 +114,12 @@
     note.textContent = "Four model features describe the same two target peaks. Explore them together in the inspector.";
     body.append(note);
 
-    const technical = document.createElement("details");
+    const technical = document.createElement("div");
     technical.className = "gg-shap-technical";
-    const technicalTitle = document.createElement("summary");
-    technicalTitle.textContent = "Technical SHAP: all 7 feature effects";
     const provenance = document.createElement("p");
     provenance.className = "shap-provenance";
     provenance.textContent = `SHAP baseline ${percent(explanation.base_value)}; model output ${percent(explanation.output_value)}. ${explanation.method || "SHAP"} · ${explanation.background_sample_count ?? "N/A"} training background samples · SHAP ${explanation.shap_version || "version unavailable"}.`;
-    technical.append(technicalTitle, provenance, list);
+    technical.append(provenance, list);
     body.append(technical);
 
     const caution = document.createElement("p");
