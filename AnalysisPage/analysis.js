@@ -44,11 +44,6 @@
 const downloadReportButton = document.getElementById("analysisDownloadReport");
 let editReportButton = null;
 let isEditingFinalizedReport = false;
-  const researchCard = document.getElementById("analysisResearchCard");
-  const researchButton = document.getElementById("analysisResearchLookup");
-  const researchStatus = document.getElementById("analysisResearchStatus");
-  const researchResults = document.getElementById("analysisResearchResults");
-  const researchBadge = document.getElementById("analysisResearchBadge");
 
   const apiBaseUrl = window.GeneGlassConfig?.apiBaseUrl;
   let activeAnalysisId = null;
@@ -89,24 +84,37 @@ let isEditingFinalizedReport = false;
   }
 
   const REVIEW_NOTES = {
-    positive: [
-      "The chromatogram supports a Positive JAK2 V617F result.",
-      "The target peak pattern is consistent with a Positive JAK2 V617F result.",
+    not_detected: [
+      "No convincing JAK2 V617F variant signal is detected at the target position.",
+      "The chromatogram supports a Not Detected JAK2 V617F result.",
     ],
-    negative: [
-      "The chromatogram supports a Negative JAK2 V617F result.",
-      "No convincing variant peak is present at the JAK2 V617F target.",
+    heterozygous: [
+      "The target peak pattern supports a Heterozygous JAK2 V617F result.",
+      "Reference and variant signals are both present at the target position.",
     ],
-    needs_more_data: [
-      "Repeat testing is required because the target signal is inconclusive.",
-      "A new specimen or sequencing run is required for confirmation.",
+    homozygous: [
+      "The target peak pattern supports a Homozygous JAK2 V617F result.",
+      "The variant signal predominates at the target position without a convincing reference peak.",
+    ],
+    inconclusive: [
+      "The available signal is insufficient for a conclusive JAK2 V617F result.",
+      "Repeat testing or additional evidence is required before final interpretation.",
     ],
   };
 
   const DEFAULT_INTERPRETATIONS = {
-    positive: "JAK2 V617F was detected in the tested specimen based on specialist review of the available technical evidence.",
-    negative: "JAK2 V617F was not detected in the tested specimen based on specialist review of the available technical evidence.",
+    not_detected: "JAK2 V617F was not detected in the tested specimen based on specialist review of the available technical evidence.",
+    heterozygous: "A heterozygous JAK2 V617F pattern was identified in the tested specimen based on specialist review of the available technical evidence.",
+    homozygous: "A homozygous JAK2 V617F pattern was identified in the tested specimen based on specialist review of the available technical evidence.",
+    inconclusive: "The JAK2 V617F result is inconclusive based on the available technical evidence; repeat or additional testing is recommended.",
   };
+
+  const REPORTABLE_DECISIONS = new Set([
+    "not_detected",
+    "heterozygous",
+    "homozygous",
+    "inconclusive",
+  ]);
 
   function authHeaders() {
     const token = window.GeneGlassAuth?.token;
@@ -120,9 +128,10 @@ let isEditingFinalizedReport = false;
   }
 
   function decisionLabel(decision) {
-    if (decision === "positive") return "Positive";
-    if (decision === "negative") return "Negative";
-    if (decision === "needs_more_data") return "More data requested";
+    if (decision === "not_detected") return "Not Detected";
+    if (decision === "heterozygous") return "Heterozygous";
+    if (decision === "homozygous") return "Homozygous";
+    if (decision === "inconclusive") return "Inconclusive";
     return "Not reviewed";
   }
 
@@ -343,7 +352,7 @@ let isEditingFinalizedReport = false;
   }
 
 function setReportAvailability() {
-  const decisionIsFinal = ["positive", "negative"].includes(latestReviewDecision);
+  const decisionIsFinal = REPORTABLE_DECISIONS.has(latestReviewDecision);
 
   const reportIsCurrent = savedReport?.status === "finalized"
     && savedReport.final_decision === latestReviewDecision;
@@ -367,7 +376,7 @@ function setReportAvailability() {
     ? `<i class="fa-solid fa-rotate"></i><span>The decision changed to <strong>${decisionLabel(latestReviewDecision)}</strong>. Generate a new PDF version.</span>`
     : decisionIsFinal
       ? `<i class="fa-solid fa-user-doctor"></i><span>Specialist decision: <strong>${decisionLabel(latestReviewDecision)}</strong></span>`
-      : '<i class="fa-solid fa-lock"></i><span>Save a Positive or Negative Specialist Review first.</span>';
+      : '<i class="fa-solid fa-lock"></i><span>Save the Specialist Review result first.</span>';
 
   reportForm.hidden = !decisionIsFinal || showFinalizedReportActions;
   existingReportActions.hidden = !showFinalizedReportActions;
@@ -516,111 +525,6 @@ function setReportAvailability() {
     modelNext.disabled = false;
   }
 
-  function appendResearchField(container, label, value) {
-    const row = document.createElement("div");
-    row.className = "analysis-research-field";
-    const name = document.createElement("span");
-    name.textContent = label;
-    const content = document.createElement("strong");
-    content.textContent = value || "N/A";
-    row.append(name, content);
-    container.appendChild(row);
-  }
-
-  function renderResearchResults(data, searched = false) {
-    researchResults.replaceChildren();
-    const candidates = (Array.isArray(data?.candidates) ? data.candidates : [])
-      .filter((candidate) => (candidate.external_annotations || []).some(
-        (item) => item.source === "NCBI ClinVar" && item.lookup_status === "matched"
-      ));
-    if (!candidates.length) {
-      researchBadge.textContent = searched ? "0 exact matches" : "Not searched";
-      researchBadge.dataset.state = searched ? "empty" : "idle";
-      if (searched) {
-        const empty = document.createElement("p");
-        empty.className = "analysis-research-empty";
-        empty.textContent = "No exact ClinVar matches were found. Unmatched candidates are not displayed as external results.";
-        researchResults.appendChild(empty);
-      }
-      return;
-    }
-
-    for (const candidate of candidates) {
-      const card = document.createElement("article");
-      card.className = "analysis-research-variant";
-      const title = document.createElement("h3");
-      title.textContent = candidate.hgvs;
-      card.appendChild(title);
-      appendResearchField(card, "AB1 base", String(candidate.ab1_base_number));
-      appendResearchField(card, "Read direction", candidate.direction);
-      appendResearchField(card, "Raw AB1 change", candidate.raw_ab1_change);
-      appendResearchField(card, "Reference change", candidate.reference_oriented_change);
-      appendResearchField(card, "Phred", candidate.phred_quality == null ? "N/A" : `Q${candidate.phred_quality}`);
-      const clinvar = (candidate.external_annotations || []).find(
-        (item) => item.source === "NCBI ClinVar" && item.lookup_status === "matched"
-      );
-      appendResearchField(card, "ClinVar accession", clinvar?.accession_version || clinvar?.accession);
-      appendResearchField(
-        card,
-        "Published classifications",
-        (clinvar?.classifications || []).map((item) => `${item.type}: ${item.description}`).join(" · ")
-      );
-      appendResearchField(card, "Associated conditions", (clinvar?.conditions || []).join("; "));
-      if (clinvar?.source_url) {
-        const link = document.createElement("a");
-        link.className = "analysis-research-link";
-        link.href = clinvar.source_url;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = "Open matched ClinVar record";
-        card.appendChild(link);
-      }
-      researchResults.appendChild(card);
-    }
-    researchBadge.textContent = `${candidates.length} exact match${candidates.length === 1 ? "" : "es"}`;
-    researchBadge.dataset.state = "matched";
-  }
-
-  async function loadSavedResearchResults() {
-    if (!activeAnalysisId) return;
-    const response = await fetch(
-      `${apiBaseUrl}/analyses/${activeAnalysisId}/research-variants`,
-      { headers: authHeaders() },
-    );
-    if (!response.ok) return;
-    const data = await response.json();
-    const previouslySearched = Number(data.screened_candidate_count) > 0 || Number(data.candidate_count) > 0;
-    researchStatus.textContent = data.candidate_count > 0
-      ? `${data.candidate_count} saved exact ClinVar match${data.candidate_count === 1 ? "" : "es"}. Research use only.`
-      : previouslySearched
-        ? "No exact ClinVar matches are saved for this analysis."
-        : "No ClinVar search has been requested.";
-    renderResearchResults(data, previouslySearched);
-  }
-
-  async function refreshResearchResults() {
-    if (!activeAnalysisId || !authHeaders()) return;
-    researchButton.disabled = true;
-    researchButton.textContent = "Searching…";
-    researchStatus.textContent = "Checking eligible JAK2 HGVS candidates in ClinVar…";
-    try {
-      const response = await fetch(
-        `${apiBaseUrl}/analyses/${activeAnalysisId}/research-variants/refresh`,
-        { method: "POST", headers: authHeaders() },
-      );
-      const data = await responseJson(response, "ClinVar search failed.");
-      researchStatus.textContent = data.candidate_count > 0
-        ? `${data.candidate_count} exact ClinVar match${data.candidate_count === 1 ? "" : "es"} found. Research use only.`
-        : "No exact ClinVar matches were found. Unmatched candidates are not displayed.";
-      renderResearchResults(data, true);
-    } catch (error) {
-      researchStatus.textContent = error.message;
-    } finally {
-      researchButton.disabled = false;
-      researchButton.textContent = "Search ClinVar";
-    }
-  }
-
 
   function qcMetric(label, value) {
     const item = document.createElement("div");
@@ -756,7 +660,6 @@ function setReportAvailability() {
     section.hidden = false;
     uploadCard.hidden = true;
     finalizationWorkspace.hidden = true;
-    researchCard.hidden = true;
     document.getElementById("analysisAiResult")?.remove();
     document.getElementById("jak2TargetError")?.remove();
     chromatogramController = window.GeneGlassChromatogram.render(activeTrace, chromatogramOptions(activeTrace));
@@ -821,8 +724,6 @@ function setReportAvailability() {
       return;
     }
     if (qc.decision === "continue_analysis") {
-      researchCard.hidden = false;
-      await loadSavedResearchResults();
       await loadWorkflowState(activeAnalysisId);
     }
     showWorkflowStep(requestedStep, { focus: requestedStep !== 1 });
@@ -899,7 +800,7 @@ function editSavedReport() {
 
   async function createReport(event) {
     event.preventDefault();
-    if (!activeAnalysisId || !["positive", "negative"].includes(latestReviewDecision)) return;
+    if (!activeAnalysisId || !REPORTABLE_DECISIONS.has(latestReviewDecision)) return;
     if (!reportForm.reportValidity()) return;
     const previewWindow = window.open("", "_blank");
     reportSubmit.disabled = true;
@@ -955,7 +856,6 @@ function editSavedReport() {
     workflow.hidden = true;
     initialQcCard.hidden = true;
     finalizationWorkspace.hidden = true;
-    researchCard.hidden = true;
     document.getElementById("jak2TargetError")?.remove();
     document.getElementById("analysisAiResult")?.remove();
     try {
@@ -987,7 +887,7 @@ function editSavedReport() {
   });
   reviewBack.addEventListener("click", () => showWorkflowStep(2));
   openReportStep.addEventListener("click", () => {
-    if (["positive", "negative"].includes(latestReviewDecision)) showWorkflowStep(4);
+    if (REPORTABLE_DECISIONS.has(latestReviewDecision)) showWorkflowStep(4);
   });
   skipReportStep.addEventListener("click", () => {
     if (!latestReviewDecision) return;
@@ -1019,7 +919,6 @@ editReportButton.innerHTML =
 editReportButton.addEventListener("click", editSavedReport);
 
 existingReportActions.appendChild(editReportButton);
-  researchButton.addEventListener("click", refreshResearchResults);
 
 
 async function resumeFromUrl() {
@@ -1045,7 +944,7 @@ async function resumeFromUrl() {
       if (
         !savedReport ||
         savedReport.status !== "finalized" ||
-        !["positive", "negative"].includes(latestReviewDecision)
+        !REPORTABLE_DECISIONS.has(latestReviewDecision)
       ) {
         throw new Error("A finalized report is not available for editing.");
       }
@@ -1064,7 +963,7 @@ async function resumeFromUrl() {
         block: "start"
       });
     } else if (openReport && modelReady) {
-      if (["positive", "negative"].includes(latestReviewDecision)) {
+      if (REPORTABLE_DECISIONS.has(latestReviewDecision)) {
         showWorkflowStep(4);
         reportForm.scrollIntoView({
           behavior: "smooth",
@@ -1072,9 +971,7 @@ async function resumeFromUrl() {
         });
       } else {
         showWorkflowStep(3);
-        reviewStatus.textContent = latestReviewDecision === "needs_more_data"
-          ? "Change and save the decision as Positive or Negative before generating the PDF."
-          : "Save a Positive or Negative specialist decision before generating the PDF.";
+        reviewStatus.textContent = "Save the Specialist Review result before generating the PDF.";
         reviewForm.scrollIntoView({
           behavior: "smooth",
           block: "start"

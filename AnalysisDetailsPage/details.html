@@ -9,7 +9,7 @@
 
   <link rel="stylesheet" href="../DashboardPage/dashboard.css">
 <link rel="stylesheet" href="../AnalysisPage/analysis.css?v=20261113-10">
-<link rel="stylesheet" href="details.css?v=20261116-evidence-inspector-1">
+<link rel="stylesheet" href="details.css?v=20261116-review-results">
 
   <link rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -19,7 +19,7 @@
 <script src="../assets/auth.js" defer></script>
 <script src="../assets/shap-explanation.js?v=20261116-evidence-inspector-1" defer></script>
 <script src="../assets/chromatogram-viewer.js?v=20261116-evidence-inspector-1" defer></script>
-<script src="details.js?v=20261116-evidence-inspector-1" defer></script>
+<script src="details.js?v=20261116-review-results" defer></script>
 
 </head>
 
@@ -206,50 +206,19 @@
         <div class="audit-heading">
           <div>
             <h2>Audit Trail</h2>
-            
+            <p>Chronological record of actions performed on this analysis.</p>
           </div>
-          <span id="auditCount" class="audit-count">0 events</span>
+          <div class="audit-heading-actions">
+            <span id="auditCount" class="audit-count">0 events</span>
+            <button id="printAuditButton" class="print-audit-button" type="button" disabled>
+              <i class="fa-solid fa-print"></i> Print Audit
+            </button>
+          </div>
         </div>
         <p id="auditStatus" role="status">Loading audit trail…</p>
         <details class="audit-disclosure">
           <summary>View audit history</summary>
           <div id="auditTimeline" class="audit-timeline"></div>
-        </details>
-      </section>
-
-      <section class="dashboard-card details-card research-card">
-        <details class="research-disclosure">
-          <summary>
-            <span class="research-summary-icon"><i class="fa-solid fa-database"></i></span>
-            <span>
-              <strong>Research Databases</strong>
-              <small>Optional external evidence · research use only</small>
-            </span>
-            <span id="researchMatchBadge" class="research-match-badge">Not searched</span>
-          </summary>
-          <div class="research-panel">
-            <div class="source-dashboard">
-              <article class="source-card source-card-primary">
-                <div class="source-card-heading">
-                  <span class="source-icon"><i class="fa-solid fa-shield-halved"></i></span>
-                  <div><strong>NCBI ClinVar</strong><small>Primary reference source</small></div>
-                </div>
-                <p>Checks eligible HGVS candidates and displays exact database matches only.</p>
-                <button id="researchLookupButton" type="button">Search ClinVar</button>
-              </article>
-              <article class="source-card">
-                <div class="source-card-heading">
-                  <span class="source-icon"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
-                  <div><strong>Genovate</strong><small>Independent research workspace</small></div>
-                </div>
-                <p>Opens externally. Verify genome assembly before entering coordinates; GeneGlass sends no data.</p>
-                <a class="secondary-source-link" href="https://genovate-variant-validation-system-921860441860.us-west1.run.app/" target="_blank" rel="noopener noreferrer">Open Genovate</a>
-              </article>
-            </div>
-            <p id="researchStatus" class="research-status" role="status">No ClinVar search has been requested.</p>
-            <div id="researchResults" class="research-results"></div>
-            <p class="research-footnote"><i class="fa-solid fa-circle-info"></i> External results support research review and do not replace specialist interpretation.</p>
-          </div>
         </details>
       </section>
 

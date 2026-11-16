@@ -77,7 +77,7 @@ def test_specialist_review_history_is_append_only_and_owner_scoped(
                 f"/api/analyses/{analysis_id}/reviews",
                 headers=owner_headers,
                 json={
-                    "decision": "needs_more_data",
+                    "decision": "inconclusive",
                     "comment": "Repeat sequencing is required for this region.",
                 },
             )
@@ -85,8 +85,24 @@ def test_specialist_review_history_is_append_only_and_owner_scoped(
                 f"/api/analyses/{analysis_id}/reviews",
                 headers=owner_headers,
                 json={
-                    "decision": "positive",
-                    "comment": "The repeated trace supports a Positive JAK2 V617F decision.",
+                    "decision": "heterozygous",
+                    "comment": "The repeated trace supports a Heterozygous JAK2 V617F decision.",
+                },
+            )
+            third = client.post(
+                f"/api/analyses/{analysis_id}/reviews",
+                headers=owner_headers,
+                json={
+                    "decision": "not_detected",
+                    "comment": "No JAK2 V617F signal was detected.",
+                },
+            )
+            fourth = client.post(
+                f"/api/analyses/{analysis_id}/reviews",
+                headers=owner_headers,
+                json={
+                    "decision": "homozygous",
+                    "comment": "The trace supports a Homozygous JAK2 V617F result.",
                 },
             )
             history = client.get(
@@ -118,21 +134,25 @@ def test_specialist_review_history_is_append_only_and_owner_scoped(
 
         assert first.status_code == 201
         assert second.status_code == 201
+        assert third.status_code == 201
+        assert fourth.status_code == 201
         assert invalid.status_code == 422
         assert forbidden_history.status_code == 404
 
         payload = history.json()
         assert history.status_code == 200
-        assert payload["review_count"] == 2
-        assert payload["latest_decision"] == "positive"
+        assert payload["review_count"] == 4
+        assert payload["latest_decision"] == "homozygous"
         assert [item["decision"] for item in payload["reviews"]] == [
-            "positive",
-            "needs_more_data",
+            "homozygous",
+            "not_detected",
+            "heterozygous",
+            "inconclusive",
         ]
         assert payload["reviews"][0]["reviewer_name"] == "Review Specialist"
 
         with test_sessions() as session:
-            assert session.scalar(select(func.count()).select_from(Review)) == 2
+            assert session.scalar(select(func.count()).select_from(Review)) == 4
             stored_analysis = session.get(Analysis, analysis_id)
             assert stored_analysis is not None
             assert stored_analysis.v617f_detected is None

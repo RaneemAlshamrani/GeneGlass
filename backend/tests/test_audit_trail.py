@@ -73,7 +73,7 @@ def test_audit_events_are_created_without_secrets_and_are_owner_scoped(
                 f"/api/analyses/{analysis_id}/reviews",
                 headers=headers,
                 json={
-                    "decision": "needs_more_data",
+                    "decision": "inconclusive",
                     "comment": "A repeat trace is required before acceptance.",
                 },
             )
@@ -129,7 +129,7 @@ def test_audit_events_are_created_without_secrets_and_are_owner_scoped(
             "analysis.review_created"
         )
         assert analysis_payload["events"][0]["details"]["decision"] == (
-            "needs_more_data"
+            "inconclusive"
         )
 
         actions = {event["action"] for event in my_trail.json()["events"]}

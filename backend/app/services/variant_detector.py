@@ -1,6 +1,5 @@
 """Reference utilities for JAK2 variant detection."""
 
-from functools import lru_cache
 from pathlib import Path
 
 from Bio import SeqIO
@@ -23,7 +22,6 @@ GENOMIC_REFERENCE_PATH = (
 
 JAK2_V617F_CDNA_POSITION = 1849
 JAK2_CDS_START = 468
-JAK2_CDS_END = 3866
 JAK2_TRANSCRIPT_ACCESSION = "NM_004972.4"
 JAK2_GENOMIC_ACCESSION = "NC_000009.12"
 JAK2_GENOMIC_REFERENCE_START = 5_073_170
@@ -40,24 +38,6 @@ JAK2_PIPELINE_VERSION = "jak2-genomic-grch38-v2"
 # Conservative preliminary alignment screening limits, not clinical cutoffs.
 MIN_ALIGNMENT_IDENTITY_PERCENT = 80.0
 MIN_ALIGNMENT_READ_COVERAGE_PERCENT = 50.0
-MIN_RESEARCH_CANDIDATE_PHRED = 20
-
-JAK2_V617F_REFERENCE_EVIDENCE = {
-    "source": "NCBI ClinVar",
-    "variation_id": 14662,
-    "accession": "VCV000014662",
-    "transcript": "NM_004972.4",
-    "hgvs_c": "c.1849G>T",
-    "genomic_reference": "NC_000009.12",
-    "hgvs_g": "g.5073770G>T",
-    "protein_change": "p.Val617Phe",
-    "url": "https://www.ncbi.nlm.nih.gov/clinvar/variation/14662/",
-    "note": (
-        "External reference record only; GeneGlass does not infer a clinical "
-        "classification from this link."
-    ),
-}
-
 
 def load_jak2_reference() -> str:
     """Load the JAK2 transcript reference used for HGVS conversion."""
@@ -178,165 +158,6 @@ def align_ab1_to_jak2(ab1_sequence: str) -> dict:
         "coverage_percentage": coverage_percentage,
     }
 
-
-@lru_cache(maxsize=1)
-def _genomic_to_transcript_map() -> dict[int, int]:
-    """Map bases shared by the genomic window and spliced transcript."""
-
-    transcript = load_jak2_reference()
-    genomic = load_jak2_genomic_reference()
-    aligner = PairwiseAligner()
-    aligner.mode = "local"
-    aligner.match_score = 2
-    aligner.mismatch_score = -3
-    aligner.open_gap_score = -5
-    aligner.extend_gap_score = -1
-    alignment = aligner.align(transcript, genomic)[0]
-    mapping: dict[int, int] = {}
-    for transcript_block, genomic_block in zip(
-        alignment.aligned[0],
-        alignment.aligned[1],
-    ):
-        transcript_start, transcript_end = map(int, transcript_block)
-        genomic_start, genomic_end = map(int, genomic_block)
-        block_length = min(
-            transcript_end - transcript_start,
-            genomic_end - genomic_start,
-        )
-        for offset in range(block_length):
-            genomic_position = (
-                JAK2_GENOMIC_REFERENCE_START + genomic_start + offset
-            )
-            mapping[genomic_position] = transcript_start + offset + 1
-    return mapping
-
-
-def map_genomic_to_transcript_position(
-    genomic_position: int,
-) -> int | None:
-    """Return the NM_004972.4 position for an exonic genomic base."""
-
-    return _genomic_to_transcript_map().get(genomic_position)
-
-
-def _transcript_hgvs_coordinate(
-    transcript_position: int,
-) -> tuple[int | None, str]:
-    if transcript_position < JAK2_CDS_START:
-        return None, f"c.-{JAK2_CDS_START - transcript_position}"
-    if transcript_position <= JAK2_CDS_END:
-        coding_position = transcript_position - JAK2_CDS_START + 1
-        return coding_position, f"c.{coding_position}"
-    return None, f"c.*{transcript_position - JAK2_CDS_END}"
-
-
-def extract_jak2_candidate_snvs(data: dict) -> list[dict]:
-    """Return research-only SNV candidates from aligned AB1 base calls.
-
-    Only explicit A/C/G/T substitutions are emitted. Mixed secondary peaks and
-    insertions/deletions are intentionally excluded until independently
-    validated rules are available.
-    """
-
-    sequence = str(data.get("sequence") or "").upper()
-    quality_scores = list(data.get("quality_scores") or [])
-    if len(quality_scores) < len(sequence):
-        quality_scores.extend([None] * (len(sequence) - len(quality_scores)))
-
-    alignment = align_ab1_to_jak2(sequence)
-    reference = load_jak2_genomic_reference()
-    direction = alignment["direction"]
-    oriented_sequence = (
-        sequence
-        if direction == "Forward"
-        else str(Seq(sequence).reverse_complement())
-    )
-    oriented_quality = (
-        quality_scores
-        if direction == "Forward"
-        else list(reversed(quality_scores))
-    )
-    alignment_is_eligible = (
-        alignment["identity_percentage"] >= MIN_ALIGNMENT_IDENTITY_PERCENT
-        and alignment["coverage_percentage"] >= MIN_ALIGNMENT_READ_COVERAGE_PERCENT
-    )
-
-    candidates = []
-    for reference_block, read_block in zip(
-        alignment["reference_positions"],
-        alignment["read_positions"],
-    ):
-        reference_start, reference_end = map(int, reference_block)
-        read_start, read_end = map(int, read_block)
-        block_length = min(reference_end - reference_start, read_end - read_start)
-
-        for offset in range(block_length):
-            reference_index = reference_start + offset
-            read_index = read_start + offset
-            reference_base = reference[reference_index]
-            observed_base = oriented_sequence[read_index]
-            if (
-                reference_base == observed_base
-                or reference_base not in "ACGT"
-                or observed_base not in "ACGT"
-            ):
-                continue
-
-            genomic_position = JAK2_GENOMIC_REFERENCE_START + reference_index
-            transcript_position = map_genomic_to_transcript_position(
-                genomic_position
-            )
-            if transcript_position is not None:
-                coding_position, coordinate = _transcript_hgvs_coordinate(
-                    transcript_position
-                )
-                reference_accession = JAK2_TRANSCRIPT_ACCESSION
-                hgvs = (
-                    f"{reference_accession}:{coordinate}"
-                    f"{reference_base}>{observed_base}"
-                )
-            else:
-                coding_position = None
-                reference_accession = JAK2_GENOMIC_ACCESSION
-                hgvs = (
-                    f"{reference_accession}:g.{genomic_position}"
-                    f"{reference_base}>{observed_base}"
-                )
-            quality = oriented_quality[read_index]
-            quality = int(quality) if quality is not None else None
-            original_read_index = (
-                read_index
-                if direction == "Forward"
-                else len(sequence) - 1 - read_index
-            )
-            lookup_eligible = (
-                alignment_is_eligible
-                and quality is not None
-                and quality >= MIN_RESEARCH_CANDIDATE_PHRED
-            )
-
-            candidates.append({
-                "reference_accession": reference_accession,
-                "transcript_position": transcript_position,
-                "coding_position": coding_position,
-                "genomic_position": genomic_position,
-                "reference_allele": reference_base,
-                "observed_allele": observed_base,
-                "hgvs": hgvs,
-                "ab1_base_number": original_read_index + 1,
-                "direction": direction,
-                "phred_quality": quality,
-                "review_status": (
-                    "Research Candidate" if lookup_eligible else "Needs Review"
-                ),
-                "lookup_eligible": lookup_eligible,
-                "note": (
-                    "Base-call mismatch only; non-diagnostic and subject to "
-                    "specialist review."
-                ),
-            })
-
-    return candidates
 
 def find_jak2_v617f_position(ab1_sequence: str) -> dict:
     """Map the JAK2 V617F reference position to an AB1 base index."""
@@ -587,7 +408,6 @@ def analyze_jak2_chromatogram(data: dict) -> dict:
         return {
             **result,
             "pipeline_version": JAK2_PIPELINE_VERSION,
-            "reference_evidence": JAK2_V617F_REFERENCE_EVIDENCE,
             "target_region": {"available": False, "reason": result.get("reason", "Target not mapped.")},
             "review_reasons": [result.get("reason", "Target position could not be mapped.")],
             "review_status": "Needs Review",
@@ -635,7 +455,6 @@ def analyze_jak2_chromatogram(data: dict) -> dict:
     return {
         **result,
         "pipeline_version": JAK2_PIPELINE_VERSION,
-        "reference_evidence": JAK2_V617F_REFERENCE_EVIDENCE,
         "peak_analysis": peaks,
         "target_region": region,
         "noise_assessment": noise_assessment,

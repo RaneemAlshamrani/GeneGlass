@@ -2,9 +2,7 @@
 
 from app.services.variant_detector import (
     JAK2_V617F_GENOMIC_INDEX,
-    JAK2_V617F_GENOMIC_POSITION,
     analyze_jak2_chromatogram,
-    extract_jak2_candidate_snvs,
     load_jak2_genomic_reference,
 )
 
@@ -59,45 +57,3 @@ def test_synthetic_reference_read_maps_target_and_peak_details() -> None:
         "No QC Review Flag",
     }
     assert result["review_status"] == "No QC Review Flag"
-    evidence = result["reference_evidence"]
-    assert evidence["variation_id"] == 14662
-    assert evidence["transcript"] == "NM_004972.4"
-    assert evidence["hgvs_c"] == "c.1849G>T"
-    assert evidence["url"].startswith("https://www.ncbi.nlm.nih.gov/clinvar/")
-
-
-def test_extracts_high_quality_v617f_as_research_candidate() -> None:
-    trace = build_synthetic_target_trace()
-    sequence = list(trace["sequence"])
-    sequence[100] = "T"
-    trace["sequence"] = "".join(sequence)
-
-    candidates = extract_jak2_candidate_snvs(trace)
-
-    assert len(candidates) == 1
-    candidate = candidates[0]
-    assert candidate["hgvs"] == "NM_004972.4:c.1849G>T"
-    assert candidate["genomic_position"] == JAK2_V617F_GENOMIC_POSITION
-    assert candidate["reference_allele"] == "G"
-    assert candidate["observed_allele"] == "T"
-    assert candidate["phred_quality"] == 40
-    assert candidate["lookup_eligible"] is True
-    assert candidate["review_status"] == "Research Candidate"
-
-
-def test_extracts_intronic_candidate_with_genomic_hgvs() -> None:
-    trace = build_synthetic_target_trace()
-    sequence = list(trace["sequence"])
-    original = sequence[10]
-    sequence[10] = next(base for base in "ACGT" if base != original)
-    trace["sequence"] = "".join(sequence)
-
-    candidates = extract_jak2_candidate_snvs(trace)
-
-    intronic = next(
-        item for item in candidates if item["ab1_base_number"] == 11
-    )
-    assert intronic["reference_accession"] == "NC_000009.12"
-    assert intronic["transcript_position"] is None
-    assert intronic["coding_position"] is None
-    assert intronic["hgvs"].startswith("NC_000009.12:g.")

@@ -56,12 +56,16 @@ def _latest_report_decision(session: Session, analysis_id: int) -> ReviewDecisio
         .order_by(Review.created_at.desc(), Review.id.desc())
         .limit(1)
     )
-    if decision not in {ReviewDecision.POSITIVE, ReviewDecision.NEGATIVE}:
+    if decision not in {
+        ReviewDecision.NOT_DETECTED,
+        ReviewDecision.HETEROZYGOUS,
+        ReviewDecision.HOMOZYGOUS,
+        ReviewDecision.INCONCLUSIVE,
+    }:
         raise HTTPException(
             status_code=409,
             detail=(
-                "Record a Positive or Negative Specialist Review before "
-                "creating the molecular report."
+                "Record a specialist result before creating the molecular report."
             ),
         )
     return decision

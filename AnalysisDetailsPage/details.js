@@ -14,16 +14,13 @@
   const detailsQcMessage = document.getElementById("detailsQcMessage");
   const detailsQcNote = document.getElementById("detailsQcNote");
   const detailsQcLink = document.getElementById("detailsQcLink");
-  const researchButton = document.getElementById("researchLookupButton");
-  const researchStatus = document.getElementById("researchStatus");
-  const researchResults = document.getElementById("researchResults");
-  const researchMatchBadge = document.getElementById("researchMatchBadge");
   const reviewHistory = document.getElementById("reviewHistory");
   const reviewHistoryCount = document.getElementById("reviewHistoryCount");
   const latestReviewBadge = document.getElementById("latestReviewBadge");
   const auditCount = document.getElementById("auditCount");
   const auditStatus = document.getElementById("auditStatus");
   const auditTimeline = document.getElementById("auditTimeline");
+  const printAuditButton = document.getElementById("printAuditButton");
   const reportBadge = document.getElementById("reportBadge");
   const reportArchiveTitle = document.getElementById("reportArchiveTitle");
   const reportArchiveMessage = document.getElementById("reportArchiveMessage");
@@ -36,6 +33,13 @@
 
   const params = new URLSearchParams(window.location.search);
   const analysisId = params.get("id");
+
+  const reviewLabels = {
+    not_detected: "Not Detected",
+    heterozygous: "Heterozygous",
+    homozygous: "Homozygous",
+    inconclusive: "Inconclusive",
+  };
 
   function showCards(container, fields) {
     container.replaceChildren();
@@ -578,7 +582,7 @@
     }
 
     const storedDecision = report.final_decision || report.decision;
-    const decision = storedDecision === "positive" ? "Positive" : "Negative";
+    const decision = reviewLabels[storedDecision] || storedDecision || "Unavailable";
 
     reportBadge.textContent = `Final · v${report.version}`;
     reportBadge.dataset.decision = storedDecision || "pending";
@@ -627,34 +631,11 @@
     }
   }
 
-  function appendResearchField(container, label, value) {
-    const row = document.createElement("div");
-    row.className = "research-field";
-
-    const name = document.createElement("span");
-    name.textContent = label;
-
-    const content = document.createElement("strong");
-    content.textContent = value || "N/A";
-
-    row.append(name, content);
-    container.appendChild(row);
-  }
-
-  const reviewLabels = {
-    positive: "Positive",
-    negative: "Negative",
-    approved: "Evidence accepted",
-    rejected: "Evidence rejected",
-    needs_more_data: "More data requested",
-  };
-
   const auditLabels = {
     "analysis.uploaded": "Analysis uploaded",
     "analysis.preliminary_evidence_recalculated": "JAK2 evidence recalculated",
     "analysis.review_created": "Specialist review recorded",
     "analysis.qc_decision_recorded": "Initial QC decision recorded",
-    "analysis.clinvar_refreshed": "ClinVar research lookup completed",
   };
 
   function formatAuditDetails(details) {
@@ -665,14 +646,6 @@
     if (details.decision) {
       const qcLabels = { continue_analysis: "Continue Analysis", request_repeat: "Request Repeat" };
       readable.push(`Decision: ${qcLabels[details.decision] || reviewLabels[details.decision] || details.decision}`);
-    }
-
-    if (Number.isInteger(details.screened_candidate_count)) {
-      readable.push(`Candidates screened: ${details.screened_candidate_count}`);
-    }
-
-    if (Number.isInteger(details.matched_annotation_count)) {
-      readable.push(`ClinVar matches: ${details.matched_annotation_count}`);
     }
 
     if (details.qc_status) readable.push(`QC: ${details.qc_status}`);
@@ -726,6 +699,19 @@
       entry.append(marker, content);
       auditTimeline.appendChild(entry);
     });
+    printAuditButton.disabled = false;
+  }
+
+  function printAuditTrail() {
+    const disclosure = document.querySelector(".audit-disclosure");
+    const wasOpen = disclosure?.open === true;
+    if (disclosure) disclosure.open = true;
+    document.body.classList.add("printing-audit");
+    window.addEventListener("afterprint", () => {
+      document.body.classList.remove("printing-audit");
+      if (disclosure && !wasOpen) disclosure.open = false;
+    }, { once: true });
+    window.print();
   }
 
   async function loadAuditTrail(token) {
@@ -801,151 +787,6 @@
     }
 
     renderReviewHistory(await response.json());
-  }
-
-  function renderResearchResults(data) {
-    researchResults.replaceChildren();
-
-    const candidates = (Array.isArray(data.candidates) ? data.candidates : [])
-      .filter((candidate) => (candidate.external_annotations || []).some(
-        (item) => item.source === "NCBI ClinVar" && item.lookup_status === "matched"
-      ));
-
-    if (!candidates.length) {
-      researchMatchBadge.textContent = "0 exact matches";
-      researchMatchBadge.dataset.state = "empty";
-
-      const empty = document.createElement("p");
-      empty.className = "research-empty";
-      empty.textContent =
-        "No exact ClinVar-matched variants were found among the eligible candidates. " +
-        "Unmatched and Needs Review candidates are not displayed as external results.";
-
-      researchResults.appendChild(empty);
-      return;
-    }
-
-    candidates.forEach((candidate) => {
-      const card = document.createElement("article");
-      card.className = "research-variant";
-
-      const title = document.createElement("h3");
-      title.textContent = candidate.hgvs;
-      card.appendChild(title);
-
-      appendResearchField(card, "AB1 base", String(candidate.ab1_base_number));
-
-      if (candidate.genomic_position) {
-        appendResearchField(
-          card,
-          "Genomic position",
-          `NC_000009.12:g.${candidate.genomic_position}`
-        );
-      }
-
-      appendResearchField(card, "Read direction", candidate.direction);
-      appendResearchField(card, "Raw AB1 change", candidate.raw_ab1_change);
-
-      appendResearchField(
-        card,
-        "Reference-oriented change",
-        candidate.reference_oriented_change
-      );
-
-      appendResearchField(card, "Phred", candidate.phred_quality == null
-        ? "N/A" : `Q${candidate.phred_quality}`);
-
-      appendResearchField(card, "Candidate status", candidate.review_status);
-
-      const annotations = Array.isArray(candidate.external_annotations)
-        ? candidate.external_annotations : [];
-
-      const clinvar = annotations.find((item) => item.source === "NCBI ClinVar");
-
-      if (clinvar?.lookup_status === "matched") {
-        appendResearchField(card, "ClinVar accession", clinvar.accession_version || clinvar.accession);
-
-        const classifications = (clinvar.classifications || []).map((item) =>
-          `${item.type}: ${item.description}${item.review_status ? ` (${item.review_status})` : ""}`
-        );
-
-        appendResearchField(card, "Published classifications", classifications.join(" · "));
-        appendResearchField(card, "Associated conditions", (clinvar.conditions || []).join("; "));
-
-        if (clinvar.source_url) {
-          const link = document.createElement("a");
-          link.className = "research-source-link";
-          link.href = clinvar.source_url;
-          link.target = "_blank";
-          link.rel = "noopener noreferrer";
-          link.textContent = "Open the matched ClinVar record";
-          card.appendChild(link);
-        }
-      }
-
-      researchResults.appendChild(card);
-    });
-
-    researchMatchBadge.textContent = `${candidates.length} exact match${candidates.length === 1 ? "" : "es"}`;
-    researchMatchBadge.dataset.state = "matched";
-  }
-
-  async function loadSavedResearchResults(token) {
-    const response = await fetch(
-      `${apiBaseUrl}/analyses/${analysisId}/research-variants`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    if (!response.ok) return;
-
-    const data = await response.json();
-
-    researchStatus.textContent = data.candidate_count > 0
-      ? `${data.candidate_count} saved ClinVar-matched variant(s). Research use only.`
-      : "No exact ClinVar-matched variants are saved for this analysis.";
-
-    researchMatchBadge.textContent = data.candidate_count > 0
-      ? `${data.candidate_count} exact match${data.candidate_count === 1 ? "" : "es"}`
-      : "Not searched";
-
-    renderResearchResults(data);
-  }
-
-  async function refreshResearchResults() {
-    const token = window.GeneGlassAuth?.token;
-    if (!token || !analysisId) return;
-
-    researchButton.disabled = true;
-    researchButton.textContent = "Searching…";
-    researchStatus.textContent =
-      "Extracting eligible JAK2 base-call candidates and querying ClinVar by HGVS only…";
-
-    try {
-      const response = await fetch(
-        `${apiBaseUrl}/analyses/${analysisId}/research-variants/refresh`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Research lookup failed.");
-      }
-
-      researchStatus.textContent = data.candidate_count
-        ? `${data.candidate_count} candidate(s) displayed; eligible candidates were checked in ClinVar. Research use only.`
-        : "No exact ClinVar-matched variants were found. Unmatched candidates are not displayed.";
-
-      renderResearchResults(data);
-    } catch (error) {
-      researchStatus.textContent = error.message;
-    } finally {
-      researchButton.disabled = false;
-      researchButton.textContent = "Search ClinVar";
-    }
   }
 
   async function loadDetails() {
@@ -1039,26 +880,6 @@
             ["Pipeline Version", result.pipeline_version]
           ]);
 
-          const reference = result.reference_evidence;
-
-          if (reference?.url) {
-            const referenceCard = document.createElement("div");
-            referenceCard.className = "details-item";
-
-            const label = document.createElement("span");
-            label.className = "details-label";
-            label.textContent = "External Reference";
-
-            const link = document.createElement("a");
-            link.className = "details-value";
-            link.href = reference.url;
-            link.target = "_blank";
-            link.rel = "noopener noreferrer";
-            link.textContent = `${reference.source}: ${reference.accession}`;
-
-            referenceCard.append(label, link);
-            jak2Details.append(referenceCard);
-          }
         } else {
           // A failed target endpoint should not leave a misleading 'Loading' message.
           evidenceBadge.textContent = "Evidence unavailable";
@@ -1121,7 +942,6 @@
       message.textContent = "";
 
       await Promise.all([
-        loadSavedResearchResults(token),
         loadReviewHistory(token),
         loadAuditTrail(token),
       ]);
@@ -1131,7 +951,7 @@
   }
 
   document.addEventListener("geneglass:auth-ready", loadDetails);
-  researchButton.addEventListener("click", refreshResearchResults);
+  printAuditButton.addEventListener("click", printAuditTrail);
   downloadReportButton.addEventListener("click", downloadSavedReport);
 
   // Open the saved report in edit mode without starting a new analysis.

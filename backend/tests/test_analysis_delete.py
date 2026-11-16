@@ -63,7 +63,7 @@ def test_owner_can_delete_analysis_files_but_other_user_cannot(
                 author_id=owner.id,
                 version=1,
                 status="finalized",
-                final_decision="negative",
+                final_decision="not_detected",
                 normal_control_file_path=str(control_path),
             )
         )

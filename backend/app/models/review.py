@@ -15,11 +15,10 @@ if TYPE_CHECKING:
 
 class ReviewDecision(str, Enum):
     PENDING = "pending"
-    APPROVED = "approved"
-    REJECTED = "rejected"
-    NEEDS_MORE_DATA = "needs_more_data"
-    POSITIVE = "positive"
-    NEGATIVE = "negative"
+    NOT_DETECTED = "not_detected"
+    HETEROZYGOUS = "heterozygous"
+    HOMOZYGOUS = "homozygous"
+    INCONCLUSIVE = "inconclusive"
 
 
 class Review(TimestampMixin, Base):

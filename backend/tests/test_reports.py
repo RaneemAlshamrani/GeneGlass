@@ -100,7 +100,7 @@ def test_report_is_finalized_versioned_and_owner_scoped(
         "submitted_date": "2026-11-12",
         "clinical_history": "Research case",
         "specimen_type": "Peripheral Blood",
-        "interpretation": "Specialist-confirmed positive result.",
+        "interpretation": "Specialist-confirmed heterozygous result.",
     }
 
     app.dependency_overrides[get_db] = override_get_db
@@ -125,12 +125,12 @@ def test_report_is_finalized_versioned_and_owner_scoped(
                 headers=owner_headers,
                 data=form,
             )
-            positive_review = client.post(
+            heterozygous_review = client.post(
                 f"/api/analyses/{analysis_id}/reviews",
                 headers=owner_headers,
                 json={
-                    "decision": "positive",
-                    "comment": "Specialist confirms a Positive JAK2 V617F decision.",
+                    "decision": "heterozygous",
+                    "comment": "Specialist confirms a Heterozygous JAK2 V617F decision.",
                 },
             )
             ready = client.get(
@@ -162,12 +162,12 @@ def test_report_is_finalized_versioned_and_owner_scoped(
                 headers=owner_headers,
             )
 
-            negative_review = client.post(
+            not_detected_review = client.post(
                 f"/api/analyses/{analysis_id}/reviews",
                 headers=owner_headers,
                 json={
-                    "decision": "negative",
-                    "comment": "Specialist confirms a Negative JAK2 V617F decision.",
+                    "decision": "not_detected",
+                    "comment": "Specialist confirms a Not Detected JAK2 V617F decision.",
                 },
             )
             update_required = client.get(
@@ -176,7 +176,7 @@ def test_report_is_finalized_versioned_and_owner_scoped(
             )
             second_form = {
                 **form,
-                "interpretation": "Specialist-confirmed negative result.",
+                "interpretation": "Specialist-confirmed not detected result.",
             }
             revised = client.put(
                 f"/api/analyses/{analysis_id}/report",
@@ -220,10 +220,10 @@ def test_report_is_finalized_versioned_and_owner_scoped(
             "version": None,
             "download_url": None,
         }
-        assert positive_review.status_code == 201
+        assert heterozygous_review.status_code == 201
         assert ready.status_code == 200
         assert ready.json()["report"]["status"] == "ready_to_create"
-        assert ready.json()["report"]["decision"] == "positive"
+        assert ready.json()["report"]["decision"] == "heterozygous"
         assert saved.status_code == 200
         assert saved.json()["report"]["normal_control_uploaded"] is True
         assert finalized.status_code == 200
@@ -231,31 +231,31 @@ def test_report_is_finalized_versioned_and_owner_scoped(
         assert archived.status_code == 200
         archived_report = archived.json()["items"][0]["report"]
         assert archived_report["status"] == "finalized"
-        assert archived_report["decision"] == "positive"
+        assert archived_report["decision"] == "heterozygous"
         assert archived_report["version"] == 1
         assert archived_report["download_url"].endswith("report.pdf?version=1")
         assert pdf.status_code == 200
         assert pdf.headers["content-type"] == "application/pdf"
         assert pdf.content.startswith(b"%PDF-1.4")
-        assert b"decision=positive" in pdf.content
-        assert negative_review.status_code == 201
+        assert b"decision=heterozygous" in pdf.content
+        assert not_detected_review.status_code == 201
         assert update_required.status_code == 200
         stale_report = update_required.json()["items"][0]["report"]
         assert stale_report["status"] == "needs_update"
-        assert stale_report["decision"] == "negative"
+        assert stale_report["decision"] == "not_detected"
         assert stale_report["version"] == 1
         assert revised.status_code == 200
         assert revised.json()["report"]["version"] == 2
         assert revised.json()["report"]["status"] == "draft"
-        assert revised.json()["report"]["final_decision"] == "negative"
+        assert revised.json()["report"]["final_decision"] == "not_detected"
         assert second_finalized.status_code == 200
         assert second_finalized.json()["report"]["version"] == 2
         assert second_finalized.json()["report"]["status"] == "finalized"
         updated_report = updated_history.json()["items"][0]["report"]
         assert updated_report["status"] == "finalized"
-        assert updated_report["decision"] == "negative"
+        assert updated_report["decision"] == "not_detected"
         assert updated_report["version"] == 2
-        assert b"decision=negative" in updated_pdf.content
+        assert b"decision=not_detected" in updated_pdf.content
         assert hidden.status_code == 404
 
         with sessions() as session:
@@ -266,7 +266,7 @@ def test_report_is_finalized_versioned_and_owner_scoped(
                 (1, "finalized"),
                 (2, "finalized"),
             ]
-            assert reports[0].final_decision == "positive"
+            assert reports[0].final_decision == "heterozygous"
             assert (
                 reports[1].normal_control_file_path
                 == reports[0].normal_control_file_path

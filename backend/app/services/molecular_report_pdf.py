@@ -295,12 +295,14 @@ def build_molecular_report_pdf(
     pdf.setFont("Helvetica-Bold", 9)
     pdf.drawString(MARGIN + 14, y - 18, "SPECIALIST REVIEW DECISION")
     pdf.setFont("Helvetica-Bold", 17)
-    decision = _clean(report.final_decision).upper()
-    pdf.setFillColor(
-        colors.HexColor("#b83c3c")
-        if decision == "POSITIVE"
-        else colors.HexColor("#087d72")
-    )
+    decision = _clean(report.final_decision).replace("_", " ").upper()
+    decision_colors = {
+        "NOT DETECTED": "#087d72",
+        "HETEROZYGOUS": "#b83c3c",
+        "HOMOZYGOUS": "#8d2f5f",
+        "INCONCLUSIVE": "#9a6b08",
+    }
+    pdf.setFillColor(colors.HexColor(decision_colors.get(decision, "#17393e")))
     pdf.drawString(MARGIN + 14, y - 40, decision)
     pdf.setFillColor(colors.HexColor("#17393e"))
     pdf.setFont("Helvetica-Bold", 10)

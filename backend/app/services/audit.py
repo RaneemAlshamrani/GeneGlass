@@ -21,7 +21,6 @@ class AuditAction(StrEnum):
     REPORT_DRAFT_SAVED = "analysis.report_draft_saved"
     REPORT_FINALIZED = "analysis.report_finalized"
     REVIEW_CREATED = "analysis.review_created"
-    CLINVAR_REFRESHED = "analysis.clinvar_refreshed"
 
 
 def add_audit_event(
