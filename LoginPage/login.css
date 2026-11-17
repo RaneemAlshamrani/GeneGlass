@@ -1487,3 +1487,45 @@ body {
         height: 56px;
     }
 }
+
+
+/* ===============================
+   SIGN UP AND ACCOUNT SWITCH
+================================ */
+
+.auth-switch {
+    margin-top: 22px;
+    text-align: center;
+    color: #718288;
+    font-size: 14px;
+}
+
+.auth-switch a {
+    color: #047b80;
+    font-weight: 700;
+    text-decoration: none;
+    margin-left: 4px;
+}
+
+.auth-switch a:hover {
+    color: #025d62;
+    text-decoration: underline;
+}
+
+.signup-field {
+    padding-left: 18px !important;
+}
+
+.success-message {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(30, 150, 100, 0.09);
+    color: #18794e;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+[hidden] {
+    display: none !important;
+}

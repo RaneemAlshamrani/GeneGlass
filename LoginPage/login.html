@@ -247,6 +247,116 @@
 
             </form>
 
+
+<p class="auth-switch" id="loginSwitch">
+    Don't have an account?
+    <a href="#" id="showSignup">Create Account</a>
+</p>
+
+
+<form id="signupForm" hidden>
+
+    <div class="form-group">
+        <label for="signupName">Full Name</label>
+        <div class="input-wrapper">
+            <input
+                class="signup-field"
+                type="text"
+                id="signupName"
+                placeholder="Enter your full name"
+                minlength="2"
+                maxlength="150"
+                required
+            >
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="signupEmail">Email</label>
+        <div class="input-wrapper">
+            <input
+                class="signup-field"
+                type="email"
+                id="signupEmail"
+                placeholder="doctor@kau.edu.sa"
+                required
+            >
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="signupPassword">Password</label>
+        <div class="input-wrapper">
+            <input
+                class="signup-field"
+                type="password"
+                id="signupPassword"
+                placeholder="At least 12 characters"
+                minlength="12"
+                maxlength="128"
+                autocomplete="new-password"
+                required
+            >
+
+            <button
+                type="button"
+                class="password-toggle"
+                data-password-target="signupPassword"
+                aria-label="Show password"
+            >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path>
+                    <circle cx="12" cy="12" r="2.5"></circle>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="confirmPassword">Confirm Password</label>
+        <div class="input-wrapper">
+            <input
+                class="signup-field"
+                type="password"
+                id="confirmPassword"
+                placeholder="Re-enter your password"
+                minlength="12"
+                maxlength="128"
+                autocomplete="new-password"
+                required
+            >
+
+            <button
+                type="button"
+                class="password-toggle"
+                data-password-target="confirmPassword"
+                aria-label="Show password"
+            >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path>
+                    <circle cx="12" cy="12" r="2.5"></circle>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <p class="error-message" id="signupError"></p>
+
+    <button type="submit" class="login-button" id="signupButton">
+        <span>Create Account</span>
+        <span class="button-arrow">→</span>
+    </button>
+
+    <p class="auth-switch">
+        Already have an account?
+        <a href="#" id="showLogin">Sign In</a>
+    </p>
+
+</form>
+
+
+<p class="success-message" id="signupSuccess" hidden></p>
+
         </div>
 
     </section>

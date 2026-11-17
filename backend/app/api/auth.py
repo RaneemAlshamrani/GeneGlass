@@ -9,10 +9,11 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
 from app.db.session import get_db
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.auth import (
     PasswordChange,
     TokenResponse,
+    UserCreate,
     UserResponse,
 )
 from app.services.security import (
@@ -20,7 +21,11 @@ from app.services.security import (
     hash_password,
     verify_password,
 )
-from app.services.users import authenticate_user
+from app.services.users import (
+    authenticate_user,
+    create_user,
+    get_user_by_email,
+)
 from app.services.audit import AuditAction, add_audit_event
 
 auth_router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -111,3 +116,30 @@ def change_password(
     session.commit()
 
     return {"message": "Password changed successfully."}
+
+    
+@auth_router.post(
+    "/register",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a new specialist account",
+)
+def register(
+    user_data: UserCreate,
+    session: Annotated[Session, Depends(get_db)],
+) -> UserResponse:
+    email = str(user_data.email).strip().lower()
+
+    if get_user_by_email(session, email):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email already exists.",
+        )
+
+    specialist_data = user_data.model_copy(
+        update={"role": UserRole.SPECIALIST}
+    )
+
+    user = create_user(session, specialist_data)
+
+    return UserResponse.model_validate(user)

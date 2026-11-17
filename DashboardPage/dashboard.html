@@ -14,12 +14,21 @@
 <script defer="" src="../assets/auth.js"></script>
 <style>
 /* Dashboard-only layout: preserves existing GeneGlass sidebar, colors and background */
-.stats-grid { display:grid !important;grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:24px !important;margin-bottom:24px !important; }
+.stats-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 24px !important;
+  margin-bottom: 24px !important;
+}
 .gg-summary-card {min-height:155px;display:flex;align-items:center;gap:20px;}
 .gg-summary-card .stat-info h2 {font-size:clamp(30px,3vw,44px);}
 .recent-card {width:100%;}
 .recent-card .table-wrapper {overflow-x:auto;}
-@media(max-width:850px){.stats-grid{grid-template-columns:1fr !important;}}
+@media(max-width:850px) {
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
 </style></head>
 <body>
 <div class="dashboard-page">
@@ -68,7 +77,45 @@
 </button>
 </header>
 <!-- ================= STAT CARDS ================= -->
-<section class="stats-grid"><article class="stat-card gg-summary-card"><div class="stat-icon"><i class="fa-solid fa-file-waveform"></i></div><div class="stat-info"><p>Total Analyses</p><h2 id="ggTotal">—</h2><span>Uploaded AB1 analyses</span></div></article><article class="stat-card gg-summary-card"><div class="stat-icon"><i class="fa-solid fa-microchip"></i></div><div class="stat-info"><p>Model Results</p><h2 id="ggPending">—</h2><span>Heterozygous / negative · research only</span></div></article></section>
+<section class="stats-grid">
+
+  <!-- Total Analyses -->
+  <article class="stat-card gg-summary-card">
+    <div class="stat-icon">
+      <i class="fa-solid fa-file-waveform"></i>
+    </div>
+    <div class="stat-info">
+      <p>Total Analyses</p>
+      <h2 id="ggTotal">—</h2>
+      <span>Uploaded AB1 analyses</span>
+    </div>
+  </article>
+
+  <!-- Heterozygous -->
+  <article class="stat-card gg-summary-card">
+    <div class="stat-icon">
+      <i class="fa-solid fa-dna"></i>
+    </div>
+    <div class="stat-info">
+      <p>Heterozygous</p>
+      <h2 id="ggPositive">—</h2>
+      <span>Heterozygous results</span>
+    </div>
+  </article>
+
+  <!-- Not Detected -->
+  <article class="stat-card gg-summary-card">
+    <div class="stat-icon">
+      <i class="fa-solid fa-circle-check"></i>
+    </div>
+    <div class="stat-info">
+      <p>Not Detected</p>
+      <h2 id="ggNegative">—</h2>
+      <span>No heterozygous pattern</span>
+    </div>
+  </article>
+
+</section>
 <!-- ================= CHARTS ================= -->
 
 <!-- ================= RECENT ACTIVITY ================= -->

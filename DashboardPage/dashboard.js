@@ -46,15 +46,19 @@ function updateStatCards(data) {
   if (cards.length < 2) return;
 
   const totalElement = cards[0].querySelector(".stat-info h2");
-  const resultElement = cards[1].querySelector(".stat-info h2");
+  const positiveElement = document.getElementById("ggPositive");
+  const negativeElement = document.getElementById("ggNegative");
 
   if (totalElement) {
     totalElement.textContent = data.total_analyses ?? 0;
   }
 
-  if (resultElement) {
-    resultElement.textContent =
-      `${data.positive ?? 0} / ${data.negative ?? 0}`;
+  if (positiveElement) {
+    positiveElement.textContent = data.positive ?? 0;
+  }
+
+  if (negativeElement) {
+    negativeElement.textContent = data.negative ?? 0;
   }
 }
 
