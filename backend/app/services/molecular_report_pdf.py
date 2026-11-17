@@ -25,7 +25,9 @@ TRACE_COLORS = {
     "G": colors.HexColor("#252525"),
     "T": colors.HexColor("#df4b4b"),
 }
-LOGO_PATH = Path(__file__).resolve().parents[3] / "assets" / "geneglass-logo.png"
+ASSETS_DIR = Path(__file__).resolve().parents[3] / "assets"
+GENATI_LOGO_PATH = ASSETS_DIR / "genati-logo.jpg"
+INSTITUTE_LOGO_PATH = ASSETS_DIR / "kau-full-logo.png"
 
 
 def _clean(value: object | None, fallback: str = "-") -> str:
@@ -60,33 +62,37 @@ def _wrapped_lines(text: str, max_chars: int) -> list[str]:
 
 
 def _draw_header(pdf: Canvas, title: str, page_number: int) -> None:
-    if LOGO_PATH.is_file():
-        logo_y = PAGE_HEIGHT - 75
+    logo_y = PAGE_HEIGHT - 76
+    if GENATI_LOGO_PATH.is_file():
         pdf.drawImage(
-            ImageReader(str(LOGO_PATH)),
+            ImageReader(str(GENATI_LOGO_PATH)),
             MARGIN,
             logo_y,
-            width=118,
-            height=42,
+            width=142,
+            height=50,
             preserveAspectRatio=True,
             mask="auto",
         )
-        # The source logo has white brand lettering designed for a dark
-        # background. Replace only that small lettering area so the name
-        # remains legible on the report's white page.
-        pdf.setFillColor(colors.white)
-        pdf.rect(MARGIN + 22, logo_y, 76, 13, stroke=0, fill=1)
-        pdf.setFillColor(colors.HexColor("#0b5f67"))
-        pdf.setFont("Helvetica-Bold", 12)
-        pdf.drawCentredString(MARGIN + 60, logo_y + 2, "GeneGlass")
+
+    if INSTITUTE_LOGO_PATH.is_file():
+        pdf.drawImage(
+            ImageReader(str(INSTITUTE_LOGO_PATH)),
+            PAGE_WIDTH - MARGIN - 180,
+            PAGE_HEIGHT - 72,
+            width=180,
+            height=46,
+            preserveAspectRatio=True,
+            mask="auto",
+        )
+
     pdf.setFillColor(colors.HexColor("#0b777b"))
-    pdf.setFont("Helvetica-Bold", 22)
-    pdf.drawRightString(PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 48, title)
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawCentredString(PAGE_WIDTH / 2 - 10, PAGE_HEIGHT - 47, title)
     pdf.setFillColor(colors.HexColor("#506b70"))
     pdf.setFont("Helvetica", 8)
-    pdf.drawRightString(
-        PAGE_WIDTH - MARGIN,
-        PAGE_HEIGHT - 63,
+    pdf.drawCentredString(
+        PAGE_WIDTH / 2 - 10,
+        PAGE_HEIGHT - 62,
         f"GeneGlass Molecular Laboratory Report | Page {page_number}",
     )
     pdf.setStrokeColor(colors.HexColor("#0b777b"))

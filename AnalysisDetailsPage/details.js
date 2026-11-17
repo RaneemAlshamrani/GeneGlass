@@ -21,6 +21,7 @@
   const auditStatus = document.getElementById("auditStatus");
   const auditTimeline = document.getElementById("auditTimeline");
   const printAuditButton = document.getElementById("printAuditButton");
+  const auditPrintReference = document.getElementById("auditPrintReference");
   const reportBadge = document.getElementById("reportBadge");
   const reportArchiveTitle = document.getElementById("reportArchiveTitle");
   const reportArchiveMessage = document.getElementById("reportArchiveMessage");
@@ -803,6 +804,9 @@
 
       const details = await response.json();
       renderSavedReport(details.report);
+      auditPrintReference.textContent = (
+        `Analysis #${analysisId} | ${details.original_file_name || "AB1 file"}`
+      );
 
       showCards(fileDetails, [
         ["AB1 file", details.original_file_name],
