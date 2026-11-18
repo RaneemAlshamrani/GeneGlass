@@ -63,32 +63,25 @@
 <!-- Fixed DNA Background -->
 <img alt="" class="dashboard-dna" src="../assets/dna-bg.png"/>
 <!-- ================= HEADER ================= -->
+
 <header class="dashboard-header">
-<div>
-<h1 data-auth-greeting="">Hi, Specialist</h1>
-<p>JAK2 V617F Analysis Dashboard</p>
-</div>
-<button class="profile-button">
-<span class="profile-circle">
-<i class="fa-solid fa-user"></i>
-</span>
-<span data-auth-name="">Specialist</span>
-<i class="fa-solid fa-chevron-down arrow-small"></i>
-</button>
+  <div>
+    <h1>Welcome back</h1>
+    </div>
 </header>
+
 <!-- ================= STAT CARDS ================= -->
 <section class="stats-grid">
 
   <!-- Total Analyses -->
   <article class="stat-card gg-summary-card">
     <div class="stat-icon">
-      <i class="fa-solid fa-file-waveform"></i>
+      <i class="fa-solid fa-flask-vial"></i>
     </div>
     <div class="stat-info">
       <p>Total Analyses</p>
       <h2 id="ggTotal">—</h2>
-      <span>Uploaded AB1 analyses</span>
-    </div>
+         </div>
   </article>
 
   <!-- Heterozygous -->
@@ -99,20 +92,18 @@
     <div class="stat-info">
       <p>Heterozygous</p>
       <h2 id="ggPositive">—</h2>
-      <span>Heterozygous results</span>
-    </div>
+         </div>
   </article>
 
   <!-- Not Detected -->
   <article class="stat-card gg-summary-card">
     <div class="stat-icon">
-      <i class="fa-solid fa-circle-check"></i>
+      <i class="fa-solid fa-circle-minus"></i>
     </div>
     <div class="stat-info">
       <p>Not Detected</p>
       <h2 id="ggNegative">—</h2>
-      <span>No heterozygous pattern</span>
-    </div>
+          </div>
   </article>
 
 </section>
@@ -133,18 +124,8 @@
 </div>
 <div class="table-wrapper">
 <table>
-<thead>
-<tr>
-<th>File Name</th>
-<th>Gene</th>
-<th>Target Position</th>
-<th>Result</th>
-<th>QC Status</th>
-<th>Date</th>
-<th>Actions</th>
-</tr>
-</thead>
-<tbody><tr><td colspan="7" style="text-align:center;padding:24px">Loading analyses…</td></tr></tbody>
+<thead><tr><th>File Name</th><th>Date</th><th>Result</th></tr></thead>
+<tbody><tr><td colspan="3" style="text-align:center;padding:24px">Loading analyses…</td></tr></tbody>
 </table>
 </div>
 </section>

@@ -204,57 +204,38 @@
           <details class="password-toggle">
             <summary class="password-toggle-heading">
               <span class="password-toggle-copy">
-                <strong><i class="fa-solid fa-lock"></i> Change Password</strong>
-
+                <strong><i class="fa-solid fa-lock" aria-hidden="true"></i> Change Password</strong>
               </span>
-              <span class="outline-btn password-toggle-button" aria-hidden="true">
-                <i class="fa-solid fa-key"></i> Change Password
+              <span class="password-toggle-chevron" aria-hidden="true">
                 <i class="fa-solid fa-chevron-down"></i>
               </span>
             </summary>
             <div class="password-toggle-content">
-          <form id="changePasswordForm" class="password-form">
-            <label for="currentPassword">Current Password</label>
-            <input
-              id="currentPassword"
-              name="currentPassword"
-              type="password"
-              autocomplete="current-password"
-              required
-            />
-
-            <label for="newPassword">New Password</label>
-            <input
-              id="newPassword"
-              name="newPassword"
-              type="password"
-              minlength="12"
-              maxlength="128"
-              autocomplete="new-password"
-              required
-            />
-
-            <label for="confirmPassword">Confirm New Password</label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              minlength="12"
-              maxlength="128"
-              autocomplete="new-password"
-              required
-            />
-
-            <button
-              type="submit"
-              class="primary-btn"
-              id="changePasswordBtn"
-            >
-              <i class="fa-solid fa-key"></i> Change Password
-            </button>
-
-            <p id="passwordMessage" class="form-message" role="status"></p>
-          </form>
+              <form id="changePasswordForm" class="password-form">
+                <div class="password-form-grid">
+                  <label for="currentPassword">
+                    Current Password
+                    <input id="currentPassword" name="currentPassword" type="password"
+                      autocomplete="current-password" required />
+                  </label>
+                  <label for="newPassword">
+                    New Password
+                    <input id="newPassword" name="newPassword" type="password"
+                      minlength="12" maxlength="128" autocomplete="new-password" required />
+                  </label>
+                  <label for="confirmPassword">
+                    Confirm New Password
+                    <input id="confirmPassword" name="confirmPassword" type="password"
+                      minlength="12" maxlength="128" autocomplete="new-password" required />
+                  </label>
+                </div>
+                <div class="password-form-footer">
+                  <p id="passwordMessage" class="form-message" role="status" aria-live="polite"></p>
+                  <button type="submit" class="primary-btn" id="changePasswordBtn">
+                    <i class="fa-solid fa-check" aria-hidden="true"></i> Save Changes
+                  </button>
+                </div>
+              </form>
             </div>
           </details>
         </section>

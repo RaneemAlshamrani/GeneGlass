@@ -253,124 +253,141 @@
   }
 }
 
-/* Change Password Form */
-.password-form {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 16px;
-  width: 100%;
-  max-width: 520px;
+/* Change Password: compact, responsive single section */
+.profile-grid + .password-card {
   margin-top: 20px;
 }
-
-.password-form label {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-  width: 100%;
-  margin: 0;
-  color: #36565a;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.password-form input {
-  display: block;
-  width: 100%;
-  height: 46px;
-  padding: 0 14px;
-  box-sizing: border-box;
-  border: 1px solid #d7e8e8;
-  border-radius: 10px;
-  background: #fff;
-  color: #183c40;
-  font: inherit;
-  font-size: 14px;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.password-form input:focus {
-  outline: none;
-  border-color: #069c9d;
-  box-shadow: 0 0 0 3px rgba(6, 156, 157, 0.12);
-}
-
-.password-form button {
-  align-self: flex-start;
-  margin-top: 4px;
-}
-
-.password-form #passwordMessage {
-  margin: 0;
-  min-height: 16px;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-@media (max-width: 600px) {
-  .password-form button {
-    width: 100%;
-  }
-}
-/* Collapsible password section: closed until the specialist chooses to open it. */
 .password-card {
-  padding: 20px 28px;
+  padding: 23px 28px;
 }
 .password-toggle-heading {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  align-items: center;
+  gap: 16px;
+  min-height: 40px;
   cursor: pointer;
   list-style: none;
 }
 .password-toggle-heading::-webkit-details-marker {
   display: none;
 }
-.password-toggle-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.password-toggle-heading::marker {
+  content: "";
 }
 .password-toggle-copy strong {
-  font-size: 19px;
-  color: #10363b;
-}
-.password-toggle-copy small {
-  font-size: 13px;
-  color: #789098;
-}
-.password-toggle-button {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  pointer-events: none;
+  gap: 12px;
+  color: #10363b;
+  font-size: 19px;
+  font-weight: 750;
 }
-.password-toggle[open] .password-toggle-button .fa-chevron-down {
+.password-toggle-chevron {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 1px solid #d3e8e9;
+  border-radius: 11px;
+  color: #078b8c;
+  background: #f5fbfb;
+  transition: transform 0.18s ease;
+}
+.password-toggle[open] .password-toggle-chevron {
   transform: rotate(180deg);
 }
 .password-toggle-content {
-  border-top: 1px solid #e0eeee;
-  margin-top: 20px;
-  padding-top: 4px;
+  margin-top: 18px;
+  padding-top: 23px;
+  border-top: 1px solid #e3eeee;
 }
-.password-toggle-content .password-form {
-  margin-top: 14px;
+.password-form {
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+}
+.password-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.password-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  color: #36565a;
+  font-size: 13px;
+  font-weight: 700;
+}
+.password-form-grid input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 47px;
+  padding: 0 13px;
+  border: 1px solid #d7e8e8;
+  border-radius: 11px;
+  background: #fff;
+  color: #183c40;
+  font: inherit;
+  font-size: 14px;
+}
+.password-form-grid input:focus {
+  outline: none;
+  border-color: #069c9d;
+  box-shadow: 0 0 0 3px rgba(6, 156, 157, 0.12);
+}
+.password-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 18px;
+  margin-top: 21px;
+}
+.password-form-footer #passwordMessage {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  line-height: 1.5;
+  font-size: 12px;
+}
+.password-form-footer .primary-btn {
+  padding: 12px 20px;
+  min-width: 162px;
+  min-height: 44px;
+}
+.password-form-footer .primary-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+@media (max-width: 900px) {
+  .password-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .password-form-grid label:first-child {
+    grid-column: 1 / -1;
+  }
 }
 @media (max-width: 600px) {
-  .password-toggle-heading {
-    align-items: flex-start;
-    flex-wrap: wrap;
+  .password-card {
+    padding: 20px 17px;
   }
-  .password-toggle-button {
-    width: auto;
+  .password-form-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
   }
-}
-/* Consistent spacing below the profile cards */
-.profile-grid + .password-card {
-  margin-top: 20px;
+  .password-form-grid label:first-child {
+    grid-column: auto;
+  }
+  .password-form-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .password-form-footer .primary-btn {
+    width: 100%;
+  }
 }

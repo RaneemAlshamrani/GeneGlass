@@ -285,7 +285,7 @@
       + pattern.raw_alternative_channel + " vs " + pattern.raw_reference_channel
       + "; other/alternative ratio " + Number(pattern.max_other_to_alternative_ratio).toFixed(3)
       + "). The binary AI model cannot establish a homozygous genotype. "
-      + "Do not accept the Negative/Hetero prediction without specialist verification. Research advisory only.";
+      + "Do not accept the AI prediction without specialist verification. Research advisory only.";
 
     box.append(title, explanation);
 
@@ -378,7 +378,7 @@
     const displayStatus = isHetero
       ? "Heterozygous pattern"
       : isNegative
-        ? "No heterozygous pattern detected"
+        ? "Not Detected"
         : "Model result needs review";
 
     const header = document.createElement("div");
@@ -439,7 +439,7 @@
 
       metrics.append(
         createPredictionMetric("Heterozygous", data.probabilities.hetero, "hetero"),
-        createPredictionMetric("Negative", data.probabilities.negative, "negative")
+        createPredictionMetric("Not Detected", data.probabilities.negative, "negative")
       );
 
       body.appendChild(metrics);

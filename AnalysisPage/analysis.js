@@ -14,6 +14,11 @@
   const initialQcTarget = document.getElementById("initialQcTarget");
   const initialQcMetrics = document.getElementById("initialQcMetrics");
   const initialQcComment = document.getElementById("initialQcComment");
+  const initialQcReason = document.getElementById("initialQcReason");
+  const initialQcNoteActions = document.getElementById("initialQcNoteActions");
+  const initialQcMainActions = document.getElementById("initialQcMainActions");
+  const initialQcConfirmReason = document.getElementById("initialQcConfirmReason");
+  const initialQcCancelReason = document.getElementById("initialQcCancelReason");
   const initialQcContinue = document.getElementById("initialQcContinue");
   const initialQcRepeat = document.getElementById("initialQcRepeat");
   const initialQcMessage = document.getElementById("initialQcMessage");
@@ -54,6 +59,7 @@ let isEditingFinalizedReport = false;
   let currentQc = null;
   let currentTarget = null;
   let qcSaving = false;
+  let qcReasonMode = null;
   let modelReady = false;
 
   const WORKFLOW_LABELS = {
@@ -463,14 +469,14 @@ function setReportAvailability() {
     const needsReview = status.toLowerCase() === "needs review";
     const state = document.createElement("strong");
     state.className = `analysis-ai-status ${needsReview ? "review" : status.toLowerCase() === "hetero" ? "hetero" : "negative"}`;
-    state.textContent = needsReview ? "Needs Review" : status;
+    state.textContent = needsReview ? "Needs Review" : (status.toLowerCase() === "negative" ? "Not Detected" : status);
     panel.append(state);
     const summary = document.createElement("p");
     summary.textContent = needsReview
       ? "This analysis needs specialist review; a definitive classification is not provided."
       : status.toLowerCase() === "hetero"
         ? "The binary research model favors a heterozygous pattern."
-        : "The binary research model favors a negative pattern.";
+        : "The research model favors the Not Detected category.";
     panel.append(summary);
     if (data?.reason) {
       const reason = document.createElement("p");
@@ -482,7 +488,7 @@ function setReportAvailability() {
     if (probs && Number.isFinite(Number(probs.negative)) && Number.isFinite(Number(probs.hetero))) {
       const metrics = document.createElement("div");
       metrics.className = "analysis-ai-metrics";
-      for (const [key, name] of [["negative", "Negative"], ["hetero", "Heterozygous"]]) {
+      for (const [key, name] of [["negative", "Not Detected"], ["hetero", "Heterozygous"]]) {
         const value = Math.max(0, Math.min(1, Number(probs[key])));
         const metric = document.createElement("div");
         const heading = document.createElement("div");
@@ -559,6 +565,10 @@ function setReportAvailability() {
         ? Number(noise.mean_flank_secondary_ratio).toFixed(3) : "N/A");
     }
     initialQcComment.value = qc.comment || "";
+    qcReasonMode = null;
+    initialQcReason.hidden = true;
+    initialQcNoteActions.hidden = true;
+    initialQcMainActions.hidden = false;
     const repeatRequested = qc.decision === "request_repeat";
     initialQcContinue.disabled = !readableTarget;
     initialQcRepeat.disabled = repeatRequested;
@@ -589,6 +599,33 @@ function setReportAvailability() {
     modelNext.disabled = true;
   }
 
+  function openQcReason(decision) {
+    if (qcSaving || !currentQc) return;
+    qcReasonMode = decision;
+    const repeat = decision === "request_repeat";
+    initialQcReason.hidden = false;
+    initialQcNoteActions.hidden = false;
+    initialQcMainActions.hidden = true;
+    initialQcReason.querySelector("span").textContent = repeat
+      ? "Reason for Repeat"
+      : "Reason for QC Override";
+    initialQcComment.placeholder = "Reason (required)";
+    initialQcComment.value = "";
+    initialQcConfirmReason.textContent = repeat
+      ? "Confirm Request Repeat"
+      : "Confirm Continue";
+    initialQcMessage.textContent = "";
+    initialQcComment.focus();
+  }
+
+  function closeQcReason() {
+    qcReasonMode = null;
+    initialQcReason.hidden = true;
+    initialQcNoteActions.hidden = true;
+    initialQcMainActions.hidden = false;
+    initialQcMessage.textContent = "";
+  }
+
   async function saveQcChoice(decision) {
     if (!activeAnalysisId || !currentQc || qcSaving) return;
     // Prevent duplicate repeat requests from repeated clicks.
@@ -602,6 +639,7 @@ function setReportAvailability() {
     const needsReason = decision === "request_repeat"
       || (decision === "continue_analysis" && currentQc.preliminary_qc_status !== "passed");
     if (needsReason && !comment) {
+      if (initialQcReason.hidden || qcReasonMode !== decision) openQcReason(decision);
       initialQcMessage.textContent = "Enter a specialist reason before saving this decision.";
       initialQcComment.focus();
       return;
@@ -678,7 +716,7 @@ function setReportAvailability() {
       return;
     }
     if (qc.target_found !== true) {
-      renderAiNotice("Target Not Found", "JAK2 V617F could not be mapped. A Negative/Hetero result cannot be generated.");
+      renderAiNotice("Target Not Found", "JAK2 V617F could not be mapped. The model cannot provide a result.");
       showWorkflowStep(1, { focus: false });
       return;
     }
@@ -867,9 +905,20 @@ function editSavedReport() {
       showWorkflowStep(2);
       return;
     }
+    if (currentQc?.preliminary_qc_status !== "passed") {
+      openQcReason("continue_analysis");
+      return;
+    }
+    closeQcReason();
     saveQcChoice("continue_analysis");
   });
-  initialQcRepeat.addEventListener("click", () => saveQcChoice("request_repeat"));
+  initialQcRepeat.addEventListener("click", () => {
+    if (currentQc?.decision !== "request_repeat") openQcReason("request_repeat");
+  });
+  initialQcConfirmReason.addEventListener("click", () => {
+    if (qcReasonMode) saveQcChoice(qcReasonMode);
+  });
+  initialQcCancelReason.addEventListener("click", closeQcReason);
   modelBack.addEventListener("click", () => showWorkflowStep(1));
   modelNext.addEventListener("click", () => {
     if (modelReady) showWorkflowStep(3);

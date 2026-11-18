@@ -223,7 +223,7 @@ function updateRecentAnalyses(analyses) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
 
-    cell.colSpan = 7;
+    cell.colSpan = 3;
     cell.textContent = "No analyses found yet.";
     cell.style.textAlign = "center";
     cell.style.padding = "25px";
@@ -275,19 +275,11 @@ function updateRecentAnalyses(analyses) {
 
     row.appendChild(fileCell);
 
-    // Gene
-    const geneCell = document.createElement("td");
-    const geneName = document.createElement("strong");
+    // Date
+    const dateCell = document.createElement("td");
 
-    geneName.textContent = analysis.gene || "—";
-    geneCell.appendChild(geneName);
-    row.appendChild(geneCell);
-
-    // Target position
-    const targetCell = document.createElement("td");
-
-    targetCell.textContent = analysis.target_variant || "—";
-    row.appendChild(targetCell);
+    dateCell.textContent = formatDate(analysis.created_at);
+    row.appendChild(dateCell);
 
     // Result
     const resultCell = document.createElement("td");
@@ -297,74 +289,36 @@ function updateRecentAnalyses(analyses) {
 
     const modelResult = analysis.ai_prediction;
 
-    if (modelResult?.prediction === "hetero") {
+    if (modelResult?.status !== "Needs Review" && analysis.status !== "failed" && modelResult?.prediction === "hetero") {
       resultBadge.classList.add("mutation-result");
-      resultBadge.textContent = "Heterozygous Pattern";
+      resultBadge.textContent = "Heterozygous";
       resultBadge.title =
         "Research model output — not a clinical diagnosis";
 
-    } else if (modelResult?.prediction === "negative") {
+    } else if (modelResult?.status !== "Needs Review" && analysis.status !== "failed" && modelResult?.prediction === "negative") {
       resultBadge.classList.add("normal-result");
-      resultBadge.textContent = "No Heterozygous Pattern";
+      resultBadge.textContent = "Not Detected";
       resultBadge.title =
         "Research model output — not a clinical diagnosis";
 
     } else if (modelResult?.status === "Needs Review") {
       resultBadge.classList.add("review-result");
-      resultBadge.textContent = "Needs Review";
+      resultBadge.textContent = "Pending";
+      resultBadge.title = "Needs review — open analysis details";
 
     } else if (analysis.status === "failed") {
       resultBadge.classList.add("review-result");
-      resultBadge.textContent = "Analysis Failed";
+      resultBadge.textContent = "Pending";
+      resultBadge.title = "Analysis failed — open analysis details";
 
     } else {
       resultBadge.classList.add("review-result");
-      resultBadge.textContent = "Model Pending";
+      resultBadge.textContent = "Pending";
     }
 
     resultCell.appendChild(resultBadge);
     row.appendChild(resultCell);
 
-    // QC status
-    const qcCell = document.createElement("td");
-    const qcBadge = document.createElement("span");
-
-    qcBadge.className = "qc-badge";
-
-    const qcStatus = analysis.qc_status || "pending";
-
-    if (qcStatus === "passed") {
-      qcBadge.classList.add("passed");
-      qcBadge.textContent = "Passed";
-
-    } else if (qcStatus === "needs_review") {
-      qcBadge.classList.add("review");
-      qcBadge.textContent = "Review";
-
-    } else if (qcStatus === "failed") {
-      qcBadge.classList.add("review");
-      qcBadge.textContent = "Failed";
-
-    } else {
-      qcBadge.textContent = "Pending";
-    }
-
-    qcCell.appendChild(qcBadge);
-    row.appendChild(qcCell);
-
-    // Date
-    const dateCell = document.createElement("td");
-
-    dateCell.textContent = formatDate(analysis.created_at);
-    row.appendChild(dateCell);
-
-    // Actions
-    const actionsCell = document.createElement("td");
-
-    actionsCell.className = "actions";
-    actionsCell.textContent = "—";
-
-    row.appendChild(actionsCell);
 
     tableBody.appendChild(row);
   });

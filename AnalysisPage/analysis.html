@@ -61,14 +61,14 @@
             <h1>New Analysis</h1>
 
           </div>
-          <span class="gene-tag">JAK2 V617F</span>
+
         </header>
         <section
           class="dashboard-card upload-card"
           aria-labelledby="upload-title"
         >
           <h2 id="upload-title">
-            <i class="fa-solid fa-file-arrow-up"></i>Upload AB1 File
+            <i class="fa-solid fa-file-arrow-up"></i>Upload JAK2 AB1 File
           </h2>
           <p class="hint">
             Select an original .ab1 file. The original signal will be preserved.
@@ -131,13 +131,17 @@
           </div>
           <p id="initialQcTarget" class="initial-qc-target" role="status">Checking target mapping...</p>
           <div class="initial-qc-metrics" id="initialQcMetrics"></div>
-          <label class="initial-qc-reason" for="initialQcComment">
-            <span>Specialist reason / note</span>
-            <textarea id="initialQcComment" rows="3" maxlength="2000" placeholder="Required for Request Repeat or for continuing despite a QC flag."></textarea>
-          </label>
-          <div class="initial-qc-actions">
+          <div class="initial-qc-actions" id="initialQcMainActions">
             <button id="initialQcContinue" type="button">Continue <i class="fa-solid fa-arrow-right"></i></button>
             <button id="initialQcRepeat" class="initial-qc-repeat" type="button"><i class="fa-solid fa-rotate-left"></i> Request Repeat</button>
+          </div>
+          <label class="initial-qc-reason" id="initialQcReason" for="initialQcComment" hidden>
+            <span>Specialist reason / note</span>
+            <textarea id="initialQcComment" rows="2" maxlength="2000" placeholder="Reason (required)"></textarea>
+          </label>
+          <div class="initial-qc-actions initial-qc-note-actions" id="initialQcNoteActions" hidden>
+            <button id="initialQcConfirmReason" type="button">Confirm Request Repeat</button>
+            <button id="initialQcCancelReason" class="initial-qc-cancel-link" type="button">Cancel</button>
           </div>
           <p id="initialQcMessage" class="initial-qc-message" role="status"></p>
           <div id="initialQcRepeatConfirmation" class="initial-qc-repeat-confirmation" role="status" aria-live="polite" hidden>

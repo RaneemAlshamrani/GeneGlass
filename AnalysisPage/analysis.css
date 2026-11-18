@@ -261,27 +261,6 @@ body {
   line-height: 1.5;
 }
 
-.gene-tag {
-  display: inline-flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  white-space: nowrap;
-
-  padding: 11px 18px;
-
-  border-radius: 25px;
-
-  background: #dff4f3;
-
-  color: #00777c;
-
-  font-size: 14px;
-
-  font-weight: 700;
-}
 
 .dashboard-card {
   border-radius: 22px;
@@ -553,9 +532,6 @@ body {
     padding: 18px;
   }
 
-  .gene-tag {
-    font-size: 12px;
-  }
 
   .drop {
     min-height: 125px;
@@ -1282,10 +1258,17 @@ body {
 .initial-qc-metric strong { display:block; overflow-wrap:anywhere; color:#19434a; font-size:15px; }
 .initial-qc-disclaimer { color:#6b767a; font-size:13px; line-height:1.55; }
 .initial-qc-reason { display:grid; gap:8px; color:#24515a; font-size:13px; font-weight:750; margin-top:14px; }
-.initial-qc-reason textarea { box-sizing:border-box; width:100%; border:1px solid #c9e1e2; border-radius:10px; padding:12px; background:#fff; color:#17393e; font:inherit; resize:vertical; }
+.initial-qc-reason[hidden], .initial-qc-note-actions[hidden], .initial-qc-actions[hidden] { display:none!important; }
+.initial-qc-reason textarea { box-sizing:border-box; width:100%; min-height:82px; border:1px solid #c9e1e2; border-radius:10px; padding:12px; background:#fff; color:#17393e; font:inherit; font-size:14px; font-weight:400; line-height:1.5; resize:vertical; }
+.initial-qc-reason textarea:focus { outline:2px solid #008f96; outline-offset:1px; border-color:#008f96; }
 .initial-qc-actions { display:flex; gap:12px; flex-wrap:wrap; margin-top:15px; }
 .initial-qc-actions button { padding:12px 18px; border-radius:10px; border:0; background:#008f96; color:#fff; font:inherit; font-weight:800; cursor:pointer; }
 .initial-qc-actions .initial-qc-repeat { background:#fff; color:#99522b; border:1px solid #dbb89d; }
+.initial-qc-note-actions { align-items:center; gap:12px; margin-top:12px; }
+.initial-qc-note-actions #initialQcConfirmReason { padding:10px 16px; font-size:14px; }
+.initial-qc-actions .initial-qc-cancel-link { border:0; background:transparent; color:#647b80; padding:6px; font-weight:600; font-size:13px; text-decoration:underline; text-underline-offset:3px; }
+.initial-qc-actions .initial-qc-cancel-link:hover { background:transparent; color:#24515a; }
+.initial-qc-message:empty { display:none; }
 .initial-qc-actions button:disabled { opacity:.5; cursor:not-allowed; }
 .initial-qc-message { min-height:18px; color:#62777d; font-size:13px; line-height:1.5; }
 @media (max-width:750px) {

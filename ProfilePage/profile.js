@@ -221,6 +221,11 @@ passwordForm.addEventListener("submit", async (event) => {
   const confirmPassword =
     document.getElementById("confirmPassword").value;
 
+  if (currentPassword === newPassword) {
+    passwordMessage.textContent = "New password must be different from the current password.";
+    return;
+  }
+
   if (newPassword !== confirmPassword) {
     passwordMessage.textContent = "New passwords do not match.";
     return;
