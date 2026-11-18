@@ -1,6 +1,14 @@
 
 """OAuth2 login, current-user, and password-change endpoints."""
 
+
+from app.core.config import get_settings
+from app.services.password_reset import (
+    create_reset_token,
+    consume_reset_token,
+)
+
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -11,6 +19,8 @@ from app.api.dependencies import get_current_user
 from app.db.session import get_db
 from app.models.user import User, UserRole
 from app.schemas.auth import (
+   ForgotPasswordRequest,
+   ResetPasswordRequest,
     PasswordChange,
     TokenResponse,
     UserCreate,
@@ -117,13 +127,68 @@ def change_password(
 
     return {"message": "Password changed successfully."}
 
-    
+
 @auth_router.post(
     "/register",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new specialist account",
 )
+
+
+@auth_router.post(
+    "/forgot-password",
+    summary="Request a password-reset token",
+)
+def forgot_password(
+    request: ForgotPasswordRequest,
+    session: Annotated[Session, Depends(get_db)],
+) -> dict[str, str]:
+    email = str(request.email).strip().lower()
+    user = get_user_by_email(session, email)
+
+    # Always return the same response to avoid revealing registered emails.
+    if user is not None and user.is_active:
+        settings = get_settings()
+
+        if settings.app_env.lower() == "development":
+            token = create_reset_token(user.id)
+            print(f"\n[GeneGlass] Password reset token: {token}\n")
+
+    return {
+        "message": "If the account exists, a reset token has been generated."
+    }
+
+
+@auth_router.post(
+    "/reset-password",
+    summary="Reset password using a valid token",
+)
+def reset_password(
+    request: ResetPasswordRequest,
+    session: Annotated[Session, Depends(get_db)],
+) -> dict[str, str]:
+    user_id = consume_reset_token(request.token)
+
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token.",
+        )
+
+    user = session.get(User, user_id)
+
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token.",
+        )
+
+    user.password_hash = hash_password(request.new_password)
+    session.commit()
+
+    return {"message": "Password reset successfully."}
+
 def register(
     user_data: UserCreate,
     session: Annotated[Session, Depends(get_db)],
