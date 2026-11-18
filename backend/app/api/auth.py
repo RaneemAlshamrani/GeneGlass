@@ -140,6 +140,8 @@ def change_password(
     "/forgot-password",
     summary="Request a password-reset token",
 )
+
+
 def forgot_password(
     request: ForgotPasswordRequest,
     session: Annotated[Session, Depends(get_db)],
