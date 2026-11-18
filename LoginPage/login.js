@@ -114,7 +114,7 @@ function openForgotPasswordForm() {
 
     loginHeader.querySelector("h1").textContent = "Forgot Password";
     loginHeader.querySelector("p").textContent =
-        "Enter your email to reset your password";
+        "We will email you a password reset link";
 }
 
 function openResetPasswordForm() {
@@ -128,7 +128,16 @@ function openResetPasswordForm() {
 
     loginHeader.querySelector("h1").textContent = "Reset Password";
     loginHeader.querySelector("p").textContent =
-        "Enter your reset token and new password";
+        "Choose your new password";
+}
+
+// Reset tokens are delivered in the URL fragment, not shown or typed in the UI.
+// Remove the token from the address bar immediately after reading it.
+const emailedResetToken = new URLSearchParams(window.location.hash.slice(1)).get("reset");
+if (emailedResetToken) {
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    resetToken.value = emailedResetToken;
+    openResetPasswordForm();
 }
 
 document.getElementById("showSignup").addEventListener("click", function (event) {
@@ -246,14 +255,12 @@ forgotPasswordForm.addEventListener("submit", async function (event) {
         const result = await response.json().catch(() => null);
 
         if (!response.ok) {
-            throw new Error(result?.detail || "Unable to request reset token.");
+            throw new Error(result?.detail || "Unable to request a reset link.");
         }
 
-        openResetPasswordForm();
-
-        resetSuccess.textContent =
-            "Reset request submitted. Check the backend Terminal for your token.";
-        resetSuccess.hidden = false;
+        forgotSuccess.textContent =
+            "If an account exists for this email, a reset link has been sent.";
+        forgotSuccess.hidden = false;
 
     } catch (error) {
         forgotError.textContent =

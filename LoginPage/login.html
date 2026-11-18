@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
 
     <title>GeneGlass | Login</title>
 
@@ -391,17 +392,7 @@
 <!-- RESET PASSWORD FORM -->
 <form id="resetPasswordForm" hidden>
 
-    <div class="form-group">
-        <label for="resetToken">Reset Token</label>
-        <div class="input-wrapper">
-            <input
-                type="text"
-                id="resetToken"
-                placeholder="Enter your reset token"
-                required
-            >
-        </div>
-    </div>
+    <input type="hidden" id="resetToken">
 
     <div class="form-group">
         <label for="newResetPassword">New Password</label>

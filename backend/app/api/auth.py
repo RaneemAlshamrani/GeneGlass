@@ -5,8 +5,12 @@
 from app.core.config import get_settings
 from app.services.password_reset import (
     create_reset_token,
+    get_reset_token_user_id,
     consume_reset_token,
+    invalidate_reset_token,
 )
+from app.services.password_reset_email import send_password_reset_email
+import logging
 
 
 from typing import Annotated
@@ -39,6 +43,7 @@ from app.services.users import (
 from app.services.audit import AuditAction, add_audit_event
 
 auth_router = APIRouter(prefix="/auth", tags=["authentication"])
+_reset_logger = logging.getLogger(__name__)
 
 
 @auth_router.post(
@@ -128,69 +133,89 @@ def change_password(
     return {"message": "Password changed successfully."}
 
 
+
+
+@auth_router.post(
+    "/forgot-password",
+    summary="Email a password-reset link",
+)
+def forgot_password(
+    request: ForgotPasswordRequest,
+    session: Annotated[Session, Depends(get_db)],
+) -> dict[str, str]:
+    settings = get_settings()
+    if not settings.smtp_email or not settings.smtp_app_password:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Password reset email is not configured.",
+        )
+
+    email = str(request.email).strip().lower()
+    user = get_user_by_email(session, email)
+    if user is not None and user.is_active:
+        token = create_reset_token(user.id)
+        if token is not None:
+            try:
+                send_password_reset_email(email, token)
+            except Exception as error:
+                invalidate_reset_token(token)
+                # Never print the token, recipient, SMTP password, or link.
+                _reset_logger.error("Reset email delivery failed (%s)", type(error).__name__)
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Unable to send reset email right now. Please try again later.",
+                ) from None
+
+    # Identical message whether an account exists or not.
+    return {"message": "If the account exists, a reset link has been sent."}
+
+
+@auth_router.post(
+    "/reset-password",
+    summary="Reset password using an emailed one-time link",
+)
+def reset_password(
+    request: ResetPasswordRequest,
+    session: Annotated[Session, Depends(get_db)],
+) -> dict[str, str]:
+    user_id = get_reset_token_user_id(request.token)
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset link.",
+        )
+
+    user = session.get(User, user_id)
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset link.",
+        )
+
+    if user.password_hash and verify_password(request.new_password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be different from the current password.",
+        )
+
+    if consume_reset_token(request.token) != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset link.",
+        )
+
+    user.password_hash = hash_password(request.new_password)
+    add_audit_event(session, actor_id=user.id, action=AuditAction.PASSWORD_CHANGED)
+    session.commit()
+    return {"message": "Password reset successfully."}
+
+
 @auth_router.post(
     "/register",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new specialist account",
 )
-
-
-@auth_router.post(
-    "/forgot-password",
-    summary="Request a password-reset token",
-)
-
-
-def forgot_password(
-    request: ForgotPasswordRequest,
-    session: Annotated[Session, Depends(get_db)],
-) -> dict[str, str]:
-    email = str(request.email).strip().lower()
-    user = get_user_by_email(session, email)
-
-    # Always return the same response to avoid revealing registered emails.
-    if user is not None and user.is_active:
-        settings = get_settings()
-
-        if settings.app_env.lower() == "development":
-            token = create_reset_token(user.id)
-            print(f"\n[GeneGlass] Password reset token: {token}\n")
-
-    return {
-        "message": "If the account exists, a reset token has been generated."
-    }
-
-
-@auth_router.post(
-    "/reset-password",
-    summary="Reset password using a valid token",
-)
-def reset_password(
-    request: ResetPasswordRequest,
-    session: Annotated[Session, Depends(get_db)],
-) -> dict[str, str]:
-    user_id = consume_reset_token(request.token)
-
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired reset token.",
-        )
-
-    user = session.get(User, user_id)
-
-    if user is None or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired reset token.",
-        )
-
-    user.password_hash = hash_password(request.new_password)
-    session.commit()
-
-    return {"message": "Password reset successfully."}
-
 def register(
     user_data: UserCreate,
     session: Annotated[Session, Depends(get_db)],

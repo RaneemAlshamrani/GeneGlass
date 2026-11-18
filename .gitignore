@@ -25,3 +25,7 @@ tmp/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# GeneGlass password reset secrets and state
+/backend/.env
+/backend/data/password_reset_tokens.sqlite3

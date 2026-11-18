@@ -21,6 +21,23 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     cors_origins: str = "http://localhost:5500,http://127.0.0.1:5500"
+    # GeneGlass email reset (configure in backend/.env; never commit secrets).
+    smtp_email: str = ""
+    smtp_app_password: str = ""
+    frontend_reset_url: str = "http://127.0.0.1:5500/LoginPage/login.html"
+
+    @field_validator("frontend_reset_url")
+    @classmethod
+    def validate_frontend_reset_url(cls, value: str) -> str:
+        from urllib.parse import urlsplit
+        parsed = urlsplit(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            raise ValueError("FRONTEND_RESET_URL must be an absolute http(s) URL")
+        if parsed.query or parsed.fragment or parsed.username or parsed.password:
+            raise ValueError("FRONTEND_RESET_URL must not include query, fragment or credentials")
+        if parsed.scheme == "http" and parsed.hostname not in {"localhost", "127.0.0.1"}:
+            raise ValueError("FRONTEND_RESET_URL must use HTTPS outside localhost")
+        return value.rstrip("#")
 
    
    
