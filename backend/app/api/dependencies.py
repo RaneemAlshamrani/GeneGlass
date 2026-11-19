@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.user import User
-from app.services.security import decode_access_token
+from app.services.security import decode_access_token, matches_session_stamp
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
@@ -23,11 +23,14 @@ def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    user_id = decode_access_token(token)
-    if user_id is None:
+    token_data = decode_access_token(token)
+    if token_data is None:
         raise credentials_error
 
+    user_id, token_stamp = token_data
     user = session.get(User, user_id)
     if user is None or not user.is_active:
+        raise credentials_error
+    if not matches_session_stamp(user.id, user.password_hash, token_stamp):
         raise credentials_error
     return user

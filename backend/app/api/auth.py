@@ -8,6 +8,7 @@ from app.services.password_reset import (
     get_reset_token_user_id,
     consume_reset_token,
     invalidate_reset_token,
+    invalidate_reset_tokens_for_user,
 )
 from app.services.password_reset_email import send_password_reset_email
 import logging
@@ -15,8 +16,9 @@ import logging
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
@@ -41,6 +43,12 @@ from app.services.users import (
     get_user_by_email,
 )
 from app.services.audit import AuditAction, add_audit_event
+from app.services.login_rate_limit import (
+    forgot_password_rate_limiter,
+    login_rate_limiter,
+    register_rate_limiter,
+    reset_password_rate_limiter,
+)
 
 auth_router = APIRouter(prefix="/auth", tags=["authentication"])
 _reset_logger = logging.getLogger(__name__)
@@ -52,9 +60,20 @@ _reset_logger = logging.getLogger(__name__)
     summary="Sign in with email and password",
 )
 def login(
+    request: Request,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
+    # Use the actual ASGI client address, not an untrusted forwarded header.
+    client_ip = request.client.host if request.client else "unknown"
+    retry_after = login_rate_limiter.reserve(client_ip, form_data.username)
+    if retry_after:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many login attempts. Please try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
     user = authenticate_user(
         session,
         form_data.username,
@@ -74,7 +93,8 @@ def login(
         action=AuditAction.LOGIN_SUCCEEDED,
     )
     session.commit()
-    token, expires_in = create_access_token(user.id)
+    # A session is valid only while this user's password hash is unchanged.
+    token, expires_in = create_access_token(user.id, user.password_hash)
 
     return TokenResponse(
         access_token=token,
@@ -128,6 +148,8 @@ def change_password(
         actor_id=current_user.id,
         action=AuditAction.PASSWORD_CHANGED,
     )
+    # Revoke any reset email already issued for this account.
+    invalidate_reset_tokens_for_user(current_user.id)
     session.commit()
 
     return {"message": "Password changed successfully."}
@@ -141,8 +163,19 @@ def change_password(
 )
 def forgot_password(
     request: ForgotPasswordRequest,
+    http_request: Request,
     session: Annotated[Session, Depends(get_db)],
 ) -> dict[str, str]:
+    email = str(request.email).strip().lower()
+    client_ip = http_request.client.host if http_request.client else "unknown"
+    retry_after = forgot_password_rate_limiter.reserve(client_ip, email)
+    if retry_after:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many requests. Please try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
     settings = get_settings()
     if not settings.smtp_email or not settings.smtp_app_password:
         raise HTTPException(
@@ -150,7 +183,6 @@ def forgot_password(
             detail="Password reset email is not configured.",
         )
 
-    email = str(request.email).strip().lower()
     user = get_user_by_email(session, email)
     if user is not None and user.is_active:
         token = create_reset_token(user.id)
@@ -159,14 +191,10 @@ def forgot_password(
                 send_password_reset_email(email, token)
             except Exception as error:
                 invalidate_reset_token(token)
-                # Never print the token, recipient, SMTP password, or link.
+                # Never log the recipient, token, SMTP password, or reset URL.
                 _reset_logger.error("Reset email delivery failed (%s)", type(error).__name__)
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail="Unable to send reset email right now. Please try again later.",
-                ) from None
+                # A uniform public response prevents revealing registered addresses.
 
-    # Identical message whether an account exists or not.
     return {"message": "If the account exists, a reset link has been sent."}
 
 
@@ -176,8 +204,18 @@ def forgot_password(
 )
 def reset_password(
     request: ResetPasswordRequest,
+    http_request: Request,
     session: Annotated[Session, Depends(get_db)],
 ) -> dict[str, str]:
+    client_ip = http_request.client.host if http_request.client else "unknown"
+    retry_after = reset_password_rate_limiter.reserve(client_ip, request.token)
+    if retry_after:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many reset attempts. Please try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
     user_id = get_reset_token_user_id(request.token)
     if user_id is None:
         raise HTTPException(
@@ -217,10 +255,19 @@ def reset_password(
     summary="Create a new specialist account",
 )
 def register(
+    request: Request,
     user_data: UserCreate,
     session: Annotated[Session, Depends(get_db)],
 ) -> UserResponse:
     email = str(user_data.email).strip().lower()
+    client_ip = request.client.host if request.client else "unknown"
+    retry_after = register_rate_limiter.reserve(client_ip, email)
+    if retry_after:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many registration attempts. Please try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
 
     if get_user_by_email(session, email):
         raise HTTPException(
@@ -232,6 +279,17 @@ def register(
         update={"role": UserRole.SPECIALIST}
     )
 
-    user = create_user(session, specialist_data)
+    try:
+        user = create_user(session, specialist_data)
+    except IntegrityError:
+        # Another request may have registered the same email between lookup
+        # and INSERT. Handle that race without exposing database details.
+        session.rollback()
+        if get_user_by_email(session, email) is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="An account with this email already exists.",
+            ) from None
+        raise
 
     return UserResponse.model_validate(user)

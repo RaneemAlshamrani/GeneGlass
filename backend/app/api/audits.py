@@ -3,10 +3,11 @@
 import json
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, joinedload
 
+from app.api.analysis_access import get_owned_analysis
 from app.api.dependencies import get_current_user
 from app.db.session import get_db
 from app.models.analysis import Analysis
@@ -36,25 +37,6 @@ def _serialize_event(event: AuditEvent) -> AuditEventResponse:
         details=details,
         created_at=event.created_at,
     )
-
-
-def _owned_analysis(
-    session: Session,
-    analysis_id: int,
-    current_user: User,
-) -> Analysis:
-    analysis = session.scalar(
-        select(Analysis).where(
-            Analysis.id == analysis_id,
-            Analysis.user_id == current_user.id,
-        )
-    )
-    if analysis is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Analysis not found",
-        )
-    return analysis
 
 
 @audits_router.get(
@@ -96,7 +78,7 @@ def get_analysis_audit_events(
 ) -> AuditTrailResponse:
     """Return events for an analysis only when it belongs to the user."""
 
-    _owned_analysis(session, analysis_id, current_user)
+    get_owned_analysis(session, analysis_id, current_user.id)
     events = session.scalars(
         select(AuditEvent)
         .options(joinedload(AuditEvent.actor))

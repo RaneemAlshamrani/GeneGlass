@@ -94,31 +94,20 @@ form.addEventListener("submit", async (event) => {
     editable[1].value = result.email;
     editable[2].value = result.department || "";
 
-    document.querySelectorAll("[data-auth-name]").forEach((element) => {
-      if ("value" in element) {
-        element.value = result.full_name;
-      } else {
-        element.textContent = result.full_name;
-      }
-    });
-
-    document.querySelectorAll("[data-auth-email]").forEach((element) => {
-      if ("value" in element) {
-        element.value = result.email;
-      } else {
-        element.textContent = result.email;
-      }
-    });
-
-    document.querySelectorAll("[data-auth-department]").forEach((element) => {
-      const department = result.department || "Not provided";
-
-      if ("value" in element) {
-        element.value = department;
-      } else {
-        element.textContent = department;
-      }
-    });
+    // Keep the visible profile fields in sync after a successful save.
+    for (const [attribute, value] of [
+      ["name", result.full_name],
+      ["email", result.email],
+      ["department", result.department || "Not provided"],
+    ]) {
+      document.querySelectorAll(`[data-auth-${attribute}]`).forEach((element) => {
+        if ("value" in element) {
+          element.value = value;
+        } else {
+          element.textContent = value;
+        }
+      });
+    }
 
     if (window.GeneGlassAuth) {
       window.GeneGlassAuth.user = {

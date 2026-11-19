@@ -16,6 +16,7 @@ from app.models.audit import AuditEvent
 from app.models.molecular_report import MolecularReport
 from app.schemas.auth import UserCreate
 from app.services.users import create_user
+from app.services.storage import ab1_storage
 
 
 def test_owner_can_delete_analysis_files_but_other_user_cannot(
@@ -75,6 +76,7 @@ def test_owner_can_delete_analysis_files_but_other_user_cannot(
             yield session
 
     monkeypatch.setattr(analyses_api, "UPLOAD_ROOT", upload_root)
+    monkeypatch.setattr(ab1_storage, "UPLOAD_ROOT", upload_root)
     app.dependency_overrides[get_db] = override_get_db
     try:
         with TestClient(app) as client:

@@ -20,6 +20,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.api.analysis_access import get_owned_analysis
 from app.api.dependencies import get_current_user
 from app.db.session import get_db
 from app.models.analysis import Analysis, AnalysisStatus, QCStatus
@@ -34,10 +35,11 @@ from app.services.ab1_reader import read_ab1_file
 from app.services.ab1_reader import read_chromatogram
 from app.services.audit import AuditAction, add_audit_event
 from app.services.sequence_cleaner import clean_sequence
-from app.services.storage.ab1_storage import UPLOAD_ROOT, save_ab1_file
+from app.services.storage.ab1_storage import UPLOAD_ROOT, delete_owned_ab1_file, save_ab1_file
 from app.services.model_predictions import (
     get_or_record_current_prediction,
     latest_prediction_map,
+    prediction_summary,
     record_prediction,
     serialize_prediction,
 )
@@ -47,21 +49,6 @@ from app.services.variant_detector import (
 )
 
 analyses_router = APIRouter(prefix="/analyses", tags=["analyses"])
-
-
-def _prediction_summary(record: ModelPrediction | None) -> dict | None:
-    if record is None:
-        return None
-    return {
-        "status": record.status,
-        "prediction": record.prediction,
-        "negative_probability": record.negative_probability,
-        "hetero_probability": record.hetero_probability,
-        "model_name": record.model_name,
-        "model_version": record.model_version,
-        "created_at": record.created_at,
-        "research_use_only": record.research_use_only,
-    }
 
 
 def _analysis_list_item(
@@ -78,7 +65,7 @@ def _analysis_list_item(
             "status": analysis.status.value,
             "qc_status": analysis.qc_status.value,
             "v617f_detected": analysis.v617f_detected,
-            "ai_prediction": _prediction_summary(prediction),
+            "ai_prediction": prediction_summary(prediction),
             "report": report,
             "created_at": analysis.created_at,
         }
@@ -443,18 +430,7 @@ def get_analysis_details(
 ) -> dict:
     """Return one analysis only if it belongs to the signed-in user."""
 
-    analysis = session.scalar(
-        select(Analysis).where(
-            Analysis.id == analysis_id,
-            Analysis.user_id == current_user.id,
-        )
-    )
-
-    if analysis is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Analysis not found",
-        )
+    analysis = get_owned_analysis(session, analysis_id, current_user.id)
 
     report_summary = _report_summary_map(session, [analysis.id])[analysis.id]
 
@@ -477,7 +453,7 @@ def get_analysis_details(
             "quality_assessment": analysis.quality_assessment,
         },
         "v617f_detected": analysis.v617f_detected,
-        "ai_prediction": _prediction_summary(
+        "ai_prediction": prediction_summary(
             latest_prediction_map(session, [analysis.id]).get(analysis.id)
         ),
         "report": report_summary,
@@ -494,24 +470,15 @@ def get_analysis_details(
 
 
 def _remove_owned_upload_files(paths: set[str], user_id: int) -> None:
-    """Remove only files inside the signed-in user's managed upload folder."""
+    """Delete only managed AB1 files owned by the current user."""
+    for raw_path in paths:
+        delete_owned_ab1_file(raw_path, user_id)
 
     owned_root = (UPLOAD_ROOT / f"user_{user_id}").resolve()
-    for raw_path in paths:
-        candidate = Path(raw_path).resolve()
-        if not candidate.is_relative_to(owned_root):
-            continue
-        try:
-            candidate.unlink(missing_ok=True)
-        except OSError:
-            # The database deletion is authoritative; an unavailable file can
-            # be cleaned by maintenance without restoring deleted health data.
-            continue
     try:
         owned_root.rmdir()
     except OSError:
         pass
-
 
 @analyses_router.delete("/{analysis_id}")
 def delete_analysis(
@@ -521,17 +488,7 @@ def delete_analysis(
 ) -> dict[str, int | str]:
     """Delete one owned analysis and its managed AB1/report files."""
 
-    analysis = session.scalar(
-        select(Analysis).where(
-            Analysis.id == analysis_id,
-            Analysis.user_id == current_user.id,
-        )
-    )
-    if analysis is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Analysis not found",
-        )
+    analysis = get_owned_analysis(session, analysis_id, current_user.id)
 
     reports = session.scalars(
         select(MolecularReport).where(
@@ -580,11 +537,7 @@ def get_analysis_chromatogram(
     """Return original trace data only for the owner of this analysis."""
     from app.services.ab1_reader import read_chromatogram
 
-    analysis = session.scalar(select(Analysis).where(
-        Analysis.id == analysis_id, Analysis.user_id == current_user.id
-    ))
-    if analysis is None:
-        raise HTTPException(status_code=404, detail="Analysis not found")
+    analysis = get_owned_analysis(session, analysis_id, current_user.id)
     try:
         return read_chromatogram(analysis.stored_file_path)
     except (ValueError, OSError, FileNotFoundError) as exc:
@@ -598,18 +551,7 @@ def get_jak2_target_analysis(
 ) -> dict:
     """Return preliminary JAK2 target and peak analysis."""
 
-    analysis = session.scalar(
-        select(Analysis).where(
-            Analysis.id == analysis_id,
-            Analysis.user_id == current_user.id,
-        )
-    )
-
-    if analysis is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Analysis not found",
-        )
+    analysis = get_owned_analysis(session, analysis_id, current_user.id)
 
     if analysis.gene != "JAK2":
         raise HTTPException(
@@ -702,6 +644,17 @@ def get_jak2_target_analysis(
         "result": result,
     }
 
+def _require_ai_target_and_file(analysis: Analysis) -> None:
+    """Check the JAK2 V617F target and availability of the AB1 file path."""
+    if analysis.gene != "JAK2" or analysis.target_variant != "V617F":
+        raise HTTPException(
+            status_code=400,
+            detail="AI prediction supports JAK2 V617F only",
+        )
+    if not analysis.stored_file_path:
+        raise HTTPException(status_code=422, detail="AB1 file path unavailable")
+
+
 @analyses_router.get("/{analysis_id}/ai-prediction")
 def get_ai_prediction(
     analysis_id: int,
@@ -710,27 +663,9 @@ def get_ai_prediction(
 ) -> dict:
     """Return a research-only AI prediction for an existing AB1 analysis."""
 
-    analysis = session.scalar(
-        select(Analysis).where(
-            Analysis.id == analysis_id,
-            Analysis.user_id == current_user.id,
-        )
-    )
+    analysis = get_owned_analysis(session, analysis_id, current_user.id)
 
-    if analysis is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Analysis not found",
-        )
-
-    if analysis.gene != "JAK2" or analysis.target_variant != "V617F":
-        raise HTTPException(
-            status_code=400,
-            detail="AI prediction supports JAK2 V617F only",
-        )
-
-    if not analysis.stored_file_path:
-        raise HTTPException(status_code=422, detail="AB1 file path unavailable")
+    _require_ai_target_and_file(analysis)
 
     # Show an existing historical result without recalculating it.
     # New uploads have no prediction until specialist QC approval.
@@ -766,21 +701,8 @@ def refresh_ai_prediction(
 ) -> dict:
     """Append a new research-only model run without replacing history."""
 
-    analysis = session.scalar(
-        select(Analysis).where(
-            Analysis.id == analysis_id,
-            Analysis.user_id == current_user.id,
-        )
-    )
-    if analysis is None:
-        raise HTTPException(status_code=404, detail="Analysis not found")
-    if analysis.gene != "JAK2" or analysis.target_variant != "V617F":
-        raise HTTPException(
-            status_code=400,
-            detail="AI prediction supports JAK2 V617F only",
-        )
-    if not analysis.stored_file_path:
-        raise HTTPException(status_code=422, detail="AB1 file path unavailable")
+    analysis = get_owned_analysis(session, analysis_id, current_user.id)
+    _require_ai_target_and_file(analysis)
 
     require_preliminary_qc_approval(session, analysis)
     record = record_prediction(session, analysis)
@@ -864,13 +786,7 @@ def get_preliminary_qc_decision(
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[Session, Depends(get_db)],
 ) -> dict:
-    analysis = session.scalar(
-        select(Analysis).where(
-            Analysis.id == analysis_id, Analysis.user_id == current_user.id
-        )
-    )
-    if analysis is None:
-        raise HTTPException(status_code=404, detail="Analysis not found")
+    analysis = get_owned_analysis(session, analysis_id, current_user.id)
     latest = get_latest_preliminary_qc_decision(session, analysis.id)
     return {
         "analysis_id": analysis.id,
@@ -889,13 +805,7 @@ def save_preliminary_qc_decision(
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[Session, Depends(get_db)],
 ) -> dict:
-    analysis = session.scalar(
-        select(Analysis).where(
-            Analysis.id == analysis_id, Analysis.user_id == current_user.id
-        )
-    )
-    if analysis is None:
-        raise HTTPException(status_code=404, detail="Analysis not found")
+    analysis = get_owned_analysis(session, analysis_id, current_user.id)
     if payload.decision == QCDecision.CONTINUE_ANALYSIS and not _qc_target_found(analysis):
         raise HTTPException(
             status_code=409, detail="Target Not Found. AI analysis cannot continue."

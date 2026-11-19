@@ -13,6 +13,31 @@ from app.models.model_prediction import ModelPrediction
 from app.services.ai_predictor import get_model_identity, predict_ab1
 
 
+def prediction_summary(
+    record: ModelPrediction | None,
+    *,
+    iso_datetime: bool = False,
+) -> dict | None:
+    """Common compact prediction fields for lists and dashboard responses."""
+    if record is None:
+        return None
+
+    return {
+        "status": record.status,
+        "prediction": record.prediction,
+        "negative_probability": record.negative_probability,
+        "hetero_probability": record.hetero_probability,
+        "model_name": record.model_name,
+        "model_version": record.model_version,
+        "created_at": (
+            record.created_at.isoformat()
+            if iso_datetime
+            else record.created_at
+        ),
+        "research_use_only": record.research_use_only,
+    }
+
+
 def serialize_prediction(record: ModelPrediction) -> dict:
     probabilities = None
     if (

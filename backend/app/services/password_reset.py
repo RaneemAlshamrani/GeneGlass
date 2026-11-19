@@ -104,3 +104,12 @@ def invalidate_reset_token(token: str) -> None:
     """Discard a link if SMTP delivery fails."""
     with _connect() as connection:
         connection.execute("DELETE FROM password_reset_tokens WHERE token_hash = ?", (_digest(token),))
+
+
+def invalidate_reset_tokens_for_user(user_id: int) -> None:
+    """Revoke outstanding emailed reset links following password changes."""
+    with _connect() as connection:
+        connection.execute(
+            "DELETE FROM password_reset_tokens WHERE user_id = ?",
+            (user_id,),
+        )

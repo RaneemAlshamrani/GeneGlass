@@ -16,7 +16,7 @@ from app.models.analysis import (
     QCStatus,
 )
 from app.models.user import User
-from app.services.model_predictions import latest_prediction_map
+from app.services.model_predictions import latest_prediction_map, prediction_summary
 
 dashboard_router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -30,13 +30,10 @@ def get_dashboard_summary(
 
     user_filter = Analysis.user_id == current_user.id
 
-    total_analyses = session.scalar(
-        select(func.count(Analysis.id)).where(user_filter)
-    ) or 0
-
     owned_analyses = session.scalars(
         select(Analysis).where(user_filter)
     ).all()
+    total_analyses = len(owned_analyses)
     prediction_by_analysis = latest_prediction_map(
         session, (analysis.id for analysis in owned_analyses)
     )
@@ -111,12 +108,10 @@ def get_dashboard_summary(
         .limit(5)
     ).all()
 
-    recent_prediction_by_analysis = latest_prediction_map(
-        session, (analysis.id for analysis in recent_rows)
-    )
+    # These analyses are already included in the user's prediction map.
     recent_analyses = []
     for analysis in recent_rows:
-        prediction = recent_prediction_by_analysis.get(analysis.id)
+        prediction = prediction_by_analysis.get(analysis.id)
         recent_analyses.append({
             "id": analysis.id,
             "file_name": analysis.original_file_name,
@@ -125,20 +120,7 @@ def get_dashboard_summary(
             "status": analysis.status.value,
             "qc_status": analysis.qc_status.value,
             "v617f_detected": analysis.v617f_detected,
-            "ai_prediction": (
-                {
-                    "status": prediction.status,
-                    "prediction": prediction.prediction,
-                    "negative_probability": prediction.negative_probability,
-                    "hetero_probability": prediction.hetero_probability,
-                    "model_name": prediction.model_name,
-                    "model_version": prediction.model_version,
-                    "created_at": prediction.created_at.isoformat(),
-                    "research_use_only": prediction.research_use_only,
-                }
-                if prediction
-                else None
-            ),
+            "ai_prediction": prediction_summary(prediction, iso_datetime=True),
             "created_at": (
                 analysis.created_at.isoformat()
                 if analysis.created_at

@@ -63,7 +63,9 @@
   }
 
   function formatPercent(value) {
-    return Number.isFinite(Number(value)) ? `${Number(value).toFixed(2)}%` : "N/A";
+    return Number.isFinite(Number(value))
+      ? `${Number(value).toFixed(2)}%`
+      : "N/A";
   }
 
   function formatRatio(value) {
@@ -85,13 +87,24 @@
       index = normalized.indexOf(motif, index + 1);
     }
 
-    return best ? { startBase: best.start + 1, endBase: best.start + motif.length } : null;
+    return best
+      ? { startBase: best.start + 1, endBase: best.start + motif.length }
+      : null;
   }
 
   function inspectValue(feature, value) {
-    if (value === null || value === undefined || !Number.isFinite(Number(value))) return "Unavailable";
+    if (
+      value === null ||
+      value === undefined ||
+      !Number.isFinite(Number(value))
+    )
+      return "Unavailable";
     const number = Number(value);
-    if (["peak_overlap_score", "alternative_ratio", "local_noise_ratio"].includes(feature)) {
+    if (
+      ["peak_overlap_score", "alternative_ratio", "local_noise_ratio"].includes(
+        feature,
+      )
+    ) {
       return `${(number * 100).toFixed(1)}%`;
     }
     if (feature === "phred_quality") return `Q${Math.round(number)}`;
@@ -99,18 +112,28 @@
   }
 
   function openShapInspector(explanation, trigger) {
-    if (!chromatogramController?.canInspect?.() || !chromatogram?.isConnected ||
-        !Array.isArray(explanation?.contributions) || !explanation.contributions.length) {
+    if (
+      !chromatogramController?.canInspect?.() ||
+      !chromatogram?.isConnected ||
+      !Array.isArray(explanation?.contributions) ||
+      !explanation.contributions.length
+    ) {
       return false;
     }
     if (document.querySelector(".gg-evidence-dialog")) return true;
 
-    const featureData = new Map(explanation.contributions.map(item => [item.feature, item]));
-    const peakFeature = featureData.get("peak_overlap_score") || featureData.get("alternative_ratio");
+    const featureData = new Map(
+      explanation.contributions.map((item) => [item.feature, item]),
+    );
+    const peakFeature =
+      featureData.get("peak_overlap_score") ||
+      featureData.get("alternative_ratio");
     const qualityFeature = featureData.get("phred_quality");
     if (!peakFeature && !qualityFeature) return false;
 
-    const placeholder = document.createComment("GeneGlass chromatogram location");
+    const placeholder = document.createComment(
+      "GeneGlass chromatogram location",
+    );
     const originalParent = chromatogram.parentNode;
     originalParent.insertBefore(placeholder, chromatogram);
 
@@ -125,7 +148,8 @@
     const title = document.createElement("h2");
     title.textContent = "Inspect AI evidence";
     const subtitle = document.createElement("p");
-    subtitle.textContent = "Choose what to inspect on the original AB1 chromatogram.";
+    subtitle.textContent =
+      "Choose what to inspect on the original AB1 chromatogram.";
     heading.append(title, subtitle);
     const close = document.createElement("button");
     close.type = "button";
@@ -179,7 +203,8 @@
       const overlap = featureData.get("peak_overlap_score")?.value;
       currentName.textContent = "Target peak signals";
       currentValue.textContent = `Reference: ${inspectValue("reference_peak", reference)}  |  Alternative: ${inspectValue("alternative_peak", alternative)}`;
-      currentImpact.textContent = "Four related model measurements from the SAME TWO peaks";
+      currentImpact.textContent =
+        "Four related model measurements from the SAME TWO peaks";
       currentNote.textContent = `Alternative is ${inspectValue("alternative_ratio", altPercent)} of their combined intensity, and ${inspectValue("peak_overlap_score", overlap)} as strong as the reference. These are two ratios of the same signals, not separate peaks.`;
       chromatogramController.focusFeature("peak_overlap_score", overlap);
     }
@@ -191,7 +216,8 @@
       currentName.textContent = "Base reading quality";
       currentValue.textContent = `Measured: ${inspectValue("phred_quality", item?.value)}`;
       currentImpact.textContent = `${Math.abs(impact * 100).toFixed(1)} points ${impact >= 0 ? "raising" : "lowering"} the model's Heterozygous estimate`;
-      currentNote.textContent = "Phred quality describes reliability of the called base. It does not prove whether the alternative peak is a mutation or background noise.";
+      currentNote.textContent =
+        "Phred quality describes reliability of the called base. It does not prove whether the alternative peak is a mutation or background noise.";
       chromatogramController.focusFeature("phred_quality", item?.value);
     }
 
@@ -213,10 +239,18 @@
 
     let defaultButton = null;
     if (peakFeature) {
-      defaultButton = addChoice("Target peak signals", "Reference, alternative and their ratios", showPeaks);
+      defaultButton = addChoice(
+        "Target peak signals",
+        "Reference, alternative and their ratios",
+        showPeaks,
+      );
     }
     if (qualityFeature) {
-      const qualityButton = addChoice("Base reading quality", inspectValue("phred_quality", qualityFeature.value), showQuality);
+      const qualityButton = addChoice(
+        "Base reading quality",
+        inspectValue("phred_quality", qualityFeature.value),
+        showQuality,
+      );
       if (!defaultButton) defaultButton = qualityButton;
     }
 
@@ -229,8 +263,16 @@
       extraHeading.textContent = "Other model measurements (no single peak)";
       extra.append(extraHeading);
       for (const [feature, label, explanationText] of [
-        ["local_noise_ratio", "Background noise", "Summarizes nearby background signals; no specific peak is identified as noise."],
-        ["alignment_score", "Sequence alignment", "Measures sequence alignment against the reference; not an individual chromatogram peak."]
+        [
+          "local_noise_ratio",
+          "Background noise",
+          "Summarizes nearby background signals; no specific peak is identified as noise.",
+        ],
+        [
+          "alignment_score",
+          "Sequence alignment",
+          "Measures sequence alignment against the reference; not an individual chromatogram peak.",
+        ],
       ]) {
         const item = featureData.get(feature);
         if (!item) continue;
@@ -246,13 +288,17 @@
       selector.append(extra);
     }
 
-    dialog.addEventListener("close", () => {
-      chromatogramController.clearEvidence();
-      placeholder.replaceWith(chromatogram);
-      dialog.remove();
-      trigger?.focus();
-    }, { once: true });
-    dialog.addEventListener("click", event => {
+    dialog.addEventListener(
+      "close",
+      () => {
+        chromatogramController.clearEvidence();
+        placeholder.replaceWith(chromatogram);
+        dialog.remove();
+        trigger?.focus();
+      },
+      { once: true },
+    );
+    dialog.addEventListener("click", (event) => {
       if (event.target === dialog) dialog.close();
     });
     if (typeof dialog.showModal !== "function") {
@@ -274,18 +320,24 @@
     const box = document.createElement("section");
     box.id = "geneglassUnsupportedNotice";
     box.setAttribute("role", "alert");
-    box.style.cssText = "border:1px solid #dfa74c;border-left:5px solid #bd7916;border-radius:12px;padding:15px 18px;margin:12px 0;background:#fff7e7;color:#443218;";
+    box.style.cssText =
+      "border:1px solid #dfa74c;border-left:5px solid #bd7916;border-radius:12px;padding:15px 18px;margin:12px 0;background:#fff7e7;color:#443218;";
 
     const title = document.createElement("strong");
-    title.textContent = "Possible Unsupported Target Pattern — Specialist Review Required";
+    title.textContent =
+      "Possible Unsupported Target Pattern — Specialist Review Required";
 
     const explanation = document.createElement("p");
     explanation.style.margin = "8px 0 0";
-    explanation.textContent = "Predominantly alternative signal at JAK2 V617F (raw "
-      + pattern.raw_alternative_channel + " vs " + pattern.raw_reference_channel
-      + "; other/alternative ratio " + Number(pattern.max_other_to_alternative_ratio).toFixed(3)
-      + "). The binary AI model cannot establish a homozygous genotype. "
-      + "Do not accept the AI prediction without specialist verification. Research advisory only.";
+    explanation.textContent =
+      "Predominantly alternative signal at JAK2 V617F (raw " +
+      pattern.raw_alternative_channel +
+      " vs " +
+      pattern.raw_reference_channel +
+      "; other/alternative ratio " +
+      Number(pattern.max_other_to_alternative_ratio).toFixed(3) +
+      "). The binary AI model cannot establish a homozygous genotype. " +
+      "Do not accept the AI prediction without specialist verification. Research advisory only.";
 
     box.append(title, explanation);
 
@@ -298,24 +350,41 @@
 
   function renderEvidenceSummary(result) {
     const notFound = result.found === false;
-    const status = notFound ? "Target Not Found" : result.needs_review ? "Needs review" : "Technical evidence available";
+    const status = notFound
+      ? "Target Not Found"
+      : result.needs_review
+        ? "Needs review"
+        : "Technical evidence available";
 
     evidenceBadge.textContent = status;
-    evidenceBadge.dataset.status = notFound || result.needs_review ? "review" : "ready";
+    evidenceBadge.dataset.status =
+      notFound || result.needs_review ? "review" : "ready";
 
     if (notFound) {
       jak2Summary.replaceChildren();
       const note = document.createElement("p");
       note.className = "evidence-unavailable";
-      note.textContent = "The JAK2 V617F target was not reliably mapped. No AI classification is available.";
+      note.textContent =
+        "The JAK2 V617F target was not reliably mapped. No AI classification is available.";
       jak2Summary.appendChild(note);
       return;
     }
 
     const items = [
-      ["Target", result.genomic_position ? `NC_000009.12:g.${result.genomic_position}` : "JAK2 V617F"],
-      ["Read base", `${result.observed_base || "N/A"} · Q${result.quality_score ?? "N/A"}`],
-      ["Alignment", `${formatPercent(result.alignment_identity_percentage)} identity`],
+      [
+        "Target",
+        result.genomic_position
+          ? `NC_000009.12:g.${result.genomic_position}`
+          : "JAK2 V617F",
+      ],
+      [
+        "Read base",
+        `${result.observed_base || "N/A"} · Q${result.quality_score ?? "N/A"}`,
+      ],
+      [
+        "Alignment",
+        `${formatPercent(result.alignment_identity_percentage)} identity`,
+      ],
       ["Coverage", formatPercent(result.alignment_coverage_percentage)],
     ];
 
@@ -323,7 +392,10 @@
 
     items.forEach(([label, value], index) => {
       const item = document.createElement("div");
-      item.className = index === 0 ? "evidence-summary-item evidence-summary-target" : "evidence-summary-item";
+      item.className =
+        index === 0
+          ? "evidence-summary-item evidence-summary-target"
+          : "evidence-summary-item";
 
       const name = document.createElement("span");
       name.textContent = label;
@@ -438,8 +510,16 @@
       metrics.className = "prediction-metrics";
 
       metrics.append(
-        createPredictionMetric("Heterozygous", data.probabilities.hetero, "hetero"),
-        createPredictionMetric("Not Detected", data.probabilities.negative, "negative")
+        createPredictionMetric(
+          "Heterozygous",
+          data.probabilities.hetero,
+          "hetero",
+        ),
+        createPredictionMetric(
+          "Not Detected",
+          data.probabilities.negative,
+          "negative",
+        ),
       );
 
       body.appendChild(metrics);
@@ -447,7 +527,7 @@
 
     const explanation = window.GeneGlassShapExplanation?.create(
       data.explanation,
-      (shapData, trigger) => openShapInspector(shapData, trigger)
+      (shapData, trigger) => openShapInspector(shapData, trigger),
     );
 
     if (explanation) body.appendChild(explanation);
@@ -466,14 +546,19 @@
 
   async function loadAiPrediction(token) {
     try {
-      const response = await fetch(`${apiBaseUrl}/analyses/${analysisId}/ai-prediction`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `${apiBaseUrl}/analyses/${analysisId}/ai-prediction`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || "Model prediction is currently unavailable.");
+        throw new Error(
+          data.detail || "Model prediction is currently unavailable.",
+        );
       }
 
       renderAiPrediction(data);
@@ -486,21 +571,29 @@
   function renderInitialQcState(qc, details) {
     detailsQcCard.hidden = false;
     detailsQcLink.href = `../AnalysisPage/analysis.html?id=${analysisId}`;
-    detailsQcLink.hidden = qc.target_found !== true || qc.decision !== "pending";
+    detailsQcLink.hidden =
+      qc.target_found !== true || qc.decision !== "pending";
     detailsQcLink.textContent = "Complete pending QC review";
 
-    detailsQcBadge.dataset.state = qc.target_found !== true ? "target_not_found" : qc.decision;
-    detailsQcBadge.textContent = qc.target_found !== true ? "Target Not Found"
-      : qc.decision === "continue_analysis" ? "Continue approved"
-      : qc.decision === "request_repeat" ? "Repeat requested" : "Pending decision";
+    detailsQcBadge.dataset.state =
+      qc.target_found !== true ? "target_not_found" : qc.decision;
+    detailsQcBadge.textContent =
+      qc.target_found !== true
+        ? "Target Not Found"
+        : qc.decision === "continue_analysis"
+          ? "Continue approved"
+          : qc.decision === "request_repeat"
+            ? "Repeat requested"
+            : "Pending decision";
 
-    detailsQcMessage.textContent = qc.target_found !== true
-      ? "Target Not Found — AI classification is unavailable because JAK2 V617F could not be mapped."
-      : qc.decision === "continue_analysis"
-        ? "The specialist authorized AI analysis after examining the original chromatogram."
-        : qc.decision === "request_repeat"
-          ? "A repeat was requested. New AI classification is blocked."
-          : "Initial QC is awaiting the specialist's Continue Analysis or Request Repeat decision.";
+    detailsQcMessage.textContent =
+      qc.target_found !== true
+        ? "Target Not Found — AI classification is unavailable because JAK2 V617F could not be mapped."
+        : qc.decision === "continue_analysis"
+          ? "The specialist authorized AI analysis after examining the original chromatogram."
+          : qc.decision === "request_repeat"
+            ? "A repeat was requested. New AI classification is blocked."
+            : "Initial QC is awaiting the specialist's Continue Analysis or Request Repeat decision.";
 
     detailsQcNote.textContent = qc.comment
       ? `Specialist note: ${qc.comment}`
@@ -508,7 +601,8 @@
         ? "This analysis has a historical AI output saved before the new QC approval workflow."
         : "";
 
-    const blocked = qc.target_found !== true || qc.decision === "request_repeat";
+    const blocked =
+      qc.target_found !== true || qc.decision === "request_repeat";
 
     if (qc.target_found !== true) {
       evidenceBadge.textContent = "Target Not Found";
@@ -519,9 +613,10 @@
     if (blocked && savedReport?.status !== "finalized") {
       reportBadge.textContent = "Unavailable";
       reportArchiveTitle.textContent = "No report available";
-      reportArchiveMessage.textContent = qc.target_found !== true
-        ? "Target Not Found: AI-based reporting is unavailable for this read."
-        : "A repeat was requested. AI-based reporting is blocked for this read.";
+      reportArchiveMessage.textContent =
+        qc.target_found !== true
+          ? "Target Not Found: AI-based reporting is unavailable for this read."
+          : "A repeat was requested. AI-based reporting is blocked for this read.";
       downloadReportButton.hidden = true;
       editReportButton.hidden = true;
       continueReportLink.hidden = true;
@@ -550,11 +645,13 @@
       reportBadge.textContent = "Update required";
       reportBadge.dataset.decision = report.decision || "pending";
       reportArchiveTitle.textContent = "PDF decision is outdated";
-      reportArchiveMessage.textContent = "The Specialist Review decision changed. Open New Analysis to generate a new PDF version.";
+      reportArchiveMessage.textContent =
+        "The Specialist Review decision changed. Open New Analysis to generate a new PDF version.";
       downloadReportButton.hidden = true;
       editReportButton.hidden = true;
       continueReportLink.hidden = false;
-      continueReportLink.innerHTML = '<i class="fa-solid fa-rotate"></i> Update PDF';
+      continueReportLink.innerHTML =
+        '<i class="fa-solid fa-rotate"></i> Update PDF';
       return;
     }
 
@@ -566,17 +663,20 @@
       downloadReportButton.hidden = true;
       editReportButton.hidden = true;
       continueReportLink.hidden = false;
-      continueReportLink.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> Open in New Analysis';
+      continueReportLink.innerHTML =
+        '<i class="fa-solid fa-arrow-up-right-from-square"></i> Open in New Analysis';
       return;
     }
 
     const storedDecision = report.final_decision || report.decision;
-    const decision = reviewLabels[storedDecision] || storedDecision || "Unavailable";
+    const decision =
+      reviewLabels[storedDecision] || storedDecision || "Unavailable";
 
     reportBadge.textContent = `Final · v${report.version}`;
     reportBadge.dataset.decision = storedDecision || "pending";
     reportArchiveTitle.textContent = `Final report · ${decision}`;
-    reportArchiveMessage.textContent = "The finalized PDF is stored and ready to download.";
+    reportArchiveMessage.textContent =
+      "The finalized PDF is stored and ready to download.";
 
     downloadReportButton.hidden = false;
     editReportButton.hidden = false;
@@ -595,10 +695,11 @@
     try {
       const response = await fetch(
         `${apiBaseUrl}/analyses/${analysisId}/report.pdf?version=${savedReport.version}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      if (!response.ok) throw new Error("The saved report could not be downloaded.");
+      if (!response.ok)
+        throw new Error("The saved report could not be downloaded.");
 
       const pdfUrl = URL.createObjectURL(await response.blob());
 
@@ -616,7 +717,8 @@
       reportArchiveMessage.textContent = error.message;
     } finally {
       downloadReportButton.disabled = false;
-      downloadReportButton.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Download PDF';
+      downloadReportButton.innerHTML =
+        '<i class="fa-solid fa-file-pdf"></i> Download PDF';
     }
   }
 
@@ -633,8 +735,13 @@
     const readable = [];
 
     if (details.decision) {
-      const qcLabels = { continue_analysis: "Continue Analysis", request_repeat: "Request Repeat" };
-      readable.push(`Decision: ${qcLabels[details.decision] || reviewLabels[details.decision] || details.decision}`);
+      const qcLabels = {
+        continue_analysis: "Continue Analysis",
+        request_repeat: "Request Repeat",
+      };
+      readable.push(
+        `Decision: ${qcLabels[details.decision] || reviewLabels[details.decision] || details.decision}`,
+      );
     }
 
     if (details.qc_status) readable.push(`QC: ${details.qc_status}`);
@@ -696,17 +803,21 @@
     const wasOpen = disclosure?.open === true;
     if (disclosure) disclosure.open = true;
     document.body.classList.add("printing-audit");
-    window.addEventListener("afterprint", () => {
-      document.body.classList.remove("printing-audit");
-      if (disclosure && !wasOpen) disclosure.open = false;
-    }, { once: true });
+    window.addEventListener(
+      "afterprint",
+      () => {
+        document.body.classList.remove("printing-audit");
+        if (disclosure && !wasOpen) disclosure.open = false;
+      },
+      { once: true },
+    );
     window.print();
   }
 
   async function loadAuditTrail(token) {
     const response = await fetch(
       `${apiBaseUrl}/analyses/${analysisId}/audit-events`,
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     );
 
     if (!response.ok) throw new Error("Unable to load audit trail.");
@@ -726,7 +837,12 @@
 
     latestReviewBadge.dataset.decision = data.latest_decision || "none";
 
-    if (!reviews.length && ["target_not_found", "request_repeat"].includes(detailsQcBadge.dataset.state)) {
+    if (
+      !reviews.length &&
+      ["target_not_found", "request_repeat"].includes(
+        detailsQcBadge.dataset.state,
+      )
+    ) {
       latestReviewBadge.textContent = "Not applicable";
     }
 
@@ -768,7 +884,7 @@
   async function loadReviewHistory(token) {
     const response = await fetch(
       `${apiBaseUrl}/analyses/${analysisId}/reviews`,
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     );
 
     if (!response.ok) {
@@ -789,14 +905,11 @@
     }
 
     try {
-      const response = await fetch(
-        `${apiBaseUrl}/analyses/${analysisId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${apiBaseUrl}/analyses/${analysisId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error("Unable to load analysis details.");
@@ -804,26 +917,30 @@
 
       const details = await response.json();
       renderSavedReport(details.report);
-      auditPrintReference.textContent = (
-        `Analysis #${analysisId} | ${details.original_file_name || "AB1 file"}`
-      );
+      auditPrintReference.textContent = `Analysis #${analysisId} | ${details.original_file_name || "AB1 file"}`;
 
       showCards(fileDetails, [
         ["AB1 file", details.original_file_name],
-        ["Uploaded", details.created_at
-          ? new Date(details.created_at).toLocaleDateString()
-          : "N/A"],
-        ["QC status", String(details.qc_status || "pending").replaceAll("_", " ")],
+        [
+          "Uploaded",
+          details.created_at
+            ? new Date(details.created_at).toLocaleDateString()
+            : "N/A",
+        ],
+        [
+          "QC status",
+          String(details.qc_status || "pending").replaceAll("_", " "),
+        ],
       ]);
 
       try {
         const [traceResponse, jak2Response] = await Promise.all([
           fetch(`${apiBaseUrl}/analyses/${analysisId}/chromatogram`, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
           }),
           fetch(`${apiBaseUrl}/analyses/${analysisId}/jak2-target`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
+            headers: { Authorization: `Bearer ${token}` },
+          }),
         ]);
 
         let targetBase = null;
@@ -851,15 +968,29 @@
 
           showCards(jak2Details, [
             ["AB1 Position", result.ab1_base_number],
-            ["Genomic Coordinate", result.genomic_position
-              ? `NC_000009.12:g.${result.genomic_position}` : "N/A"],
-            ["Transcript Coordinate", result.coding_position
-              ? `NM_004972.4:c.${result.coding_position}` : "N/A"],
+            [
+              "Genomic Coordinate",
+              result.genomic_position
+                ? `NC_000009.12:g.${result.genomic_position}`
+                : "N/A",
+            ],
+            [
+              "Transcript Coordinate",
+              result.coding_position
+                ? `NM_004972.4:c.${result.coding_position}`
+                : "N/A",
+            ],
             ["Direction", result.direction],
             ["Observed Base", result.observed_base],
             ["Target Phred Quality", result.quality_score],
-            ["Alignment Identity", formatPercent(result.alignment_identity_percentage)],
-            ["Read Coverage", formatPercent(result.alignment_coverage_percentage)],
+            [
+              "Alignment Identity",
+              formatPercent(result.alignment_identity_percentage),
+            ],
+            [
+              "Read Coverage",
+              formatPercent(result.alignment_coverage_percentage),
+            ],
             ["A Peak", heights.A],
             ["C Peak", heights.C],
             ["G Peak", heights.G],
@@ -867,11 +998,20 @@
             ["Primary Peak", peaks.primary_base],
             ["Secondary Peak", peaks.secondary_base],
             ["Secondary / Primary", formatRatio(peaks.overlap_ratio)],
-            ["Target QC Review", result.found === false ? "Target Not Found" : result.needs_review ? "Needs Review" : "No target QC flag"],
-            ["Target QC Reason", reasons || "No target mapping or peak review reason"],
-            ["Pipeline Version", result.pipeline_version]
+            [
+              "Target QC Review",
+              result.found === false
+                ? "Target Not Found"
+                : result.needs_review
+                  ? "Needs Review"
+                  : "No target QC flag",
+            ],
+            [
+              "Target QC Reason",
+              reasons || "No target mapping or peak review reason",
+            ],
+            ["Pipeline Version", result.pipeline_version],
           ]);
-
         } else {
           // A failed target endpoint should not leave a misleading 'Loading' message.
           evidenceBadge.textContent = "Evidence unavailable";
@@ -881,29 +1021,38 @@
 
           const unavailable = document.createElement("p");
           unavailable.className = "evidence-unavailable";
-          unavailable.textContent = "Target evidence could not be loaded. Refer to the Initial QC decision for target-mapping status.";
+          unavailable.textContent =
+            "Target evidence could not be loaded. Refer to the Initial QC decision for target-mapping status.";
 
           jak2Summary.appendChild(unavailable);
-          jak2Details.textContent = "No mapped JAK2 V617F target evidence available.";
+          jak2Details.textContent =
+            "No mapped JAK2 V617F target evidence available.";
         }
 
         if (!traceResponse.ok) throw new Error("Unable to load chromatogram.");
 
         const trace = await traceResponse.json();
 
-        if (!window.GeneGlassChromatogram) throw new Error("Chromatogram viewer script missing.");
+        if (!window.GeneGlassChromatogram)
+          throw new Error("Chromatogram viewer script missing.");
 
         const motifRange = findNearbyMotif(trace.sequence, targetBase, "ACAT");
 
-        chromatogramController = await window.GeneGlassChromatogram.render(trace, {
-          targetBase: Number.isInteger(targetBase) && targetBase > 0 ? targetBase : undefined,
-          showTitle: false,
-          initialBaseCount: 9,
-          highlightRange: motifRange,
-          initialSequence: "ACAT",
-          readDirection,
-          compact: true
-        });
+        chromatogramController = await window.GeneGlassChromatogram.render(
+          trace,
+          {
+            targetBase:
+              Number.isInteger(targetBase) && targetBase > 0
+                ? targetBase
+                : undefined,
+            showTitle: false,
+            initialBaseCount: 9,
+            highlightRange: motifRange,
+            initialSequence: "ACAT",
+            readDirection,
+            compact: true,
+          },
+        );
 
         document.getElementById("chromatogramLoading").hidden = true;
       } catch (error) {
@@ -912,31 +1061,41 @@
           "Chromatogram could not be loaded: " + error.message;
       }
 
-      const qcResponse = await fetch(`${apiBaseUrl}/analyses/${analysisId}/preliminary-qc-decision`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const qcResponse = await fetch(
+        `${apiBaseUrl}/analyses/${analysisId}/preliminary-qc-decision`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
 
-      if (!qcResponse.ok) throw new Error("Unable to load Initial QC decision.");
+      if (!qcResponse.ok)
+        throw new Error("Unable to load Initial QC decision.");
 
       const qc = await qcResponse.json();
       renderInitialQcState(qc, details);
 
       if (qc.target_found !== true) {
-        renderAiGateNotice("Target Not Found", "AI prediction and SHAP are unavailable without mapped JAK2 V617F target evidence.");
+        renderAiGateNotice(
+          "Target Not Found",
+          "AI prediction and SHAP are unavailable without mapped JAK2 V617F target evidence.",
+        );
       } else if (qc.decision === "request_repeat") {
-        renderAiGateNotice("Request Repeat", "A specialist requested a new sequencing run. AI classification is not displayed.");
+        renderAiGateNotice(
+          "Request Repeat",
+          "A specialist requested a new sequencing run. AI classification is not displayed.",
+        );
       } else if (qc.decision === "pending" && !details.ai_prediction) {
-        renderAiGateNotice("Awaiting Initial QC Decision", "Open New Analysis to inspect the signal and choose Continue Analysis or Request Repeat.");
+        renderAiGateNotice(
+          "Awaiting Initial QC Decision",
+          "Open New Analysis to inspect the signal and choose Continue Analysis or Request Repeat.",
+        );
       } else {
         await loadAiPrediction(token);
       }
 
       message.textContent = "";
 
-      await Promise.all([
-        loadReviewHistory(token),
-        loadAuditTrail(token),
-      ]);
+      await Promise.all([loadReviewHistory(token), loadAuditTrail(token)]);
     } catch (error) {
       message.textContent = error.message;
     }
@@ -950,8 +1109,7 @@
   editReportButton.addEventListener("click", () => {
     if (!savedReport || savedReport.status !== "finalized") return;
 
-    window.location.href =
-      `../AnalysisPage/analysis.html?id=${analysisId}&editReport=1`;
+    window.location.href = `../AnalysisPage/analysis.html?id=${analysisId}&editReport=1`;
   });
 
   if (window.GeneGlassAuth?.token) {

@@ -94,11 +94,30 @@ def test_audit_events_are_created_without_secrets_and_are_owner_scoped(
                     "new_password": "DifferentPassword123!",
                 },
             )
-            analysis_trail = client.get(
+            # Changing the password must invalidate the existing JWT.
+            old_token_trail = client.get(
                 f"/api/analyses/{analysis_id}/audit-events",
                 headers=headers,
             )
-            my_trail = client.get("/api/audit-events", headers=headers)
+            assert old_token_trail.status_code == 401
+
+            # A new login must still access the owner's audit events.
+            fresh_login = client.post(
+                "/api/auth/login",
+                data={
+                    "username": "audit@example.com",
+                    "password": "DifferentPassword123!",
+                },
+            )
+            assert fresh_login.status_code == 200
+            fresh_headers = {
+                "Authorization": f"Bearer {fresh_login.json()['access_token']}"
+            }
+            analysis_trail = client.get(
+                f"/api/analyses/{analysis_id}/audit-events",
+                headers=fresh_headers,
+            )
+            my_trail = client.get("/api/audit-events", headers=fresh_headers)
 
             other_login = client.post(
                 "/api/auth/login",

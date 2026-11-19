@@ -6,30 +6,11 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>GeneGlass | Dashboard</title>
 <link href="dashboard.css" rel="stylesheet"/>
-<!-- Icons -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet"/>
-<!-- Chart.js -->
 
 <script defer="" src="../assets/config.js"></script>
 <script defer="" src="../assets/auth.js"></script>
-<style>
-/* Dashboard-only layout: preserves existing GeneGlass sidebar, colors and background */
-.stats-grid {
-  display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 24px !important;
-  margin-bottom: 24px !important;
-}
-.gg-summary-card {min-height:155px;display:flex;align-items:center;gap:20px;}
-.gg-summary-card .stat-info h2 {font-size:clamp(30px,3vw,44px);}
-.recent-card {width:100%;}
-.recent-card .table-wrapper {overflow-x:auto;}
-@media(max-width:850px) {
-  .stats-grid {
-    grid-template-columns: 1fr !important;
-  }
-}
-</style></head>
+</head>
 <body>
 <div class="dashboard-page">
 <!-- ================= SIDEBAR ================= -->
@@ -60,14 +41,13 @@
 </aside>
 <!-- ================= MAIN ================= -->
 <main class="main-content">
-<!-- Fixed DNA Background -->
 <img alt="" class="dashboard-dna" src="../assets/dna-bg.png"/>
 <!-- ================= HEADER ================= -->
 
 <header class="dashboard-header">
   <div>
     <h1>Welcome back</h1>
-    </div>
+  </div>
 </header>
 
 <!-- ================= STAT CARDS ================= -->
@@ -81,7 +61,7 @@
     <div class="stat-info">
       <p>Total Analyses</p>
       <h2 id="ggTotal">—</h2>
-         </div>
+    </div>
   </article>
 
   <!-- Heterozygous -->
@@ -92,7 +72,7 @@
     <div class="stat-info">
       <p>Heterozygous</p>
       <h2 id="ggPositive">—</h2>
-         </div>
+    </div>
   </article>
 
   <!-- Not Detected -->
@@ -103,12 +83,10 @@
     <div class="stat-info">
       <p>Not Detected</p>
       <h2 id="ggNegative">—</h2>
-          </div>
+    </div>
   </article>
 
 </section>
-<!-- ================= CHARTS ================= -->
-
 <!-- ================= RECENT ACTIVITY ================= -->
 <section class="dashboard-card recent-card">
 <div class="recent-header">

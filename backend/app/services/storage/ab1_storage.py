@@ -88,3 +88,32 @@ async def save_ab1_file(
 
     finally:
         await upload.close()
+
+
+def delete_owned_ab1_file(file_path: str | Path | None, user_id: int) -> bool:
+    """Best-effort deletion confined to a user's directly managed AB1 files.
+
+    Invalid/out-of-folder paths are not deleted. Return False when deletion
+    is not permitted or an OS error prevents it.
+    """
+    if not file_path or user_id < 1:
+        return False
+
+    try:
+        owned_dir = (UPLOAD_ROOT / f"user_{user_id}").resolve()
+        candidate = Path(file_path)
+        # Avoid following a symlink from inside the upload directory.
+        if candidate.is_symlink():
+            return False
+        resolved = candidate.resolve()
+    except (OSError, RuntimeError, ValueError):
+        return False
+
+    # Files created by save_ab1_file live directly in user_N and end in .ab1.
+    if resolved.parent != owned_dir or resolved.suffix.lower() != ".ab1":
+        return False
+    try:
+        resolved.unlink(missing_ok=True)
+    except OSError:
+        return False
+    return True

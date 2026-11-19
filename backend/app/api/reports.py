@@ -11,33 +11,22 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.api.analysis_access import get_owned_analysis
 from app.api.dependencies import get_current_user
 from app.db.session import get_db
-from app.models.analysis import Analysis
 from app.models.molecular_report import MolecularReport
 from app.models.review import Review, ReviewDecision
 from app.models.user import User
 from app.services.ab1_reader import read_chromatogram
 from app.services.audit import AuditAction, add_audit_event
 from app.services.molecular_report_pdf import build_molecular_report_pdf
-from app.services.storage.ab1_storage import save_ab1_file
+from app.services.storage.ab1_storage import delete_owned_ab1_file, save_ab1_file
 from app.services.variant_detector import find_jak2_v617f_position
 
 reports_router = APIRouter(prefix="/analyses", tags=["reports"])
-
-
-def _analysis_for_owner(session: Session, analysis_id: int, user_id: int) -> Analysis:
-    analysis = session.scalar(
-        select(Analysis).where(
-            Analysis.id == analysis_id,
-            Analysis.user_id == user_id,
-        )
-    )
-    if analysis is None:
-        raise HTTPException(status_code=404, detail="Analysis not found")
-    return analysis
 
 
 def _latest_report(session: Session, analysis_id: int) -> MolecularReport | None:
@@ -128,7 +117,7 @@ def get_report(
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[Session, Depends(get_db)],
 ) -> dict:
-    _analysis_for_owner(session, analysis_id, current_user.id)
+    get_owned_analysis(session, analysis_id, current_user.id)
     report = _latest_report(session, analysis_id)
     return {"report": _serialize(report) if report else None}
 
@@ -151,7 +140,7 @@ async def save_report_draft(
     interpretation: Annotated[str, Form()] = "",
     normal_control: Annotated[UploadFile | None, File()] = None,
 ) -> dict:
-    analysis = _analysis_for_owner(session, analysis_id, current_user.id)
+    analysis = get_owned_analysis(session, analysis_id, current_user.id)
     review_decision = _latest_report_decision(session, analysis_id)
     latest = _latest_report(session, analysis_id)
     if latest is None:
@@ -170,46 +159,60 @@ async def save_report_draft(
 
     new_control_path: Path | None = None
     old_control_path = report.normal_control_file_path
-    if normal_control is not None and normal_control.filename:
-        new_control_path, control_sha256 = await save_ab1_file(
-            normal_control, current_user.id
-        )
-        try:
-            control_trace = read_chromatogram(new_control_path)
-            target = find_jak2_v617f_position(control_trace["sequence"])
-            if not target.get("found"):
-                raise ValueError("V617F target is not covered")
-        except (ValueError, FileNotFoundError, OSError) as exc:
-            new_control_path.unlink(missing_ok=True)
-            raise HTTPException(
-                status_code=422,
-                detail="The normal-control AB1 does not cover the JAK2 V617F target.",
-            ) from exc
-        report.normal_control_file_path = str(new_control_path)
-        report.normal_control_sha256 = control_sha256
 
-    report.patient_name = patient_name.strip()
-    report.medical_record_number = medical_record_number.strip()
-    report.gender = gender.strip()
-    report.date_of_birth = date_of_birth
-    report.physician_name = physician_name.strip()
-    report.report_number = report_number.strip()
-    report.received_date = received_date
-    report.submitted_date = submitted_date
-    report.clinical_history = clinical_history.strip()
-    report.specimen_type = specimen_type.strip() or "Peripheral Blood"
-    report.final_decision = review_decision.value
-    report.interpretation = interpretation.strip()
-    report.author_id = current_user.id
-    session.flush()
-    add_audit_event(
-        session,
-        actor_id=current_user.id,
-        analysis_id=analysis.id,
-        action=AuditAction.REPORT_DRAFT_SAVED,
-        details={"report_id": report.id, "version": report.version},
-    )
-    session.commit()
+    try:
+        if normal_control is not None and normal_control.filename:
+            new_control_path, control_sha256 = await save_ab1_file(
+                normal_control, current_user.id
+            )
+            try:
+                control_trace = read_chromatogram(new_control_path)
+                target = find_jak2_v617f_position(control_trace["sequence"])
+                if not target.get("found"):
+                    raise ValueError("V617F target is not covered")
+            except (ValueError, FileNotFoundError, OSError) as exc:
+                raise HTTPException(
+                    status_code=422,
+                    detail="The normal-control AB1 does not cover the JAK2 V617F target.",
+                ) from exc
+            report.normal_control_file_path = str(new_control_path)
+            report.normal_control_sha256 = control_sha256
+
+        report.patient_name = patient_name.strip()
+        report.medical_record_number = medical_record_number.strip()
+        report.gender = gender.strip()
+        report.date_of_birth = date_of_birth
+        report.physician_name = physician_name.strip()
+        report.report_number = report_number.strip()
+        report.received_date = received_date
+        report.submitted_date = submitted_date
+        report.clinical_history = clinical_history.strip()
+        report.specimen_type = specimen_type.strip() or "Peripheral Blood"
+        report.final_decision = review_decision.value
+        report.interpretation = interpretation.strip()
+        report.author_id = current_user.id
+        session.flush()
+        add_audit_event(
+            session,
+            actor_id=current_user.id,
+            analysis_id=analysis.id,
+            action=AuditAction.REPORT_DRAFT_SAVED,
+            details={"report_id": report.id, "version": report.version},
+        )
+        session.commit()
+    except Exception as exc:
+        # The database and uploaded file are separate resources. Revert both
+        # when report saving fails, preserving the previous control file.
+        session.rollback()
+        if new_control_path is not None:
+            delete_owned_ab1_file(new_control_path, current_user.id)
+        if isinstance(exc, SQLAlchemyError):
+            raise HTTPException(
+                status_code=500,
+                detail="The report draft could not be saved.",
+            ) from exc
+        raise
+
     session.refresh(report)
     if (
         new_control_path is not None
@@ -218,7 +221,18 @@ async def save_report_draft(
         and latest is not None
         and latest.status == "draft"
     ):
-        Path(old_control_path).unlink(missing_ok=True)
+        # A finalized report or another revision can still reference the
+        # previous control. Never delete a file needed by report history.
+        other_reference = session.scalar(
+            select(MolecularReport.id)
+            .where(
+                MolecularReport.normal_control_file_path == old_control_path,
+                MolecularReport.id != report.id,
+            )
+            .limit(1)
+        )
+        if other_reference is None:
+            delete_owned_ab1_file(old_control_path, current_user.id)
     return {"report": _serialize(report)}
 
 
@@ -228,7 +242,7 @@ def finalize_report(
     current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[Session, Depends(get_db)],
 ) -> dict:
-    analysis = _analysis_for_owner(session, analysis_id, current_user.id)
+    analysis = get_owned_analysis(session, analysis_id, current_user.id)
     report = _latest_report(session, analysis_id)
     if report is None or report.status != "draft":
         raise HTTPException(status_code=409, detail="No report draft is available")
@@ -294,7 +308,7 @@ def download_report_pdf(
     session: Annotated[Session, Depends(get_db)],
     version: int | None = None,
 ) -> StreamingResponse:
-    analysis = _analysis_for_owner(session, analysis_id, current_user.id)
+    analysis = get_owned_analysis(session, analysis_id, current_user.id)
     query = select(MolecularReport).where(
         MolecularReport.analysis_id == analysis.id,
         MolecularReport.status == "finalized",

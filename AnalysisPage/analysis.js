@@ -46,9 +46,8 @@
   const normalControl = document.getElementById("analysisNormalControl");
   const normalControlState = document.getElementById("analysisNormalControlState");
   const existingReportActions = document.getElementById("existingReportActions");
-const downloadReportButton = document.getElementById("analysisDownloadReport");
-let editReportButton = null;
-let isEditingFinalizedReport = false;
+  const downloadReportButton = document.getElementById("analysisDownloadReport");
+  let isEditingFinalizedReport = false;
 
   const apiBaseUrl = window.GeneGlassConfig?.apiBaseUrl;
   let activeAnalysisId = null;
@@ -947,16 +946,16 @@ function editSavedReport() {
   reviewForm.addEventListener("submit", saveReview);
   reportForm.addEventListener("submit", createReport);
   downloadReportButton.addEventListener("click", downloadSavedReport);
-  editReportButton = document.createElement("button");
-editReportButton.type = "button";
-editReportButton.id = "analysisEditReport";
-editReportButton.className = downloadReportButton.className;
-editReportButton.innerHTML =
-  '<i class="fa-solid fa-pen-to-square"></i> Edit Report';
+  const editReportButton = document.createElement("button");
+  editReportButton.type = "button";
+  editReportButton.id = "analysisEditReport";
+  editReportButton.className = downloadReportButton.className;
+  editReportButton.innerHTML =
+    '<i class="fa-solid fa-pen-to-square"></i> Edit Report';
 
-editReportButton.addEventListener("click", editSavedReport);
+  editReportButton.addEventListener("click", editSavedReport);
 
-existingReportActions.appendChild(editReportButton);
+  existingReportActions.appendChild(editReportButton);
 
 
 async function resumeFromUrl() {
@@ -987,19 +986,8 @@ async function resumeFromUrl() {
         throw new Error("A finalized report is not available for editing.");
       }
 
-      isEditingFinalizedReport = true;
-
-      populateReportDraft(savedReport);
-      setReportAvailability();
-
-      reportStatus.textContent =
-        "Editing a new version. The previously finalized PDF will remain unchanged.";
-
       showWorkflowStep(4);
-      reportForm.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
+      editSavedReport();
     } else if (openReport && modelReady) {
       if (REPORTABLE_DECISIONS.has(latestReviewDecision)) {
         showWorkflowStep(4);

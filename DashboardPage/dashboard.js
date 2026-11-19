@@ -3,22 +3,12 @@
    GeneGlass Dashboard Integration
 ========================================================= */
 
-let activityChart = null;
-let geneChart = null;
 let dashboardLoaded = false;
 let dashboardLoading = false;
 
 /* =========================================================
    HELPERS
 ========================================================= */
-
-function updateText(selector, value) {
-  const element = document.querySelector(selector);
-
-  if (element) {
-    element.textContent = value ?? "—";
-  }
-}
 
 function formatDate(dateValue) {
   if (!dateValue) return "—";
@@ -39,13 +29,7 @@ function formatDate(dateValue) {
 ========================================================= */
 
 function updateStatCards(data) {
-  const cards = document.querySelectorAll(
-    ".stats-grid .stat-card"
-  );
-
-  if (cards.length < 2) return;
-
-  const totalElement = cards[0].querySelector(".stat-info h2");
+  const totalElement = document.getElementById("ggTotal");
   const positiveElement = document.getElementById("ggPositive");
   const negativeElement = document.getElementById("ggNegative");
 
@@ -60,150 +44,6 @@ function updateStatCards(data) {
   if (negativeElement) {
     negativeElement.textContent = data.negative ?? 0;
   }
-}
-
-/* =========================================================
-   GENE DISTRIBUTION CHART
-========================================================= */
-
-function updateGeneChart(data) {
-  const canvas = document.getElementById("geneChart");
-
-  if (!canvas || typeof Chart === "undefined") {
-    console.error("Gene chart canvas or Chart.js is missing.");
-    return;
-  }
-
-  const distribution = data.gene_distribution || {};
-  const jak2 = distribution.JAK2 ?? 0;
-
-  if (geneChart) {
-    geneChart.destroy();
-  }
-
-  geneChart = new Chart(canvas, {
-    type: "doughnut",
-
-    data: {
-      labels: ["JAK2"],
-
-      datasets: [
-        {
-          data: [jak2],
-          backgroundColor: ["#056d70"],
-          borderWidth: 0,
-          hoverOffset: 3,
-        },
-      ],
-    },
-
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: "70%",
-
-      plugins: {
-        legend: {
-          display: false,
-        },
-      },
-    },
-  });
-
-  updateText(".donut-center strong", jak2);
-
-  const geneValues = document.querySelectorAll(
-    ".gene-list > div strong"
-  );
-
-  if (geneValues.length >= 1) {
-    geneValues[0].textContent = jak2;
-  }
-}
-
-/* =========================================================
-   ACTIVITY CHART
-========================================================= */
-
-function updateActivityChart(data) {
-  const canvas = document.getElementById("activityChart");
-
-  if (!canvas || typeof Chart === "undefined") {
-    console.error("Activity chart canvas or Chart.js is missing.");
-    return;
-  }
-
-  const activityCount = data.activity_last_7_days ?? 0;
-
-  if (activityChart) {
-    activityChart.destroy();
-  }
-
-  activityChart = new Chart(canvas, {
-    type: "bar",
-
-    data: {
-      labels: ["Last 7 Days"],
-
-      datasets: [
-        {
-          label: "Analyses",
-          data: [activityCount],
-          backgroundColor: "#10b59b",
-          borderRadius: 5,
-          borderSkipped: false,
-        },
-      ],
-    },
-
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-
-      plugins: {
-        legend: {
-          display: false,
-        },
-
-        tooltip: {
-          displayColors: false,
-        },
-      },
-
-      scales: {
-        x: {
-          grid: {
-            display: false,
-          },
-
-          border: {
-            display: false,
-          },
-
-          ticks: {
-            color: "#789095",
-          },
-        },
-
-        y: {
-          beginAtZero: true,
-
-          ticks: {
-            precision: 0,
-            color: "#789095",
-          },
-
-          grid: {
-            color: "rgba(88, 124, 128, 0.10)",
-          },
-
-          border: {
-            display: false,
-          },
-        },
-      },
-    },
-  });
 }
 
 /* =========================================================
@@ -247,9 +87,6 @@ function updateRecentAnalyses(analyses) {
       fileLink.href =
         `../AnalysisDetailsPage/details.html?id=${encodeURIComponent(analysis.id)}`;
 
-      fileLink.style.textDecoration = "none";
-      fileLink.style.color = "inherit";
-      fileLink.style.cursor = "pointer";
       fileLink.title = "Open analysis details";
 
       const fileIcon = document.createElement("i");
@@ -288,32 +125,25 @@ function updateRecentAnalyses(analyses) {
     resultBadge.className = "result";
 
     const modelResult = analysis.ai_prediction;
+    const needsReview = modelResult?.status === "Needs Review";
+    const failed = analysis.status === "failed";
 
-    if (modelResult?.status !== "Needs Review" && analysis.status !== "failed" && modelResult?.prediction === "hetero") {
+    if (!needsReview && !failed && modelResult?.prediction === "hetero") {
       resultBadge.classList.add("mutation-result");
       resultBadge.textContent = "Heterozygous";
-      resultBadge.title =
-        "Research model output — not a clinical diagnosis";
-
-    } else if (modelResult?.status !== "Needs Review" && analysis.status !== "failed" && modelResult?.prediction === "negative") {
+      resultBadge.title = "Research model output — not a clinical diagnosis";
+    } else if (!needsReview && !failed && modelResult?.prediction === "negative") {
       resultBadge.classList.add("normal-result");
       resultBadge.textContent = "Not Detected";
-      resultBadge.title =
-        "Research model output — not a clinical diagnosis";
-
-    } else if (modelResult?.status === "Needs Review") {
-      resultBadge.classList.add("review-result");
-      resultBadge.textContent = "Pending";
-      resultBadge.title = "Needs review — open analysis details";
-
-    } else if (analysis.status === "failed") {
-      resultBadge.classList.add("review-result");
-      resultBadge.textContent = "Pending";
-      resultBadge.title = "Analysis failed — open analysis details";
-
+      resultBadge.title = "Research model output — not a clinical diagnosis";
     } else {
       resultBadge.classList.add("review-result");
       resultBadge.textContent = "Pending";
+      if (needsReview) {
+        resultBadge.title = "Needs review — open analysis details";
+      } else if (failed) {
+        resultBadge.title = "Analysis failed — open analysis details";
+      }
     }
 
     resultCell.appendChild(resultBadge);
@@ -376,16 +206,9 @@ async function loadDashboardSummary() {
     const data = await response.json();
 
     updateStatCards(data);
-    updateGeneChart(data);
-    updateActivityChart(data);
     updateRecentAnalyses(data.recent_analyses);
 
     dashboardLoaded = true;
-
-    console.log(
-      "Dashboard statistics loaded successfully.",
-      data
-    );
 
   } catch (error) {
     console.error(

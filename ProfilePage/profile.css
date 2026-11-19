@@ -25,14 +25,6 @@
   margin: 0 0 7px;
   color: #10363b;
 }
-.profile-heading p,
-.section-head p,
-.account-card p {
-  margin: 0;
-  color: #789098;
-  font-size: 14px;
-  line-height: 1.5;
-}
 .profile-card {
   background: #fff;
   border: 1px solid #e0eeee;
@@ -91,8 +83,7 @@
   gap: 12px;
   margin-bottom: 24px;
 }
-.section-head h2,
-.account-card h2 {
+.section-head h2 {
   margin: 0 0 6px;
   color: #10363b;
   font-size: 19px;
@@ -207,13 +198,6 @@
   font-size: 12px;
   line-height: 1.5;
 }
-.account-card {
-  margin-top: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-}
 @media (max-width: 1100px) {
   .profile-grid {
     grid-template-columns: 1fr;
@@ -244,8 +228,7 @@
   .fields-grid {
     grid-template-columns: 1fr;
   }
-  .section-head,
-  .account-card {
+  .section-head {
     flex-wrap: wrap;
   }
   .section-head {

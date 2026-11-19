@@ -7,9 +7,9 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
 
+from app.api.analysis_access import get_owned_analysis
 from app.api.dependencies import get_current_user
 from app.db.session import get_db
-from app.models.analysis import Analysis
 from app.models.review import Review
 from app.models.user import User
 from app.schemas.review import (
@@ -20,26 +20,6 @@ from app.schemas.review import (
 from app.services.audit import AuditAction, add_audit_event
 
 reviews_router = APIRouter(prefix="/analyses", tags=["reviews"])
-
-
-def _get_owned_analysis(
-    session: Session,
-    analysis_id: int,
-    current_user: User,
-) -> Analysis:
-    analysis = session.scalar(
-        select(Analysis).where(
-            Analysis.id == analysis_id,
-            Analysis.user_id == current_user.id,
-        )
-    )
-    if analysis is None:
-        # Do not reveal whether another user's analysis exists.
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Analysis not found",
-        )
-    return analysis
 
 
 def _to_response(review: Review) -> ReviewResponse:
@@ -66,7 +46,7 @@ def get_review_history(
 ) -> ReviewHistoryResponse:
     """Return the complete review history for an owned analysis."""
 
-    _get_owned_analysis(session, analysis_id, current_user)
+    get_owned_analysis(session, analysis_id, current_user.id)
     reviews = session.scalars(
         select(Review)
         .options(joinedload(Review.reviewer))
@@ -95,7 +75,7 @@ def create_review(
 ) -> ReviewResponse:
     """Append a specialist decision without changing mutation classification."""
 
-    _get_owned_analysis(session, analysis_id, current_user)
+    get_owned_analysis(session, analysis_id, current_user.id)
     review = Review(
         analysis_id=analysis_id,
         reviewer_id=current_user.id,

@@ -1,6 +1,5 @@
 
 const loginForm = document.getElementById("loginForm");
-const togglePassword = document.getElementById("togglePassword");
 const passwordInput = document.getElementById("password");
 const emailInput = document.getElementById("email");
 const rememberInput = document.getElementById("remember");
@@ -39,11 +38,6 @@ const resetButton = document.getElementById("resetButton");
 // ===============================
 // SHOW / HIDE PASSWORD
 // ===============================
-
-togglePassword.addEventListener("click", function () {
-    passwordInput.type =
-        passwordInput.type === "password" ? "text" : "password";
-});
 
 // Show / Hide Password in Sign Up
 document.querySelectorAll("[data-password-target]").forEach(button => {
@@ -390,8 +384,6 @@ signupForm.addEventListener("submit", async function (event) {
 
         signupSuccess.textContent =
             `Account created successfully for ${registeredUser.email}. You can now sign in.`;
-
-        signupSuccess.hidden = false;
 
         emailInput.value = registeredUser.email;
 
