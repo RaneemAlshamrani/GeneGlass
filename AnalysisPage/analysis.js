@@ -88,31 +88,28 @@
     }
   }
 
-  const REVIEW_NOTES = {
-    not_detected: [
-      "No convincing JAK2 V617F variant signal is detected at the target position.",
-      "The chromatogram supports a Not Detected JAK2 V617F result.",
-    ],
-    heterozygous: [
-      "The target peak pattern supports a Heterozygous JAK2 V617F result.",
-      "Reference and variant signals are both present at the target position.",
-    ],
-    homozygous: [
-      "The target peak pattern supports a Homozygous JAK2 V617F result.",
-      "The variant signal predominates at the target position without a convincing reference peak.",
-    ],
-    inconclusive: [
-      "The available signal is insufficient for a conclusive JAK2 V617F result.",
-      "Repeat testing or additional evidence is required before final interpretation.",
-    ],
-  };
+ const REVIEW_NOTES = {
+  not_detected: [
+    "Sanger sequencing was performed, and no variants were detected in the sequenced regions of all tested genes. Myeloproliferative neoplasm has not been ruled out, and a hematology consultation is highly recommended.",
+  ],
+  heterozygous: [
+    "JAK2 (V617F) POSITIVE: Highly suggestive of myeloproliferative neoplasm or disorder (MPN/MPD). Correlation with other clinical and laboratory features will confirm MPN/MPD. With decrease Erythropietin (EPO) for example, polycythemia Vera (PV) is likely. Bone marrow biopsy is recommended.",
+  ],
+  homozygous: [
+    "JAK2 (V617F) POSITIVE: Highly suggestive of myeloproliferative neoplasm or disorder (MPN/MPD). Correlation with other clinical and laboratory features will confirm MPN/MPD. With decrease Erythropietin (EPO) for example, polycythemia Vera (PV) is likely. Bone marrow biopsy is recommended.",
+  ],
+  inconclusive: [
+    "The available signal is insufficient for a conclusive JAK2 V617F result.",
+    "Repeat testing or additional evidence is required before final interpretation.",
+  ],
+};
 
-  const DEFAULT_INTERPRETATIONS = {
-    not_detected: "JAK2 V617F was not detected in the tested specimen based on specialist review of the available technical evidence.",
-    heterozygous: "A heterozygous JAK2 V617F pattern was identified in the tested specimen based on specialist review of the available technical evidence.",
-    homozygous: "A homozygous JAK2 V617F pattern was identified in the tested specimen based on specialist review of the available technical evidence.",
-    inconclusive: "The JAK2 V617F result is inconclusive based on the available technical evidence; repeat or additional testing is recommended.",
-  };
+const DEFAULT_INTERPRETATIONS = {
+  not_detected: "Sanger sequencing was performed, and no variants were detected in the sequenced regions of all tested genes. Myeloproliferative neoplasm has not been ruled out, and a hematology consultation is highly recommended.",
+  heterozygous: "JAK2 (V617F) POSITIVE: Highly suggestive of myeloproliferative neoplasm or disorder (MPN/MPD). Correlation with other clinical and laboratory features will confirm MPN/MPD. With decrease Erythropietin (EPO) for example, polycythemia Vera (PV) is likely. Bone marrow biopsy is recommended.",
+  homozygous: "JAK2 (V617F) POSITIVE: Highly suggestive of myeloproliferative neoplasm or disorder (MPN/MPD). Correlation with other clinical and laboratory features will confirm MPN/MPD. With decrease Erythropietin (EPO) for example, polycythemia Vera (PV) is likely. Bone marrow biopsy is recommended.",
+  inconclusive: "The JAK2 V617F result is inconclusive based on the available technical evidence; repeat or additional testing is recommended.",
+};
 
   const REPORTABLE_DECISIONS = new Set([
     "not_detected",
@@ -346,12 +343,19 @@
     return true;
   }
 
-  function populateReviewTemplates(decision) {
-    reviewTemplate.replaceChildren(new Option("Choose a ready note or write below", ""));
-    for (const note of REVIEW_NOTES[decision] || []) {
-      reviewTemplate.add(new Option(note, note));
-    }
+ function populateReviewTemplates(decision) {
+  reviewTemplate.replaceChildren(
+    new Option("Choose a ready note or write below", "")
+  );
+
+  for (const note of REVIEW_NOTES[decision] || []) {
+    const shortLabel = note.length > 75
+      ? note.substring(0, 75) + "..."
+      : note;
+
+    reviewTemplate.add(new Option(shortLabel, note));
   }
+}
 
 function setReportAvailability() {
   const decisionIsFinal = REPORTABLE_DECISIONS.has(latestReviewDecision);
