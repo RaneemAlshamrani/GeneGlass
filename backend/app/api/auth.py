@@ -10,7 +10,10 @@ from app.services.password_reset import (
     invalidate_reset_token,
     invalidate_reset_tokens_for_user,
 )
-from app.services.password_reset_email import send_password_reset_email
+from app.services.password_reset_email import (
+    PasswordResetEmailError,
+    send_password_reset_email,
+)
 import logging
 
 
@@ -189,7 +192,7 @@ def forgot_password(
         if token is not None:
             try:
                 send_password_reset_email(email, token)
-            except Exception as error:
+            except PasswordResetEmailError as error:
                 invalidate_reset_token(token)
                 # Never log the recipient, token, SMTP password, or reset URL.
                 _reset_logger.error("Reset email delivery failed (%s)", type(error).__name__)

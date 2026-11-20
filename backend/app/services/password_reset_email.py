@@ -8,6 +8,10 @@ from urllib.parse import quote
 from app.core.config import get_settings
 
 
+class PasswordResetEmailError(RuntimeError):
+    """Raised when the configured SMTP service cannot deliver a reset email."""
+
+
 def send_password_reset_email(recipient_email: str, token: str) -> None:
     """Deliver a password-reset URL; never log the token or credentials."""
     settings = get_settings()
@@ -28,9 +32,12 @@ def send_password_reset_email(recipient_email: str, token: str) -> None:
         "Do not forward this link."
     )
 
-    with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as server:
-        server.ehlo()
-        server.starttls(context=ssl.create_default_context())
-        server.ehlo()
-        server.login(settings.smtp_email, settings.smtp_app_password)
-        server.send_message(message)
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as server:
+            server.ehlo()
+            server.starttls(context=ssl.create_default_context())
+            server.ehlo()
+            server.login(settings.smtp_email, settings.smtp_app_password)
+            server.send_message(message)
+    except (smtplib.SMTPException, OSError) as error:
+        raise PasswordResetEmailError("Password reset email delivery failed") from error
